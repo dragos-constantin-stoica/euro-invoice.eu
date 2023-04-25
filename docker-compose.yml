@@ -1,0 +1,113 @@
+version: '3'
+
+services:
+
+  gearmand:
+    image: "artefactual/gearmand:1.1.19.1-alpine"
+    container_name: gearmand
+    hostname: gearmand
+    restart: always
+    ports:
+      - 4730:4730
+    networks:
+      - unity_bill
+    healthcheck:
+       test: ["CMD-SHELL", "gearadmin --server-version  | grep -q '1.1.19.1' && exit 0"  ]
+       start_period: 10s
+       interval: 10s
+       timeout: 5s
+       retries: 3
+
+  couch:
+    image: "couchdb:3.3.1"
+    container_name: couch
+    hostname: couch
+    restart: always
+    environment:
+      - COUCHDB_USER=${COUCHDB_USER}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
+    ports:
+      - 5984:5984
+    volumes:
+      - ./dbcouch/etc:/opt/couchdb/etc/local.d
+      - ./dbcouch/data:/opt/couchdb/data
+      - ./dbcouch/log:/opt/couchdb/var/log
+    networks:
+      - unity_bill
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5984/_up"]
+      start_period: 5s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  nodewrk:
+    image: 'datastemalux/couch_admin:1.0.0'
+    build:
+      context: couch_admin
+      dockerfile: Dockerfile
+      target: production
+      secrets:
+        - wrk_secrets
+      tags:
+        - 'datastemalux/couch_admin:1.0.0'
+    container_name: couchdb_admin
+    hostname: node_worker
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - 8090:8090
+    depends_on:
+      gearmand:
+        condition: service_healthy
+      couch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "hck.js"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - unity_bill
+
+  unitybillapp:
+    image: 'datastemalux/unitybill:1.0.0'
+    build:
+      context: ubill_app
+      dockerfile: Dockerfile
+      target: production
+      secrets:
+        - app_secrets
+      tags:
+        - 'datastemalux/unitybill:1.0.0'
+    container_name: unitybillapp
+    hostname: unitybillapp
+    restart: unless-stopped
+    ports:
+      - 8080:3000
+    depends_on:
+      gearmand:
+        condition: service_healthy
+      couch:
+        condition: service_healthy
+      nodewrk:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "hck.js"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - unity_bill
+
+networks:
+   unity_bill:
+      driver: bridge
+
+secrets:
+  wrk_secrets:
+    file: ./couch_admin/.npmrc
+  app_secrets:
+    file: ./ubill_app/.npmrc

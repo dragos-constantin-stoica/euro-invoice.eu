@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  nodeapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+      secrets:
+        - npmrc
+      tags:
+        - 'datastemalux/couch_admin:1.0.0'
+    image: 'datastemalux/couch_admin:1.0.0'
+    ports:
+      - 8090:8090
+    healthcheck:
+      test: ["CMD", "node", "hck.js"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+
+secrets:
+  npmrc:
+    file: ./.npmrc

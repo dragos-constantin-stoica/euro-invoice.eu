@@ -1,0 +1,237 @@
+// CommonJS
+const http = require('http')
+const fastify = require('fastify')({logger: true})
+const gearman = require('gearman')
+// require the module
+var hashes = require('jshashes')
+var RMD160 = new hashes.RMD160;
+
+let worker = gearman('gearmand', 4730)
+
+// handle jobs assigned by the server
+worker.on('JOB_ASSIGN', async function(job) {
+    console.log(job.func_name + ' job assigned to this worker')
+    console.log(JSON.parse(job.payload.toString()))
+    let payload = JSON.parse(job.payload.toString())
+
+    switch (job.func_name){
+	case 'check_user':
+	    try {
+                //Connect to _users db
+                const users = nano.db.use('_users')
+                //const session = nano.session()
+                const chkuser = await users.head(`org.couchdb.user:${payload.username}`)
+                console.log('chkuser')
+                worker.sendWorkComplete(job.handle, JSON.stringify({status: 'ok', message: JSON.stringify(chkuser)}))
+                //chkuser = await users.head("org.couchdb.user:gingirel@sds.sb")
+                //const response = await users.insert({"_id": "org.couchdb.user:puffy@sds.sb" , "name": "puffy@sds.sb", "password": "password", "roles": ["sds_admin"], "type": "user"})
+                // succeeded
+            } catch (e) {
+                // failed or not 200 code
+                // should be able to recover HTTP header status
+		if (typeof(e.statusCode) !== 'undefined'){
+			switch(e.statusCode){
+				case 404:
+					worker.sendWorkComplete(job.handle, JSON.stringify({status: 'ok', message: 'User not found!'}))
+				break;
+				case 401:
+					worker.sendWorkComplete(job.handle, JSON.stringify({status: 'ok', message: 'No access!'}))
+				break;
+				default:
+					worker.sendWorkComplete(job.handle, JSON.stringify({status: 'error', error: e}))
+                        }
+		}else{
+			 worker.sendWorkComplete(job.handle, JSON.stringify({status: 'error', error: e}))
+                }
+            }
+	break;
+	case 'check_company':
+	   try{
+		let chkdb = await nano.db.list()
+		console.log(chkdb)
+		if (chkdb.indexOf(payload.name) < 0) {
+		  worker.sendWorkComplete(job.handle, JSON.stringify({status: 'ok'}))
+		}else{
+ 		  worker.sendWorkComplete(job.handle, JSON.stringify({status: 'error', error:`Database ${payload.name} already exists!`}))
+                }
+           }catch(e){
+            console.log(e);
+            worker.sendWorkComplete(job.handle, JSON.stringify({status: 'error', error: e.toString()}))
+	  }
+	break;
+	case 'create_company':
+	   console.log(JSON.parse(job.payload.toString()))
+           //Compute new - database ID
+           var dbid = RMD160.hex(JSON.stringify(payload))
+           console.log(dbid)
+           //Check if the database exists and if exists check if the user is already admin
+
+           //Check if the user exists and if it belongs to admin group for the corresponding database
+	   worker.sendWorkComplete(job.handle, JSON.stringify({status: 'ok'}))
+	break;
+  	default:
+	   console.log(`function ${job.func_name} not implemented :(`)
+	   worker.sendWorkComplete(job.handle, JSON.stringify({status:'nok', message:'function not implemented'}))
+    }
+    // go back to sleep, telling the server we're ready for more work
+    worker.preSleep()
+});
+
+// grab a job when the server signals one is available
+worker.on('NOOP', function() {
+  worker.grabJob()
+})
+
+// connect to the gearman server
+worker.connect(function(){
+   // register check user function
+   worker.addFunction('check_user')
+
+   // register ckeck company function
+   worker.addFunction('check_company')
+
+   // register create company function
+   worker.addFunction('create_company')
+
+    // tell the server the worker is going to sleep, waiting for work
+    worker.preSleep()
+});
+
+
+
+//CouchDB user management part
+const nano = require('nano')({url:'http://admin:admin@couch:5984', log: console.log })
+
+
+//Setup CouchDB properly
+//Should be idempotent and executed only once
+
+//Get the config file for the current node
+http.get('http://admin:admin@couch:5984/_node/_local/_config', res => {
+  let data = [];
+  const headerDate = res.headers && res.headers.date ? res.headers.date : 'no response date';
+  console.log('Status Code:', res.statusCode);
+
+  res.on('data', chunk => {
+    data.push(chunk);
+  });
+
+  res.on('end', () => {
+    console.log('Response ended: ');
+    const result = JSON.parse(Buffer.concat(data).toString());
+    console.log(result)
+  });
+}).on('error', err => {
+  console.log('Error: ', err.message);
+});
+
+//Create application technical user
+(async () =>{
+	try {
+                //Connect to _users db
+                const users = nano.db.use('_users')
+                const session = nano.session()
+                console.log('Creating unitybilltu')
+                const response = await users.insert({"_id": "org.couchdb.user:unitybillapptu" , "name": "unitybillapptu", "password": "Thisshouldbeastrongpassword", "roles": ["technical_member"], "type": "user"})
+                console.log(response)
+        } catch (e) {
+                // failed
+                console.error(e)
+        }
+})()
+
+//Create companies database
+(async () =>{
+  try{
+    const COMPANIES_EXISTS = await nano.db.get("companies")
+    console.log(COMPANIES_EXISTS)
+  } catch (e){
+        //The database does not exist
+	if (e.statusCode == 404){
+	  const COMPANIES_CREATE = await nano.db.create("companies")
+	  console.log(COMPANIES_CREATE)
+        }
+  }
+
+})()
+
+
+nano.db.get("companies", (err, data) =>{
+ if(err){
+   //console.log(err)
+   if(err.statusCode == 404){
+	nano.db.create('companies', (err, body)=>{
+	  console.log(err);
+	  if(body){
+             console.log(body)
+             //setup security object with members role
+		
+             //create views
+          }
+	})
+   }
+ }
+})
+
+//End  CouchDB setup
+//-----------------------
+
+//Create user if does not exist
+const cuidne = async () =>{
+	try {
+  		//Connect to _users db
+		const users = nano.db.use('_users')
+  		const session = nano.session()
+		const chkuser = await users.head("org.couchdb.user:puffy@sds.sb")
+		console.log(`>>>\n ${chkuser} \n<<<`)
+                chkuser = await users.head("org.couchdb.user:gingirel@sds.sb")
+  		//const response = await users.insert({"_id": "org.couchdb.user:puffy@sds.sb" , "name": "puffy@sds.sb", "password": "password", "roles": ["sds_admin"], "type": "user"})
+		// succeeded
+	} catch (e) {
+		// failed
+		console.error(e)
+	}
+}
+
+//--------------
+//webserver part
+
+const PORT = 8090
+const HOST = '0.0.0.0'
+
+async function closeGracefully(signal) {
+   console.log(`*^!@4=> Received signal to terminate: ${signal}`)
+   await fastify.close()
+   // client.close(); gearmand client
+   // await db.close() if we have a db connection in this app
+   // await other things we should cleanup nicely
+   process.kill(process.pid, signal);
+}
+process.once('SIGINT', closeGracefully)
+process.once('SIGTERM', closeGracefully)
+process.once('SIGHUP', closeGracefully)
+
+fastify.register(require('fastify-healthcheck'), {
+   healthcheckUrl: '/ok',
+  // healthcheckUrlDisable: true,
+  // healthcheckUrlAlwaysFail: true,
+  // exposeUptime: true,
+  // underPressureOptions: { } // no under-pressure specific options set here
+  exposeUptime: true // enable, as a sample
+})
+
+fastify.get('/', async (request, reply) => {
+  return { status: 'ok' }
+})
+
+const start = async () => {
+ try {
+   await fastify.listen({port:PORT, host:HOST})
+   console.log(`*^!@4=> Process id: ${process.pid} on ${HOST}:${PORT}`)
+ } catch (err) {
+   fastify.log.error(err)
+   process.exit(1)
+ }
+}
+
+start()

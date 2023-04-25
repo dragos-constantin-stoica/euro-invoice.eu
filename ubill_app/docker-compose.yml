@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  nodeapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+      secrets:
+        - npmrc
+      tags:
+        - 'datastemalux/unitybill:1.0.0'
+    image: 'datastemalux/unitybill:1.0.0'
+    ports:
+      - 8080:3000
+    healthcheck:
+      test: ["CMD", "node", "hck.js"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+
+secrets:
+  npmrc:
+    file: ./.npmrc

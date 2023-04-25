@@ -1,0 +1,32 @@
+{
+  "name": "node_couchcdb",
+  "version": "0.1.0",
+  "private": false,
+  "description": "The gearman worker to manage users in CouchDB",
+  "main": "worker.js",
+  "scripts": {
+    "start": "nodemon worker.js"
+  },
+  "author": "Dragos Stoica",
+  "license": "MIT",
+  "dependencies": {
+    "fastify": "^4.x",
+    "@fastify/cors": "^7.x",
+    "fastify-register-routes": "^1.1.0",
+    "fastify-healthcheck": "^4.x",
+    "fastify-routes": ">3.1",
+    "@fastify/sensible": "^4.x",
+    "jsonwebtoken": "^8.5.1",
+    "pino": "^7.6.2",
+    "pino-pretty": "^7.3.0",
+    "gearman": "^2.1",
+    "nano": "^10.x",
+    "jshashes": "^1.0.x"
+  },
+  "devDependencies": {
+    "eslint": "^6.7.2",
+    "eslint-plugin-prettier": "^3.3.1",
+    "nodemon": "^2.0.15",
+    "prettier": "^2.2.1"
+  }
+}

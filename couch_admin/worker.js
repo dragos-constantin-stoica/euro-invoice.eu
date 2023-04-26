@@ -74,6 +74,18 @@ worker.connect(function(){
 //CouchDB user management part
 const nano = require('nano')({url:`http://${COUCHDB_USER}:${COUCHDB_PASSWORD}@couch:5984`})
 
+//Cleanup in case of failure. The Company may be created an the user not
+async function cleanupCompany(newCompany){
+  try{
+	let companies = nano.use('companies')
+	let result = await companies.get(newCompany._id)
+	result = await companies.destroy(result._id, result._rev)
+	result = nano.db.destroy(`c${newCompany._id}`)
+  }catch(e){
+   console.log(e)
+  }
+}
+
 //Update Company with newly created admin
 async function updateCompanyAdmin(newCompany, admin){
    try{
@@ -81,9 +93,9 @@ async function updateCompanyAdmin(newCompany, admin){
         let company = await companies.get(newCompany._id)
         company.admin=[ admin.name ]
         company.members = [ admin.name ]
-        console.log(company)
+        //console.log(company)
         let result = await companies.insert(company)
-        console.log(result)
+        //console.log(result)
    }catch(e){
 	console.log(e)
    }
@@ -101,9 +113,9 @@ async function createCompanyWithAdmin(newCompany, admin){
 		let companies_db = nano.use('companies')
 	    try{
 		let new_doc =  await companies_db.insert(newCompany)
-		console.log(new_doc)
+		//console.log(new_doc)
 		let new_db = await nano.db.create(`c${newCompany._id}`)
-		console.log(new_db)
+		//console.log(new_db)
                 let security_db = await nano.request(
 		 {
                    method: 'put',
@@ -111,9 +123,10 @@ async function createCompanyWithAdmin(newCompany, admin){
 		   body: {"admins":{"names":[],"roles":[`adm_${newCompany._id}`, '_admin']},"members":{"names": [],"roles": [`usr_${newCompany._id}`]}}
 		 }
 		)
-                console.log(security_db)
+                //console.log(security_db)
 		let chkuser = await nano.request({method: 'get', db:'_users', doc:`org.coucdb.user:${admin.name}`})
-	        console.log(chkuser)
+	        //console.log(chkuser)
+		cleanupCompany(newCompany)
 		return JSON.stringify({status:'error', error: 'User exists!'})
 	   }catch(e){
 		if(e.statusCode == 404){
@@ -126,20 +139,23 @@ async function createCompanyWithAdmin(newCompany, admin){
                    console.log(result)
                    //add admin information to company document
                    updateCompanyAdmin(newCompany, admin)
-		   return JSON.stringify({status:'ok'})
+		   return JSON.stringify({status:'ok', message: "Company and admin created! Please login.",  action: 'showLogin'})
                   }catch(e){
                         console.log(e)
+                        cleanupCompany(newCompany)
 			return JSON.stringify({status: 'error', error:'User creation failed!'})
                   }
 	        }
-		return JSON.stringify({status:'error', error: e})
+                console.log(e)
+		return JSON.stringify({status:'error', error: 'Application error. Contact hotline.'})
 	   }
 	break;
         case 401:
           return JSON.stringify({status: 'error', error:'Unauthorized - 401!'})
         break;
 	default:
-	 return JSON.stringify({status: 'error', error: e})
+	 console.log(e)
+	 return JSON.stringify({status: 'error', error: 'Application error. Contact hotline.'})
     }
   }
 }

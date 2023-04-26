@@ -43,7 +43,7 @@ client.on('timeout', () => {
 // handle finished jobs
 client.on('WORK_COMPLETE', function(job) {
     console.log('job completed, result:', job.payload.toString())
-    sse.send(job.payload.toString())
+    sse.send(JSON.parse(job.payload.toString()))
     //client.close()
 })
 

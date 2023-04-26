@@ -75,7 +75,7 @@
 
        	   <b-button variant="success" @click="userLogin">{{$t("login.btn_login")}}</b-button>
   	</b-card>
-	   <b-button variant="link" @click="userRegister">{{$t("login.btn_register")}}</b-button>
+	   <b-button variant="link" @click="showRegister">{{$t("login.btn_register")}}</b-button>
 	</template>
 
 	<template v-if="s_register">
@@ -164,31 +164,30 @@
 	   { value:'AT', text:'Austria'},
 	   { value:'BE', text:'Belgium'},
 	   { value:'BG', text:'Bulgaria'},
-	{ value:'HR', text:'Croatia'},
-	{ value:'CY', text:'Cyprus'},
-	{ value:'CZ', text:'Czechia'},
-	{ value:'DK', text:'Denmark'},
-	{ value:'EE', text:'Estonia'},
-	{ value:'FI', text:'Finland'},
-	{ value:'FR', text:'France'},
-	{ value:'DE', text:'Germany'},
-	{ value:'GR', text:'Greece'},
-	{ value:'HU', text:'Hungary'},
-	{ value:'IE', text:'Ireland'},
-	{ value:'IT', text:'Italy'},
-	{ value:'LV', text:'Latvia'},
-	{ value:'LT', text:'Lithuania'},
-	{ value:'LU', text:'Luxembourg'},
-	{ value:'MT', text:'Malta'},
-	{ value:'NL', text:'Netherlands'},
-	{ value:'PL', text:'Poland'},
-	{ value:'PT', text:'Portugal'},
-	{ value:'RO', text:'Romania'},
-	{ value:'SK', text:'Slovakia'},
-	{ value:'SI', text:'Slovenia'},
-	{ value:'ES', text:'Spain'},
-	{ value:'SE', text:'Sweden'},
-
+	   { value:'HR', text:'Croatia'},
+	   { value:'CY', text:'Cyprus'},
+	   { value:'CZ', text:'Czechia'},
+	   { value:'DK', text:'Denmark'},
+	   { value:'EE', text:'Estonia'},
+	   { value:'FI', text:'Finland'},
+	   { value:'FR', text:'France'},
+	   { value:'DE', text:'Germany'},
+	   { value:'GR', text:'Greece'},
+	   { value:'HU', text:'Hungary'},
+	   { value:'IE', text:'Ireland'},
+	   { value:'IT', text:'Italy'},
+	   { value:'LV', text:'Latvia'},
+	   { value:'LT', text:'Lithuania'},
+	   { value:'LU', text:'Luxembourg'},
+	   { value:'MT', text:'Malta'},
+	   { value:'NL', text:'Netherlands'},
+	   { value:'PL', text:'Poland'},
+	   { value:'PT', text:'Portugal'},
+	   { value:'RO', text:'Romania'},
+	   { value:'SK', text:'Slovakia'},
+	   { value:'SI', text:'Slovenia'},
+	   { value:'ES', text:'Spain'},
+	   { value:'SE', text:'Sweden'},
          ]
         },
 	mounted() {
@@ -198,21 +197,43 @@
 		this.sse_source = new EventSource('/events');
 	      	this.sse_source.addEventListener('message', message => {
 		        console.log('Got', message.data);
-			//let payload = JSON.parse(message.data)
-		        // Display toaset with the message
-		        this.$bvToast.toast(`Toast ${this.locales} and message from server ${message.data}`, {
+			let payload = JSON.parse(message.data)
+		        // Display toaset with the message			
+			if (payload.status == "error"){
+		        this.$bvToast.toast(`Message from sever: ${payload.error}`, {
           			title: 'SSE Message',
 			        toaster: 'b-toaster-bottom-center',
 			        solid: true,
-				variant: 'info',
+				variant: 'danger',
 			        appendToast: true
 		        })
+			}else{
+			//ok, execute action
+			this.$bvToast.toast(`Message from sever: ${payload.message}`, {
+                                title: 'SSE Message',
+                                toaster: 'b-toaster-bottom-center',
+                                solid: true,
+                                variant: 'success',
+                                appendToast: true
+                        })
+			window.app[payload.action]()
+			}
 		});
 
 		this.sse_listening=true
            }
         },
         methods: {
+          showLogin(){
+		this.s_login = true
+		this.s_register = false
+		console.log('show user login')
+          },
+	  showRegister(){
+		this.s_login = false
+		this.s_register = true
+		console.log('show register company')
+	  },
     	  getLocale(){
 		return this.$i18n.locale.toUpperCase()
 	  },
@@ -230,16 +251,12 @@
 		console.log(lang)
 	  },	
           userLogin() {
+	    //TODO - check values for all fields
             console.log('user login')
           },
-          userRegister() {
-            this.s_login = false
-            this.s_register = true
-            console.log('user register')
-          },
           companyRegister() {
-	   axios.post('/register', this.form
-	   )
+	   //TODO - check values for all fields
+	   axios.post('/register', this.form)
 	   .then(function (response) {
 	    console.log(response);
 	   })

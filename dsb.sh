@@ -35,7 +35,11 @@ usage(){
         build a specific service
     $0 prune
         prune system for docker
-    -~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~"
+    -~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+where [service_name] is:
+`docker compose config --services`
+"
     echo -e "$__usage"
 	return
 }

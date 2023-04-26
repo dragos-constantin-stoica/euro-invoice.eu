@@ -74,6 +74,21 @@ worker.connect(function(){
 //CouchDB user management part
 const nano = require('nano')({url:`http://${COUCHDB_USER}:${COUCHDB_PASSWORD}@couch:5984`})
 
+//Update Company with newly created admin
+async function updateCompanyAdmin(newCompany, admin){
+   try{
+	let companies = nano.use('companies')
+        let company = await companies.get(newCompany._id)
+        company.admin=[ admin.name ]
+        company.members = [ admin.name ]
+        console.log(company)
+        let result = await companies.insert(company)
+        console.log(result)
+   }catch(e){
+	console.log(e)
+   }
+};
+
 //Create new company with admin user
 async function createCompanyWithAdmin(newCompany, admin){
   try{
@@ -105,8 +120,12 @@ async function createCompanyWithAdmin(newCompany, admin){
 		//This should be from GET user
 		//Create user
                   try{
+                   admin.companies = { admin:[ newCompany._id], memebers:[ newCompany._id ]}
+                   admin.mfa_secret = null
 		   let result = await nano.request({method:'put',path:`_users/org.couchdb.user:${admin.name}`, body: admin})
                    console.log(result)
+                   //add admin information to company document
+                   updateCompanyAdmin(newCompany, admin)
 		   return JSON.stringify({status:'ok'})
                   }catch(e){
                         console.log(e)
@@ -129,7 +148,7 @@ async function createCompanyWithAdmin(newCompany, admin){
 //--------------
 //webserver part
 async function closeGracefully(signal) {
-   console.log(`*^!@4=> Received signal to terminate: ${signal}`)
+   console.log(`[ Received signal to terminate: ${signal} ]`)
    await fastify.close()
    // client.close(); gearmand client
    // await db.close() if we have a db connection in this app
@@ -156,7 +175,7 @@ fastify.get('/', async (request, reply) => {
 (async () => {
  try {
    await fastify.listen({port:WRK_PORT, host:WRK_HOST})
-   console.log(`*^!@4=> Process id: ${process.pid} on ${WRK_HOST}:${WRK_PORT}`)
+   console.log(`[ Process id: ${process.pid} on ${WRK_HOST}:${WRK_PORT} ]`)
  } catch (err) {
    fastify.log.error(err)
    process.exit(1)

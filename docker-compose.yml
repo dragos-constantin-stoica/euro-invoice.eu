@@ -41,7 +41,7 @@ services:
       timeout: 5s
       retries: 3
 
-  nodewrk:
+  couch_admin:
     image: 'datastemalux/couch_admin:1.0.0'
     build:
       context: couch_admin
@@ -51,8 +51,8 @@ services:
         - wrk_secrets
       tags:
         - 'datastemalux/couch_admin:1.0.0'
-    container_name: couchdb_admin
-    hostname: node_worker
+    container_name: couch_admin
+    hostname: couch_admin
     restart: unless-stopped
     env_file: .env
     ports:
@@ -91,7 +91,7 @@ services:
         condition: service_healthy
       couch:
         condition: service_healthy
-      nodewrk:
+      couch_admin:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "hck.js"]

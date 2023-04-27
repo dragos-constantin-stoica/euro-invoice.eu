@@ -24,9 +24,10 @@ var compression = require('compression')
 const { createTerminus } = require('@godaddy/terminus')
 var pino = require('pino-http')()
 
+var proxy = require('express-http-proxy')
+
 var SSE = require('express-sse');
 var sse = new SSE();
-
 
 const app = express()
 
@@ -88,6 +89,8 @@ app.use(compression())
 app.use(pino) // logging with pino-http
 
 app.use(express.static(path.join(__dirname, 'public'))) //all static files go in public folder: html, js, css etc
+
+app.use('/api', proxy('http://couch_admin:8090'));
 
 //SSE endpoint handled through middleware
 app.get('/events', sse.init)
@@ -181,7 +184,7 @@ app.post('/register', async function(req, res, next){
     //check if the user exists in the company and create/add admin role to the company
     console.log(req.body)
     submitGearmanJob('create_company', req.body)
-    res.json({status: 'ok', message: 'request received'});
+    res.json({status: 'ok', message: 'Request received. Work in progress ...'});
 })
 
 /*
@@ -214,7 +217,6 @@ app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.render('50x', { layout: 'error' });
 });
-
 
 //Terminus boilerplate
 const server = http.createServer(app)

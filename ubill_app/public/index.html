@@ -66,11 +66,11 @@
 	<template v-if="s_login">
 	  <b-card  title="Login">
 		<b-form-group :label='$t("login.username")' label-for="username" label-cols-sm="3">
-                  <b-form-input id="username"></b-form-input>
+                  <b-form-input id="username" v-model="form.username"></b-form-input>
                 </b-form-group>
 
               <b-form-group :label='$t("login.password")' label-for="password" label-cols-sm="3">
-                <b-form-input id="password"></b-form-input>
+                <b-form-input id="password" v-model="form.password"></b-form-input>
               </b-form-group>
 
        	   <b-button variant="success" @click="userLogin">{{$t("login.btn_login")}}</b-button>
@@ -227,13 +227,39 @@
           showLogin(){
 		this.s_login = true
 		this.s_register = false
+		this.form = {
+                username: '',
+                password: '',
+                name: '',
+                country: null,
+                national_registration_number: ''
+                }
 		console.log('show user login')
           },
 	  showRegister(){
 		this.s_login = false
 		this.s_register = true
+		this.form = {
+                username: '',
+                password: '',
+                name: '',
+                country: null,
+                national_registration_number: ''
+                } 
 		console.log('show register company')
 	  },
+          showDashboard(){
+                this.s_login = false
+		this.s_register = false
+		this.form = {
+                username: '',
+                password: '',
+                name: '',
+                country: null,
+                national_registration_number: ''
+                } 
+		console.log('show dashboard')
+          },
     	  getLocale(){
 		return this.$i18n.locale.toUpperCase()
 	  },
@@ -252,6 +278,30 @@
 	  },	
           userLogin() {
 	    //TODO - check values for all fields
+	    axios.post('/api/login', this.form)
+           .then(function (response) {
+            console.log(response);
+		window.app.$bvToast.toast(response.data.status=='ok'?response.data.message:response.data.error, {
+                                title: 'Server Side Message',
+                                toaster: 'b-toaster-bottom-center',
+                                solid: true,
+                                variant: 'success',
+                                appendToast: true
+                })
+           })
+           .catch(function (error) {
+            console.log(error);
+		window.app.$bvToast.toast(error.data.error, {
+                                title: 'Server Side Message',
+                                toaster: 'b-toaster-bottom-center',
+                                solid: true,
+                                variant: 'danger',
+                                appendToast: true
+                })
+           })
+           .finally(function () {
+            // always executed
+           });
             console.log('user login')
           },
           companyRegister() {

@@ -11,7 +11,8 @@ const WRK_PORT = process.env.WRK_PORT || 8090,
       COUCHDB_USER = process.env.COUCHDB_USER,
       COUCHDB_PASSWORD = process.env.COUCHDB_PASSWORD,
       APP_USER = process.env.APP_USER,
-      APP_PASSWORD = process.env.APP_PASSWORD;
+      APP_PASSWORD = process.env.APP_PASSWORD,
+      COUCHDB_USER_NAMESPACE = 'org.couchdb.user';
 
 let worker = gearman('gearmand', GEARMAN_PORT)
 
@@ -72,7 +73,10 @@ worker.connect(function(){
 });
 
 //CouchDB user management part
-const nano = require('nano')({url:`http://${COUCHDB_USER}:${COUCHDB_PASSWORD}@couch:5984`})
+const nano = require('nano')({
+      url:`http://${encodeURIComponent(COUCHDB_USER)}:${encodeURIComponent(COUCHDB_PASSWORD)}@couch:5984`,
+      log: console.log,
+});
 
 //Cleanup in case of failure. The Company may be created an the user not
 async function cleanupCompany(newCompany){
@@ -124,7 +128,7 @@ async function createCompanyWithAdmin(newCompany, admin){
 		 }
 		)
                 //console.log(security_db)
-		let chkuser = await nano.request({method: 'get', db:'_users', doc:`org.coucdb.user:${admin.name}`})
+		let chkuser = await nano.request({method: 'get', db:'_users', doc:`${COUCHDB_USER_NAMESPACE}:${admin.name}`})
 	        //console.log(chkuser)
 		cleanupCompany(newCompany)
 		return JSON.stringify({status:'error', error: 'User exists!'})
@@ -135,7 +139,7 @@ async function createCompanyWithAdmin(newCompany, admin){
                   try{
                    admin.companies = { admin:[ newCompany._id], memebers:[ newCompany._id ]}
                    admin.mfa_secret = null
-		   let result = await nano.request({method:'put',path:`_users/org.couchdb.user:${admin.name}`, body: admin})
+		   let result = await nano.request({method:'put',path:`_users/${COUCHDB_USER_NAMESPACE}:${admin.name}`, body: admin})
                    console.log(result)
                    //add admin information to company document
                    updateCompanyAdmin(newCompany, admin)
@@ -186,6 +190,27 @@ fastify.register(require('fastify-healthcheck'), {
 
 fastify.get('/', async (request, reply) => {
   return { status: 'ok' }
+});
+
+fastify.post('/login', async function(request, reply){
+
+   try{
+         console.log(request.body)
+         let credentials =  request.body
+         //console.log(`${COUCHDB_USER_NAMESPACE}:${credentials.username}`)
+	 let chkuser = await nano.request({method: 'get', db:'_users', doc:`${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+	 console.log(chkuser)
+	 let result = await nano.auth(credentials.username, credentials.password)
+         console.log(result)
+         let session = await nano.session()
+         console.log(session)
+	 await nano.auth(encodeURIComponent(COUCHDB_USER), encodeURIComponent(COUCHDB_PASSWORD))
+	 reply.send({status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Sky is the limit!', action:'showDashboard'})
+   }catch(e){
+	 console.log(`[ ${e} ]`)
+	 reply.send({status: 'error', error:'Login error'})
+   }
+
 });
 
 (async () => {

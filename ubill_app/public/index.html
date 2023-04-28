@@ -29,6 +29,7 @@
 
     <!-- Translateion file -->
     <script src="js/messages.js"></script>    
+    <script src="js/utils.js"></script>
 
     <!-- Use AXIOS for http server calls -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
@@ -38,7 +39,7 @@
 
 <body>
     <!-- Our application root element -->
-    <div id="app">
+     <div id="app">
       <header>
 	<b-navbar toggleable="lg" type="light" variant="light">
     		<b-navbar-brand href="/">UnityBill</b-navbar-brand>
@@ -114,14 +115,13 @@
 
       </b-container>
 	</main>
+    </div>
 
      <footer class="footer">
       <div class="container">
         <span class="text-muted">&copy;DataStema 2023</span>
       </div>
     </footer>
-
-    </div>
 
     <!-- Start running your app -->
     <script>
@@ -200,23 +200,11 @@
 			let payload = JSON.parse(message.data)
 		        // Display toaset with the message			
 			if (payload.status == "error"){
-		        this.$bvToast.toast(`Message from sever: ${payload.error}`, {
-          			title: 'SSE Message',
-			        toaster: 'b-toaster-bottom-center',
-			        solid: true,
-				variant: 'danger',
-			        appendToast: true
-		        })
+                            showToast(`Message from server: ${payload.error}`, 'SSE Message', 'danger')
 			}else{
 			//ok, execute action
-			this.$bvToast.toast(`Message from sever: ${payload.message}`, {
-                                title: 'SSE Message',
-                                toaster: 'b-toaster-bottom-center',
-                                solid: true,
-                                variant: 'success',
-                                appendToast: true
-                        })
-			window.app[payload.action]()
+			    showToast(`Message from server: ${payload.error}`, 'SSE Message', 'success')
+			    window.app[payload.action]()
 			}
 		});
 
@@ -228,11 +216,11 @@
 		this.s_login = true
 		this.s_register = false
 		this.form = {
-                username: '',
-                password: '',
-                name: '',
-                country: null,
-                national_registration_number: ''
+                  username: '',
+                  password: '',
+                  name: '',
+                  country: null,
+                  national_registration_number: ''
                 }
 		console.log('show user login')
           },
@@ -240,11 +228,11 @@
 		this.s_login = false
 		this.s_register = true
 		this.form = {
-                username: '',
-                password: '',
-                name: '',
-                country: null,
-                national_registration_number: ''
+                  username: '',
+                  password: '',
+                  name: '',
+                  country: null,
+                  national_registration_number: ''
                 } 
 		console.log('show register company')
 	  },
@@ -252,11 +240,11 @@
                 this.s_login = false
 		this.s_register = false
 		this.form = {
-                username: '',
-                password: '',
-                name: '',
-                country: null,
-                national_registration_number: ''
+                  username: '',
+                  password: '',
+                  name: '',
+                  country: null,
+                  national_registration_number: ''
                 } 
 		console.log('show dashboard')
           },
@@ -281,23 +269,11 @@
 	    axios.post('/api/login', this.form)
            .then(function (response) {
             console.log(response);
-		window.app.$bvToast.toast(response.data.status=='ok'?response.data.message:response.data.error, {
-                                title: 'Server Side Message',
-                                toaster: 'b-toaster-bottom-center',
-                                solid: true,
-                                variant: 'success',
-                                appendToast: true
-                })
+		showToast(response.data.status=='ok'?response.data.message:response.data.error, 'Message from Server', response.data.status=='ok'?'success':'error')
            })
            .catch(function (error) {
             console.log(error);
-		window.app.$bvToast.toast(error.data.error, {
-                                title: 'Server Side Message',
-                                toaster: 'b-toaster-bottom-center',
-                                solid: true,
-                                variant: 'danger',
-                                appendToast: true
-                })
+                showToast(error.data.error, 'Message from Server', 'danger')
            })
            .finally(function () {
             // always executed

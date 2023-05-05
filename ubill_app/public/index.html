@@ -16,7 +16,7 @@
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver"></script>
 
     <!-- Required scripts -->
-    <script src="https://unpkg.com/vue@2.6.12/dist/vue.js"></script>
+    <script src="https://unpkg.com/vue@2.6.12/dist/vue.min.js"></script>
     <script src="https://unpkg.com/bootstrap-vue@2.23.0/dist/bootstrap-vue.js"></script>
     <!-- Load the following for BootstrapVueIcons support -->
     <script src="https://unpkg.com/bootstrap-vue@2.23.0/dist/bootstrap-vue-icons.min.js"></script>
@@ -34,278 +34,33 @@
     <!-- Custom  stylesheet -->
     <link rel="stylesheet" href="css/footer.css" />
 
-
     <!-- Use AXIOS for http server calls -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-
-
-
-
+	
+    <!-- Vue layouts and logic -->
+    <script src="js/login.js"></script>
+    <script src="js/main.js"></script>
+	
 </head>
 
 <body>
     <!-- Our application root element -->
-     <div id="app">
-      <header>
-	<b-navbar toggleable="lg" type="light" variant="light">
-    		<b-navbar-brand href="/">UnityBill</b-navbar-brand>
-		<b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
-		<b-collapse id="nav-collapse" is-nav>
-
-	<!-- Right aligned nav items -->
-      	<b-navbar-nav class="ml-auto">
-
-	<b-dropdown right size="lg"  variant="link" toggle-class="text-decoration-none" no-caret>
-                <template #button-content>
-                    <span :class="localeFlagClass()"></span>&nbsp;{{ getLocale() }}&nbsp;<b-icon icon="translate" aria-hidden="true"></b-icon>
-                </template>
-
-                <b-dropdown-item v-for="item in locales"
-			 @click="changeLanguage(item)"><span :class="buildFlagClass(item)"></span>&nbsp; {{item.toUpperCase()}}</b-dropdown-item>
-        </b-dropdown>
-	</b-navbar-nav>
-    		</b-collapse>
-  	</b-navbar>
-        </header>
-
-	<main role="main" class="container">
-	<b-container fluid>
-	<template v-if="s_login">
-	  <b-card  title="Login">
-		<b-form-group :label='$t("login.username")' label-for="username" label-cols-sm="3">
-                  <b-form-input id="username" v-model="form.username"></b-form-input>
-                </b-form-group>
-
-              <b-form-group :label='$t("login.password")' label-for="password" label-cols-sm="3">
-                <b-form-input id="password" v-model="form.password"></b-form-input>
-              </b-form-group>
-
-       	   <b-button variant="success" @click="userLogin">{{$t("login.btn_login")}}</b-button>
-  	</b-card>
-	   <b-button variant="link" @click="showRegister">{{$t("login.btn_register")}}</b-button>
-	</template>
-
-	<template v-if="s_register">
-	
-	<b-card>
-
-	<b-form-group label-cols-lg="3" :label='$t("register.grp_user")' label-size="lg" label-class="font-weight-bold pt-0" class="mb-0">
-      		<b-form-group :label='$t("login.username")' label-for="username" label-cols-sm="3" label-align-sm="right">
-         	  <b-form-input id="username" v-model="form.username" type="email" placeholder="email address" required></b-form-input>
-      		</b-form-group>
-
-	      <b-form-group :label='$t("login.password")' label-for="password" label-cols-sm="3" label-align-sm="right">
-	        <b-form-input id="password" v-model="form.password" type="password" placeholder="strong password" required></b-form-input>
-	      </b-form-group>
-
-	      <b-form-group :label='$t("login.password")' label-for="password_check" label-cols-sm="3" label-align-sm="right">
-	        <b-form-input id="password_check" type="password" placeholder="the same password as above"  required></b-form-input>
-	      </b-form-group>
-	</b-form-group>
-
-	<b-form-group label-cols-lg="3" :label='$t("register.grp_company")' label-siye="lg" label-class="font-weight-bold pt-0" class="mb-0">
-	      <b-form-group :label='$t("register.name")' label-for="company-name" label-cols-sm="3" label-align-sm="right">
-                <b-form-input id="company-name" v-model="form.name" placeholder="full company name" required></b-form-input>
-              </b-form-group>
-	      <b-form-group :label='$t("register.number")' label-for="company-number" label-cols-sm="3" label-align-sm="right">
-                <b-form-input id="company-number" v-model="form.national_registration_number" placeholder="national registration number" required></b-form-input>
-              </b-form-group>
-	      <b-form-group :label='$t("register.country")' label-for="company-country" label-cols-sm="3" label-align-sm="right">
-                <b-form-select id="company-country" v-model="form.country" :options="countries" required></b-form-select>
-	      </b-form-group>
-	</b-form-group>
-
-		<b-button variant="success" @click="companyRegister">{{$t("register.btn_register")}}</b-button>
-	</b-card>
- 	</template>
-
-      </b-container>
-	</main>
-    </div>
-
-     <footer class="footer">
-      <div class="container">
-        <span class="text-muted">&copy;DataStema 2023</span>
-      </div>
-    </footer>
+	<div id="app">
+	  <header>
+		 <component v-bind:is="currentHeader"></component>
+	  </header>
+	  <main>
+		<!-- We want main content here -->
+		<component v-on:change-component="showLayout" v-bind:is="mainComponent"></component>
+	  </main>
+	  <footer class="footer">
+		<!-- We want footer content here -->
+		<component v-bind:is="currentFooter"></component>
+	  </footer>
+	</div>
 
     <!-- Start running your app -->
-    <script>
-     
-     // 0. Create i18n instance with options
-
-	const i18n = new VueI18n({
-  		locale: 'gb', // set locale
-		fallbackLocale: 'gb', // set fallback locale
-		messages, // set locale messages
-		// If you need to specify other options, you can set other options
-	})
-
-	if (localStorage.getItem("language")) {
-               i18n.locale = localStorage.getItem("language");
-        } else {
-              sessionStorage.setItem("language", i18n.feedbackLocale);
-        }
-
-
-    // 1. Create a vue root instance
-	window.app = new Vue({
-	i18n,
-        el: '#app',
-        data: {
-          s_login: true,
-          s_register: false,
-          locales: ['gb', 'fr', 'ro'],
-	  sse_listening: false,
-	  sse_source: null,
-          form: {
-            	username: '',
-		password: '',
-		name: '',
-            	country: null,
-		national_registration_number: ''
-          },
-         countries: [
-           { value: null, text: 'Please select an option' },
-	   { value:'AT', text:'Austria'},
-	   { value:'BE', text:'Belgium'},
-	   { value:'BG', text:'Bulgaria'},
-	   { value:'HR', text:'Croatia'},
-	   { value:'CY', text:'Cyprus'},
-	   { value:'CZ', text:'Czechia'},
-	   { value:'DK', text:'Denmark'},
-	   { value:'EE', text:'Estonia'},
-	   { value:'FI', text:'Finland'},
-	   { value:'FR', text:'France'},
-	   { value:'DE', text:'Germany'},
-	   { value:'GR', text:'Greece'},
-	   { value:'HU', text:'Hungary'},
-	   { value:'IE', text:'Ireland'},
-	   { value:'IT', text:'Italy'},
-	   { value:'LV', text:'Latvia'},
-	   { value:'LT', text:'Lithuania'},
-	   { value:'LU', text:'Luxembourg'},
-	   { value:'MT', text:'Malta'},
-	   { value:'NL', text:'Netherlands'},
-	   { value:'PL', text:'Poland'},
-	   { value:'PT', text:'Portugal'},
-	   { value:'RO', text:'Romania'},
-	   { value:'SK', text:'Slovakia'},
-	   { value:'SI', text:'Slovenia'},
-	   { value:'ES', text:'Spain'},
-	   { value:'SE', text:'Sweden'},
-         ]
-        },
-	mounted() {
-	   //register SSE listener
-	   if (!this.sse_listening){
-
-		this.sse_source = new EventSource('/events');
-	      	this.sse_source.addEventListener('message', message => {
-		        console.log('Got', message.data);
-			let payload = JSON.parse(message.data)
-		        // Display toaset with the message			
-			if (payload.status == "error"){
-                            showToast(`Message from server: ${payload.error}`, 'SSE Message', 'danger')
-			}else{
-			//ok, execute action
-			    showToast(`Message from server: ${payload.error}`, 'SSE Message', 'success')
-			    window.app[payload.action]()
-			}
-		});
-
-		this.sse_listening=true
-           }
-        },
-        methods: {
-          showLogin(){
-		this.s_login = true
-		this.s_register = false
-		this.form = {
-                  username: '',
-                  password: '',
-                  name: '',
-                  country: null,
-                  national_registration_number: ''
-                }
-		console.log('show user login')
-          },
-	  showRegister(){
-		this.s_login = false
-		this.s_register = true
-		this.form = {
-                  username: '',
-                  password: '',
-                  name: '',
-                  country: null,
-                  national_registration_number: ''
-                } 
-		console.log('show register company')
-	  },
-          showDashboard(){
-                this.s_login = false
-		this.s_register = false
-		this.form = {
-                  username: '',
-                  password: '',
-                  name: '',
-                  country: null,
-                  national_registration_number: ''
-                } 
-		console.log('show dashboard')
-          },
-    	  getLocale(){
-		return this.$i18n.locale.toUpperCase()
-	  },
-	  localeFlagClass(){
-		return `fi fi-${this.$i18n.locale}`
-	  },
-          buildFlagClass(lang){
-		return `fi fi-${lang}`
-	  },
-	  changeLanguage(lang){
-		//save user language
-		this.$i18n.locale = lang
-		localStorage.setItem("language", this.$i18n.locale)
-		this.localFlagClass=`fi fi-${lang}`
-		console.log(lang)
-	  },	
-          userLogin() {
-	    //TODO - check values for all fields
-	    axios.post('/api/login', this.form)
-           .then(function (response) {
-            console.log(response);
-		showToast(response.data.status=='ok'?response.data.message:response.data.error, 'Message from Server', response.data.status=='ok'?'success':'error')
-           })
-           .catch(function (error) {
-            console.log(error);
-                showToast(error.data.error, 'Message from Server', 'danger')
-           })
-           .finally(function () {
-            // always executed
-           });
-            console.log('user login')
-          },
-          companyRegister() {
-	   //TODO - check values for all fields
-	   axios.post('/register', this.form)
-	   .then(function (response) {
-	    console.log(response);
-	   })
-	   .catch(function (error) {
-	    console.log(error);
-  	   })
-  	   .finally(function () {
-	    // always executed
-  	   });
- 
-            console.log('company register')
-          }
-        }
-      })
-
-
-    </script>
+    <script src="js/app.js"></script>
 
   </body>
 </html>

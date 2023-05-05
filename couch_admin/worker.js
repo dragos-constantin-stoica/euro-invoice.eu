@@ -143,7 +143,7 @@ async function createCompanyWithAdmin(newCompany, admin){
                    console.log(result)
                    //add admin information to company document
                    updateCompanyAdmin(newCompany, admin)
-		   return JSON.stringify({status:'ok', message: "Company and admin created! Please login.",  action: 'showLogin'})
+		   return JSON.stringify({status:'ok', message: "Company and admin created! Please login.",  action: 'showLayout', args: {mainComponent: 'login'} })
                   }catch(e){
                         console.log(e)
                         cleanupCompany(newCompany)
@@ -205,7 +205,7 @@ fastify.post('/login', async function(request, reply){
          let session = await nano.session()
          console.log(session)
 	 await nano.auth(encodeURIComponent(COUCHDB_USER), encodeURIComponent(COUCHDB_PASSWORD))
-	 reply.send({status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Sky is the limit!', action:'showDashboard'})
+	 reply.send({status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Sky is the limit!', action:'showLayout', args:{currentHeader:'privateHeader', mainComponent:'login', currentFooter:'privateFooter'} })
    }catch(e){
 	 console.log(`[ ${e} ]`)
 	 reply.send({status: 'error', error:'Login error'})

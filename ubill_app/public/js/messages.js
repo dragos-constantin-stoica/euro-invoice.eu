@@ -17,6 +17,17 @@ const messages = {
      number: 'National registration number:',
      country: 'Country',
      btn_register: 'Register Company'
+    },
+    mainmenu:{
+      dashboard: 'Dashboard',
+      company: 'Company',
+      clients: 'Clients',
+      contracts: 'Contracts',
+      services: 'Services',
+      invoice: 'Invoice',
+      payments: 'Payments',
+      profile: 'Profile',
+      logout: 'Logout'
     }
   },
   fr: {
@@ -36,6 +47,17 @@ const messages = {
      number: 'Numèro National:',
      country: 'Pays',
      btn_register: 'Enregistrer Enteprise'
+    },
+    mainmenu:{
+      dashboard: 'Tableau de Bord',
+      company: 'Compagnie',
+      clients: 'Clients',
+      contracts: 'Contrats',
+      services: 'Services',
+      invoice: 'Facture',
+      payments: 'Payments',
+      profile: 'Profile',
+      logout: 'Deconnection'
     }
   },
   ro: {
@@ -55,6 +77,17 @@ const messages = {
      number: 'Numar National:',
      country: 'Tara',
      btn_register: 'Enregistreaza Companie'
+    },
+    mainmenu:{
+      dashboard: 'Tablou de Bord',
+      company: 'Companie',
+      clients: 'Clienti',
+      contracts: 'Contracte',
+      services: 'Servicii',
+      invoice: 'Facturi',
+      payments: 'Plati',
+      profile: 'Profil',
+      logout: 'Deconectare'
     }
   }
 }

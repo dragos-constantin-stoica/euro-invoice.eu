@@ -1,0 +1,17 @@
+<!-- Our application root element -->
+<div id="app">
+    <header>
+        <component v-bind:is="currentHeader"></component>
+    </header>
+    <main>
+        <!-- We want main content here -->
+        <component v-bind:is="mainComponent"></component>
+    </main>
+    <footer class="footer">
+        <!-- We want footer content here -->
+        <component v-bind:is="currentFooter"></component>
+    </footer>
+</div>
+
+<!-- Start running your app -->
+<script src="js/app.js"></script>

@@ -1,41 +1,41 @@
 Vue.component("login", {
 
-    //props: ["form"],
-    data() {
-        return {
-            form: {
-                username: '',
-                password: '',
+	//props: ["form"],
+	data() {
+		return {
+			form: {
+				username: '',
+				password: '',
 			},
-            show: true
-        }
-    },
-    methods: {
-		showRegister(){
-			this.$emit('change-component',{currentHeader:'publicHeader', mainComponent:'register', currentFooter:'publicFooter'})
-			console.log('show register')
-	  },
-		userLogin() {
-            //TODO - check values for all fields
-            axios.post('/api/login', this.form)
-           .then(function (response) {
-            console.log(response);
-                showToast(response.data.status=='ok'?response.data.message:response.data.error, 'Message from Server', response.data.status=='ok'?'success':'error')
-                if(response.data.action){
-		 window.app[response.data.action](response.data.args)
+			show: true
 		}
-           })
-           .catch(function (error) {
-            console.log(error);
-                showToast(error.data.error, 'Message from Server', 'danger')
-           })
-           .finally(function () {
-            // always executed
-           });
-            console.log('user login')
-          },
-    },
-    template: `
+	},
+	methods: {
+		showRegister() {
+			window.app.showLayout({ currentHeader: 'publicHeader', mainComponent: 'register', currentFooter: 'publicFooter' })
+			console.log('show register')
+		},
+		userLogin() {
+			//TODO - check values for all fields
+			axios.post('/login', this.form)
+				.then(function (response) {
+					console.log(response);
+					showToast(response.data.status == 'ok' ? response.data.message : response.data.error, 'Message from Server', response.data.status == 'ok' ? 'success' : 'error')
+					if (response.data.action) {
+						window.app[response.data.action](response.data.args)
+					}
+				})
+				.catch(function (error) {
+					console.log(error);
+					showToast(error.data.error, 'Message from Server', 'danger')
+				})
+				.finally(function () {
+					// always executed
+				});
+			console.log('user login')
+		},
+	},
+	template: `
 	<b-container fluid>
 	<b-card  title="Login">
 		<b-form-group :label='$t("login.username")' label-for="username" label-cols-sm="3">
@@ -43,7 +43,7 @@ Vue.component("login", {
 		</b-form-group>
 
 		<b-form-group :label='$t("login.password")' label-for="password" label-cols-sm="3">
-			<b-form-input id="password" v-model="form.password"></b-form-input>
+			<b-form-input id="password" v-model="form.password" type="password"></b-form-input>
 		</b-form-group>
 
 		<b-button variant="success" @click="userLogin">{{$t("login.btn_login")}}</b-button>
@@ -55,67 +55,67 @@ Vue.component("login", {
 
 Vue.component("register", {
 
-    //props: ["form"],
-    data() {
-        return {
-            form: {
-                username: '',
-                password: '',
-                name: '',
-                country: null,
-                national_registration_number: ''
+	//props: ["form"],
+	data() {
+		return {
+			form: {
+				username: '',
+				password: '',
+				name: '',
+				country: null,
+				national_registration_number: ''
 			},
 			countries: [
-			   { value: null, text: 'Please select an option' },
-			   { value:'AT', text:'Austria'},
-			   { value:'BE', text:'Belgium'},
-			   { value:'BG', text:'Bulgaria'},
-			   { value:'HR', text:'Croatia'},
-			   { value:'CY', text:'Cyprus'},
-			   { value:'CZ', text:'Czechia'},
-			   { value:'DK', text:'Denmark'},
-			   { value:'EE', text:'Estonia'},
-			   { value:'FI', text:'Finland'},
-			   { value:'FR', text:'France'},
-			   { value:'DE', text:'Germany'},
-			   { value:'GR', text:'Greece'},
-			   { value:'HU', text:'Hungary'},
-			   { value:'IE', text:'Ireland'},
-			   { value:'IT', text:'Italy'},
-			   { value:'LV', text:'Latvia'},
-			   { value:'LT', text:'Lithuania'},
-			   { value:'LU', text:'Luxembourg'},
-			   { value:'MT', text:'Malta'},
-			   { value:'NL', text:'Netherlands'},
-			   { value:'PL', text:'Poland'},
-			   { value:'PT', text:'Portugal'},
-			   { value:'RO', text:'Romania'},
-			   { value:'SK', text:'Slovakia'},
-			   { value:'SI', text:'Slovenia'},
-			   { value:'ES', text:'Spain'},
-			   { value:'SE', text:'Sweden'},
+				{ value: null, text: 'Please select an option' },
+				{ value: 'AT', text: 'Austria' },
+				{ value: 'BE', text: 'Belgium' },
+				{ value: 'BG', text: 'Bulgaria' },
+				{ value: 'HR', text: 'Croatia' },
+				{ value: 'CY', text: 'Cyprus' },
+				{ value: 'CZ', text: 'Czechia' },
+				{ value: 'DK', text: 'Denmark' },
+				{ value: 'EE', text: 'Estonia' },
+				{ value: 'FI', text: 'Finland' },
+				{ value: 'FR', text: 'France' },
+				{ value: 'DE', text: 'Germany' },
+				{ value: 'GR', text: 'Greece' },
+				{ value: 'HU', text: 'Hungary' },
+				{ value: 'IE', text: 'Ireland' },
+				{ value: 'IT', text: 'Italy' },
+				{ value: 'LV', text: 'Latvia' },
+				{ value: 'LT', text: 'Lithuania' },
+				{ value: 'LU', text: 'Luxembourg' },
+				{ value: 'MT', text: 'Malta' },
+				{ value: 'NL', text: 'Netherlands' },
+				{ value: 'PL', text: 'Poland' },
+				{ value: 'PT', text: 'Portugal' },
+				{ value: 'RO', text: 'Romania' },
+				{ value: 'SK', text: 'Slovakia' },
+				{ value: 'SI', text: 'Slovenia' },
+				{ value: 'ES', text: 'Spain' },
+				{ value: 'SE', text: 'Sweden' },
 			],
-            show: true
-        }
-    },
-    methods: {
+			show: true
+		}
+	},
+	methods: {
 		companyRegister() {
-           //TODO - check values for all fields
-           axios.post('/register', this.form)
-           .then(function (response) {
-            console.log(response);
-           })
-           .catch(function (error) {
-            console.log(error);
-           })
-           .finally(function () {
-            // always executed
-           });
- 
-            console.log('company register')
-        },
-    },
-    template: `
+			//TODO - check values for all fields
+			axios.post('/register', this.form)
+				.then(function (response) {
+					console.log(response);
+				})
+				.catch(function (error) {
+					console.log(error);
+				})
+				.finally(function () {
+					// always executed
+				});
+
+			console.log('company register')
+		},
+	},
+	template: `
 	<b-container fluid>
 	<b-card>
 
@@ -151,7 +151,7 @@ Vue.component("register", {
 	`
 });
 
-Vue.component("publicHeader",{
+Vue.component("publicHeader", {
 	data() {
 		return {
 			locales: ['gb', 'fr', 'ro'],
@@ -159,22 +159,22 @@ Vue.component("publicHeader",{
 		}
 	},
 	methods: {
-		getLocale(){
-		return this.$i18n.locale.toUpperCase()
-	  },
-	  localeFlagClass(){
-		return `fi fi-${this.$i18n.locale}`
-	  },
-	  buildFlagClass(lang){
-		return `fi fi-${lang}`
-	  },
-	  changeLanguage(lang){
-		//save user language
-		this.$i18n.locale = lang
-		localStorage.setItem("language", this.$i18n.locale)
-		this.localFlagClass=`fi fi-${lang}`
-		console.log(lang)
-	  },
+		getLocale() {
+			return this.$i18n.locale.toUpperCase()
+		},
+		localeFlagClass() {
+			return `fi fi-${this.$i18n.locale}`
+		},
+		buildFlagClass(lang) {
+			return `fi fi-${lang}`
+		},
+		changeLanguage(lang) {
+			//save user language
+			this.$i18n.locale = lang
+			localStorage.setItem("language", this.$i18n.locale)
+			this.localFlagClass = `fi fi-${lang}`
+			console.log(lang)
+		},
 	},
 	template: `
 	<b-navbar toggleable="lg" type="light" variant="light">
@@ -200,7 +200,7 @@ Vue.component("publicHeader",{
 });
 
 
-Vue.component("publicFooter",{
+Vue.component("publicFooter", {
 	data() {
 		return {
 			show: true

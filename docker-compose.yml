@@ -12,11 +12,15 @@ services:
     networks:
       - unity_bill
     healthcheck:
-       test: ["CMD-SHELL", "gearadmin --server-version  | grep -q '1.1.19.1' && exit 0"  ]
-       start_period: 10s
-       interval: 10s
-       timeout: 5s
-       retries: 3
+      test:
+        [
+          "CMD-SHELL",
+          "gearadmin --server-version  | grep -q '1.1.19.1' && exit 0"
+        ]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   couch:
     image: "couchdb:3.3.1"
@@ -35,7 +39,7 @@ services:
     networks:
       - unity_bill
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:5984/_up"]
+      test: [ "CMD", "curl", "--fail", "http://localhost:5984/_up" ]
       start_period: 5s
       interval: 10s
       timeout: 5s
@@ -49,8 +53,6 @@ services:
       target: production
       secrets:
         - wrk_secrets
-      tags:
-        - 'datastemalux/couch_admin:1.0.0'
     container_name: couch_admin
     hostname: couch_admin
     restart: unless-stopped
@@ -63,7 +65,7 @@ services:
       couch:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "hck.js"]
+      test: [ "CMD", "node", "hck.js" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -79,8 +81,6 @@ services:
       target: production
       secrets:
         - app_secrets
-      tags:
-        - 'datastemalux/unitybill:1.0.0'
     container_name: unitybillapp
     hostname: unitybillapp
     restart: unless-stopped
@@ -94,7 +94,7 @@ services:
       couch_admin:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "hck.js"]
+      test: [ "CMD", "node", "hck.js" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -103,8 +103,8 @@ services:
       - unity_bill
 
 networks:
-   unity_bill:
-      driver: bridge
+  unity_bill:
+    driver: bridge
 
 secrets:
   wrk_secrets:

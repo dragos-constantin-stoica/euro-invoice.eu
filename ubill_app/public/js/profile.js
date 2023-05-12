@@ -5,14 +5,17 @@ Vue.component("profile", {
         }
     },
     template: `
-	<div>
+    <div>
     <b-card title="User profile" sub-title="Add significant sections">
         <b-card-text>
-        Some quick example text to build on the <em>card title</em> and make up the bulk of the card's
-        content.
+        Mange your personal information.
         </b-card-text>
 
-        <b-card-text>A second paragraph of text in the card.</b-card-text>
+        <b-card-text>
+        Change password
+        setup 2FA --- TODO
+        add phone number, mobile, fax, alternative email
+        </b-card-text>
 
         <a href="#" class="card-link">Relevant link</a>
         <b-link href="#" class="card-link">Another link</b-link>

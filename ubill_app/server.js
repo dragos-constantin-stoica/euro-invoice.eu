@@ -10,6 +10,7 @@ const EXPRESS_SESSION = 'The quick brown fox jumps over the lazy dog.'
 const http = require('http')
 const express = require('express')
 var session = require('express-session')
+var filestore = require('session-file-store')(session);
 
 var pino = require('pino-http')()
 
@@ -82,6 +83,7 @@ app.use(express.json()) // for parsing application/json
 app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 
 app.use(session({
+  store: new filestore,
   secret: EXPRESS_SESSION, //use a secret from secrets
   resave: false,
   saveUninitialized: true
@@ -144,15 +146,18 @@ app.post('/login', async function (req, res) {
       // regenerate the session, which is good practice to help
       // guard against forms of session fixation
       req.session.regenerate(function (err) {
-        //console.log(err)
-        if (err) next(err)
+        if (err) {
+          console.log(err)
+          res.json({status:'error', error:'Session regenerate error!'})
+          return
+        }
 
         console.log(req.session)
         // store user information in session, typically a user id
         req.session.user = req.body.username
         req.session.data = {
           username: login_response.data.roles.name,
-          password: req.body.password, 
+          password: req.body.password,
           roles: login_response.data.roles.roles,
           companies: login_response.data.roles.companies
         }
@@ -160,32 +165,35 @@ app.post('/login', async function (req, res) {
         // save the session before redirection to ensure page
         // load does not happen before session is saved
         req.session.save(function (err) {
-          //console.log(err);
-          if (err) return next(err)
+          if (err) {
+            console.log(err)
+            res.json({status:'error', error:'Session save error!'})
+            return
+          }
           console.log(req.session);
-          res.json({ 
-            status: login_response.data.status, 
-            message: login_response.data.message, 
-            action: login_response.data.action, 
-            args: login_response.data.args  
+          res.json({
+            status: login_response.data.status,
+            message: login_response.data.message,
+            action: login_response.data.action,
+            args: login_response.data.args
           });
         })
-        
       })
+
     } else {
       //Clear the session variables
       req.session.user = null
       req.session.data = null
-      res.json({ 
-        status: login_response.data.status, 
-        error: login_response.data.error, 
-        action: 'showLayout', 
-        args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}  
+      res.json({
+        status: login_response.data.status,
+        error: login_response.data.error,
+        action: 'showLayout',
+        args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
       })
     }
   } catch (error) {
     console.log(error);
-    next(error)
+    req.json({status:'error', error: 'Something went West <-'})
   }
 
 });
@@ -205,11 +213,11 @@ app.post('/logout', function (req, res, next) {
 
     req.session.regenerate(function (err) {
       if (err) next(err)
-      res.json({ 
-        status: 'ok', 
-        message: 'See you soon!', 
-        action: 'showLayout', 
-        args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}  
+      res.json({
+        status: 'ok',
+        message: 'See you soon!',
+        action: 'showLayout',
+        args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
       })
     })
 
@@ -225,6 +233,18 @@ app.post('/register', async function (req, res, next) {
   submitGearmanJob('create_company', req.body)
   res.json({ status: 'ok', message: 'Request received. Work in progress ...' });
 })
+
+app.post('/changepassword', async function(req, res, next){
+   //TODO - check the preconditions before changing password
+   try{
+    var chpwd_response = await axios.post(`${COUCH_ADMIN_URL}/changepassword`, { username: req.body.username, password: req.body.oldpassword, newpassword: req.body.newpassword })
+    console.log(chpwd_response.data)
+   }catch(err){
+    console.log(err)
+    req.json({status:'error', error: 'Something went South v'})
+   }
+})
+
 
 /*
  * Error pages

@@ -69,6 +69,7 @@ setup(){
     curl -X PUT $COUCH_URL/_replicator
     curl -X PUT $COUCH_URL/_global_changes
 
+    # Companies database
     curl -X PUT $COUCH_URL/_users/org.couchdb.user:$APP_USER \
      -H "Accept: application/json" \
      -H "Content-Type: application/json" \
@@ -161,7 +162,7 @@ case $1 in
     "build")    build $2;;
     "prune")    prune;;
     "usage")    usage ;;
-	*)      echo "unknown command: $1"
+    *)      	echo "unknown command: $1"
 	        usage ;;
 esac
 

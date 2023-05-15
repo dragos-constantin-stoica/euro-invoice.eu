@@ -213,6 +213,17 @@ fastify.post('/login', async function (request, reply) {
 
 });
 
+fastify.post('/changepassword', async function(request, reply){
+   try{
+     reply.send({ status: 'ok', message: 'TO BE IMPLEMENTED!'})
+   }catch(err){
+     console.log(`[ ${err} ]`)
+     reply.send({status: 'error', error:'Password change error'})
+   }
+});
+
+
+
 (async () => {
   try {
     await fastify.listen({ port: WRK_PORT, host: WRK_HOST })

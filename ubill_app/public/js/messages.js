@@ -28,7 +28,12 @@ const messages = {
       payments: 'Payments',
       profile: 'Profile',
       logout: 'Logout'
-    }
+    },
+   profile: {
+     oldpassword: 'Current Password',
+     newpassword: 'New Password',
+     btn_changepassword: 'Change Password'
+   }
   },
   fr: {
     message: {
@@ -58,7 +63,12 @@ const messages = {
       payments: 'Payments',
       profile: 'Profile',
       logout: 'Deconnection'
-    }
+    },
+   profile: {
+     oldpassword: 'Mot de passe actuel',
+     newpassword: 'Nouveau mot de passe',
+     btn_changepassword: 'Changer le mot de passe'
+   }
   },
   ro: {
     message: {
@@ -88,6 +98,11 @@ const messages = {
       payments: 'Plati',
       profile: 'Profil',
       logout: 'Deconectare'
-    }
+    },
+   profile: {
+     oldpassword: 'Parola curenta',
+     newpassword: 'Noua Parola',
+     btn_changepassword: 'Schimba parola'
+   }
   }
 }

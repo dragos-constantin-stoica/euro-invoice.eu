@@ -237,8 +237,12 @@ app.post('/register', async function (req, res, next) {
 app.post('/changepassword', async function(req, res, next){
    //TODO - check the preconditions before changing password
    try{
-    var chpwd_response = await axios.post(`${COUCH_ADMIN_URL}/changepassword`, { username: req.body.username, password: req.body.oldpassword, newpassword: req.body.newpassword })
+    var chpwd_response = await axios.post(`${COUCH_ADMIN_URL}/changepassword`, { username: req.session.user, password: req.body.oldpassword, newpassword: req.body.newpassword })
     console.log(chpwd_response.data)
+    res.json({
+      status: chpwd_response.data.status,
+      message: chpwd_response.data.message
+    });
    }catch(err){
     console.log(err)
     req.json({status:'error', error: 'Something went South v'})

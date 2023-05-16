@@ -6,7 +6,7 @@ Vue.component("privateHeader", {
 		}
 	},
 	methods: {
-		doShow(component){
+		doShow(component) {
 			window.app.showLayout({ currentHeader: 'privateHeader', mainComponent: component, currentFooter: 'privateFooter' })
 			console.log(`show ${component}`)
 		},

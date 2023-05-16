@@ -6,7 +6,6 @@ Vue.component("company", {
     },
     template: `
     <div>
-    <b-card-group deck>
 
     <b-card title="Company" sub-title="Add significant sections">
         <b-card-text>
@@ -50,7 +49,6 @@ Vue.component("company", {
       </template>
     </b-card>
 
-    </b-card-group>
     </div>
 	`
 });

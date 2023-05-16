@@ -213,13 +213,31 @@ fastify.post('/login', async function (request, reply) {
 
 });
 
-fastify.post('/changepassword', async function(request, reply){
-   try{
-     reply.send({ status: 'ok', message: 'TO BE IMPLEMENTED!'})
-   }catch(err){
-     console.log(`[ ${err} ]`)
-     reply.send({status: 'error', error:'Password change error'})
-   }
+fastify.post('/changepassword', async function (request, reply) {
+  try {
+    console.log(request.body)
+    let credentials = request.body
+    //Check username
+    let chkuser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+    console.log(chkuser)
+    //Check current password
+    let authuser = await nano.auth(credentials.username, credentials.password)
+    console.log(authuser)
+    await nano.auth(encodeURIComponent(COUCHDB_USER), encodeURIComponent(COUCHDB_PASSWORD))
+    let newuser = {
+      name: chkuser.name,
+      password: credentials.newpassword,
+      roles: chkuser.roles,
+      type: "user",
+      mfa_secret: chkuser.mfa_secret,
+      companies: chkuser.companies
+    }
+    let newpass = await nano.request({method:'put', path: `_users/${COUCHDB_USER_NAMESPACE}:${credentials.username}`, body: newuser, headers: { 'If-Match' : chkuser._rev}  })
+    reply.send({ status: 'ok', message: 'Password successfuly changed.'})
+  } catch (err) {
+    console.log(`[ ${err} ]`)
+    reply.send({ status: 'error', error: 'Password change error.' })
+  }
 });
 
 

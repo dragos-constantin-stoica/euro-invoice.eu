@@ -100,6 +100,12 @@ async function updateCompanyAdmin(newCompany, admin) {
     //console.log(company)
     let result = await companies.insert(company)
     //console.log(result)
+    let thisCompany = nano.use(`c${newCompany._id}`)
+    let myCompany = newCompany
+    myCompany.doctype = 'company'
+    myCompany.bank_accounts = []
+    myCompany.address = []
+    result = await thisCompany.insert(myCompany)
   } catch (e) {
     console.log(e)
   }

@@ -106,6 +106,9 @@ async function updateCompanyAdmin(newCompany, admin) {
     myCompany.bank_accounts = []
     myCompany.address = []
     result = await thisCompany.insert(myCompany)
+    //create indexes
+    const doctype_idx = {index: {fields: ["doctype"]}, name: "doctype_idx", type:"json", ddoc:"doctype_idx"}
+    result = await thisCompany.createIndex(doctype_idx)
   } catch (e) {
     console.log(e)
   }
@@ -143,7 +146,7 @@ async function createCompanyWithAdmin(newCompany, admin) {
             //This should be from GET user
             //Create user
             try {
-              admin.companies = { admin: [newCompany._id], memebers: [newCompany._id] }
+              admin.companies = { admin: [newCompany._id], members: [newCompany._id] }
               admin.mfa_secret = null
               let result = await nano.request({ method: 'put', path: `_users/${COUCHDB_USER_NAMESPACE}:${admin.name}`, body: admin })
               console.log(result)
@@ -246,7 +249,38 @@ fastify.post('/changepassword', async function (request, reply) {
   }
 });
 
+async function getCompanies(company_list){
+ let result = []
+ const mango_query = {selector: {doctype: "company"}, fields: ["_id", "name","country", "national_registration_number", "bank_accounts", "address"], use_index:"doctype_idx"}
+ await Promise.all(company_list.map(async (item)=>{
+    try{
+      let tmp = nano.use(`c${item}`)
+      let q = await tmp.find(mango_query)
+      result = result.concat(...q.docs)
+    }catch(err){
+      console.log(err)
+    }
+   }));
+  return result
+}
 
+fastify.post('/companies', async function(request, reply){
+  let result = []
+  try{
+   //current user may have various roles in multiple companies - for full version
+   //in the free version, on company per user
+   // the information about the companies is stored in CouchDB user profile
+   let credentials = request.body
+   let theUser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+   let company_list = [...new Set([...theUser.companies.admin ,...theUser.companies.members])]
+   result = await getCompanies(company_list)
+   console.log(result)
+   reply.send({status: 'ok', message: 'Company data loaded.', dataset: result})
+  }catch(err){
+    console.log(err)
+    reply.send({status: 'error', error:'Company fetch error.'})
+  }
+});
 
 (async () => {
   try {

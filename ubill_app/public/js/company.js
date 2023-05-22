@@ -1,28 +1,51 @@
 Vue.component("company", {
     data() {
         return {
+            loading: true,
+            company: null,
+            company_list: [
+              { value: null, text: 'Please select an option' },
+              { value: 'a', text: 'This is First option' }
+            ],
             show: true
         }
     },
-    template: `
-    <div>
 
-    <b-card title="Company" sub-title="Add significant sections">
-        <b-card-text>
-        Select one of the companies from the list
-        </b-card-text>
+    created () {
+      axios
+      .get('/companies')
+      .then(response => {
+         console.log(response.data)
+         if(response.data.status = 'ok'){
+            this.company_list = response.data.dataset.map(item => {
+                let tmp = {}
+                tmp.value = item
+                tmp.text = item.name
+                return tmp
+            })
+            this.company = this.company_list[0].value
+            this.loading=false
+         }
+      })
+    },
+
+    template: `
+    <div v-if="loading">
+          <b-spinner type="grow" label="Loading..."></b-spinner>
+    </div>
+    <div v-else>
+
+    <b-card title="Company" sub-title="Select one of the companies from the list">
+        <b-form-select v-model="company" :options="company_list"></b-form-select>
 
         <b-card-text>
         Normaly it should be one single company
         </b-card-text>
-
-        <a href="#" class="card-link">Relevant link</a>
-        <b-link href="#" class="card-link">Another link</b-link>
     </b-card>
 
-    <b-card title="Company data" header-tag="header" footer-tag="footer">
+    <b-card title="Details" header-tag="header" footer-tag="footer">
       <template #header>
-        <h6 class="mb-0">Mandatory</h6>
+        <h6 class="mb-0">Company data</h6>
       </template>
       <b-card-text>
       Mandatory Fields: name, national registration number, vat number, address
@@ -45,7 +68,7 @@ Vue.component("company", {
       <b-button href="#" variant="primary">Do something</b-button>
 
       <template #footer>
-        <em>Per company</em>
+        <em>Fill in all mandatory fields</em>
       </template>
     </b-card>
 

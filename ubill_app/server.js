@@ -1,11 +1,11 @@
 'use strict'
 
 // Global variables
-const PORT = 3000
-const HOST = '0.0.0.0'
-const NODE_ENV = process.env.NODE_ENV || 'DEV'
-const COUCH_ADMIN_URL = 'http://couch_admin:8090'
-const EXPRESS_SESSION = 'The quick brown fox jumps over the lazy dog.'
+const PORT = 3000,
+      HOST = '0.0.0.0',
+      NODE_ENV = process.env.NODE_ENV || 'DEV',
+      COUCH_ADMIN_URL = 'http://couch_admin:8090',
+      EXPRESS_SESSION = 'The quick brown fox jumps over the lazy dog.';
 
 const http = require('http')
 const express = require('express')
@@ -127,6 +127,44 @@ app.get("/checksession", isAuthenticated, function (req, res) {
   }
 })
 
+app.post('/changepassword', isAuthenticated, async function(req, res, next){
+   //TODO - check the preconditions before changing password
+   try{
+    var chpwd_response = await axios.post(`${COUCH_ADMIN_URL}/changepassword`, { username: req.session.user, password: req.body.oldpassword, newpassword: req.body.newpassword })
+    console.log(chpwd_response.data)
+    res.json({
+      status: chpwd_response.data.status,
+      message: chpwd_response.data.message
+    });
+   }catch(err){
+    console.log(err)
+    res.json({status:'error', error: 'Something went South v'})
+   }
+})
+
+app.post('/changepassword', function(req, res){
+  res.render('index', {layout: 'main'})
+})
+
+app.get('/companies', isAuthenticated, async function(req, res, next){
+  try{
+     var companies = await axios.post(`${COUCH_ADMIN_URL}/companies`, {username: req.session.user, data: req.session.data})
+     console.log(companies)
+     res.json({
+       status: companies.data.status,
+       message: companies.data.message,
+       dataset: companies.data.dataset
+     })
+  }catch(err){
+    console.log(err)
+    res.json({status: 'error', error: 'Something went North ^'})
+  }
+})
+
+app.get('/companies', function(req, res){
+  res.render('index', { layout: 'main' })
+})
+
 app.get('/version', function (req, res) {
   res.json({ application: 'UnityBill', version: '1.0.0' })
 })
@@ -193,12 +231,12 @@ app.post('/login', async function (req, res) {
     }
   } catch (error) {
     console.log(error);
-    req.json({status:'error', error: 'Something went West <-'})
+    req.json({status:'error', error: 'Something went West <'})
   }
 
 });
 
-app.post('/logout', function (req, res, next) {
+app.post('/logout',isAuthenticated, function (req, res, next) {
   // logout logic
 
   // clear the user from the session object and save.
@@ -224,6 +262,9 @@ app.post('/logout', function (req, res, next) {
   })
 })
 
+app.post('/logout', function(req, res){
+  res.render('index', { layout: 'main' })
+})
 
 app.post('/register', async function (req, res, next) {
   //get user and company data from payload
@@ -233,22 +274,6 @@ app.post('/register', async function (req, res, next) {
   submitGearmanJob('create_company', req.body)
   res.json({ status: 'ok', message: 'Request received. Work in progress ...' });
 })
-
-app.post('/changepassword', async function(req, res, next){
-   //TODO - check the preconditions before changing password
-   try{
-    var chpwd_response = await axios.post(`${COUCH_ADMIN_URL}/changepassword`, { username: req.session.user, password: req.body.oldpassword, newpassword: req.body.newpassword })
-    console.log(chpwd_response.data)
-    res.json({
-      status: chpwd_response.data.status,
-      message: chpwd_response.data.message
-    });
-   }catch(err){
-    console.log(err)
-    req.json({status:'error', error: 'Something went South v'})
-   }
-})
-
 
 /*
  * Error pages

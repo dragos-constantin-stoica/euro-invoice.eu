@@ -11,7 +11,7 @@
 #
 # @company: DataStema Sarl
 # @date: 01.02.2023
-# @version: 2.1.0
+# @version: 3.2.0
 # @author: dragos.stoica@datastema.io
 #----------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ setup(){
     do
 	if [ ! -d "$i" ]; then
         mkdir -m 0777 -p $i
-        fi
+    fi
     done
 
     # setup CouchDB
@@ -170,4 +170,3 @@ exit 0
 
 # end of main script
 ##############################################################################
-

@@ -104,7 +104,9 @@ async function updateCompanyAdmin(newCompany, admin) {
     let myCompany = newCompany
     myCompany.doctype = 'company'
     myCompany.bank_accounts = []
+    //data structure iban, bank, swift, bic, currency, (office)
     myCompany.address = []
+    //address is a string with newlines and will be displayed in a textarea
     result = await thisCompany.insert(myCompany)
     //create indexes
     const doctype_idx = {index: {fields: ["doctype"]}, name: "doctype_idx", type:"json", ddoc:"doctype_idx"}
@@ -202,7 +204,6 @@ fastify.get('/', async (request, reply) => {
 });
 
 fastify.post('/login', async function (request, reply) {
-
   try {
     console.log(request.body)
     let credentials = request.body

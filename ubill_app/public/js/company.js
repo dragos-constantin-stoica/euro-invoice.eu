@@ -8,8 +8,46 @@ Vue.component("company", {
       company_list: [
         { value: null, text: 'Please select an option' }
       ],
+      invoice_format: [
+      	{ value: 'YYYY.MM XX', text: 'YYYY.MM ##' },
+      	{ value: 'YYYY.MM/XX', text: 'YYYY.MM/##' },
+      	{ value: 'YYYY.MM.DD-XX', text: 'YYYY.MM.DD-##'}
+      ],
+      currency_list:[
+      	{ value: 'EUR', text: 'EUR' },
+      	{ value: 'DKK', text: 'DKK' },
+      	{ value: 'BGN', text: 'BGN' },
+      	{ value: 'CZK', text: 'CZK' },
+      	{ value: 'HUF', text: 'HUF' },
+      	{ value: 'PLN', text: 'PLN' },
+      	{ value: 'RON', text: 'RON' },
+      	{ value: 'SKK', text: 'SKK' },
+      ],
       show: true
     }
+  },
+
+  methods:{
+  	addAddress: function(){
+  	    if(this.newdata.address.length > 0){
+  		//add the address to the corresponding company from the list
+  			this.company.address.unshift(this.newdata.address)
+  			this.newdata.address = null
+        }
+  	},
+  	addBankAccount: function(){
+  		if(this.newdata.bank_name.length > 0 && this.newdata.iban.length > 0){
+  			let tmp = { 
+  				bank_name: this.newdata.bank_name,
+  				iban: this.newdata.iban,
+  				swift: this.newdata.swift,
+  				bic: this.newdata.bic,
+  				currency: this.newdata.currency
+  			}
+  			this.company.bank_accounts.unshift(tmp)
+  		}
+  	}
+  	
   },
 
   created() {
@@ -24,7 +62,10 @@ Vue.component("company", {
             tmp.text = item.name
             return tmp
           })
+          //we select by default the 1st company
           this.company = this.company_list[0].value
+          this.company.invoice_format = this.company.invoice_format ?? this.invoice_format[0].value
+          this.newdata.currency = 'EUR'
           this.loading = false
         }
       })
@@ -45,43 +86,38 @@ Vue.component("company", {
       <template #header>
         <h6 class="mb-0">Company data</h6>
       </template>
-
-      <b-card-text>
-      Mandatory Fields: name, national registration number, vat number, address
-      </b-card-text>
       
       <b-form-group :label='$t("company.name")' label-for="company_name" label-cols-sm="3">
-        <b-form-input id="company_name" v-model="company.name"></b-form-input>
+        <b-form-input id="company_name" v-model="company.name" plaintext="true"></b-form-input>
       </b-form-group>
 
       <b-form-group :label='$t("company.national_registration_number")' label-for="national_registration_number" label-cols-sm="3">
-        <b-form-input id="national_registration_number" v-model="company.national_registration_number"></b-form-input>
+        <b-form-input id="national_registration_number" v-model="company.national_registration_number" plaintext="true"></b-form-input>
       </b-form-group>
 
       <b-form-group :label='$t("company.country")' label-for="country" label-cols-sm="3">
-        <b-form-input id="country" v-model="company.country"></b-form-input>
+        <b-form-input id="country" v-model="company.country" plaintext="true"></b-form-input>
       </b-form-group>
 
       <b-form-group :label='$t("company.vat")' label-for="vat" label-cols-sm="3">
         <b-form-input id="vat" v-model="company.vat"></b-form-input>
       </b-form-group>
 
-      <b-form-group v-for="item in company.address" :label='$t("company.address")' label-cols-sm="3" rows="5" max-rows="7">
-         <b-form-textarea v-model="item"></b-form-textarea>
-         <b-button variant="success">Save</b-button>
+      <b-form-group v-for="item in company.address" :label='$t("company.address")' label-cols-sm="3">
+         <b-form-textarea v-model="item" rows="5" max-rows="7" plaintext="true"></b-form-textarea>
       </b-form-group>
 
       <b-form-group :label='$t("company.address")' label-cols-sm="3" rows="5">
-        <b-form-textarea v-model="newdata.address"></b-form-textarea>
-        <b-button variant="primary">Add</b-button>
+        <b-form-textarea v-model="newdata.address" rows="5" max-rows="7"></b-form-textarea>
+        <b-button variant="primary" @click="addAddress">Add</b-button>
       </b-form-group>
 
       <b-form-group v-for="item in company.bank_accounts" :label='$t("company.bank_accounts")' label-for="bank_name" label-cols-sm="3">
-        <b-form-input id="bank_name" v-model="item.bank_name"></b-form-input>
-        <b-form-input id="iban" v-model="item.iban"></b-form-input>
-        <b-form-input id="swift" v-model="item.swift"></b-form-input>
-        <b-form-input id="bic" v-model="item.bic"></b-form-input>
-        <b-button variant="success">Save</b-button>
+        <b-form-input id="bank_name" v-model="item.bank_name" readonly="true"></b-form-input>
+        <b-form-input id="iban" v-model="item.iban" readonly="true"></b-form-input>
+        <b-form-input id="swift" v-model="item.swift" readonly="true"></b-form-input>
+        <b-form-input id="bic" v-model="item.bic" readonly="true"></b-form-input>
+        <b-form-input id="currency" v-model="item.currency" readonly="true"></b-form-input>
       </b-form-group>
       
       <b-form-group :label='$t("company.bank_accounts")' label-for="bank_name" label-cols-sm="3">
@@ -97,17 +133,17 @@ Vue.component("company", {
         <b-input-group prepend="BIC">
         <b-form-input v-model="newdata.bic"></b-form-input>
         </b-input-group>
-        <b-button variant="primary">Add</b-button>
+        <b-input-group prepend="Currency">
+        <b-form-select v-model="newdata.currency" :options="currency_list"></b-form-select>
+        </b-input-group>
+        <b-button variant="primary" @click="addBankAccount">Add</b-button>
       </b-form-group>
 
-      <b-card-text>
-      Mandatory Fields - Invoice number: year, series, number, format (standard format)
-      </b-card-text>
+      <b-form-group label="Invoice format"  label-for="invoice" label-cols-sm="3">
+         <b-form-select id="invoice" v-model="company.invoice_format" :options="invoice_format"></b-form-select>
+      </b-form-group>
 
-      <b-card-text>
-      Mandatory Fields - admin user, members users. Admin can manage admins and members. There is always one admin. The logged in user can not delete itself from the list if it is the only admin.
-      </b-card-text>
-
+      <b-button  variant="success">Save</b-button>
       <template #footer>
         <em>Fill in all mandatory fields</em>
       </template>
@@ -118,20 +154,31 @@ Vue.component("company", {
         <h6 class="mb-0">User management</h6>
       </template>       
        <b-card-text>Member</b-card-text>
+
+      <b-card-text>
+      Mandatory Fields - admin user, members users. Admin can manage admins and members. There is always one admin. The logged in user can not delete itself from the list if it is the only admin.
+      </b-card-text>
+
       <template #footer>
-        <em>User notified via email.</em>
+        <em>User will be notified via email.</em>
       </template> 
     </b-card>
 
 
-    <b-card title="Visual identity" header-tag="header" footer-tag="footer">
+    <b-card title="Logo" header-tag="header" footer-tag="footer">
       <template #header>
-        <h6 class="mb-0">Logo</h6>
+        <h6 class="mb-0">Visual identity</h6>
       </template>
-        <b-form-file v-model="logofile" :state="Boolean(logofile)" placeholder="Choose a file or drop it here..." drop-placeholder="Drop file here..."></b-form-file>
-        <div class="mt-3">Selected file: {{ logofile ? logofile.name : '' }}</div>            
+        <b-input-group>
+          <b-input-group-prepend>
+             <b-button @click="logofile = null" variant="danger">Reset</b-button>
+          </b-input-group-prepend>
+        <b-form-file v-model="logofile" accept=".jpg, .png, .svg" :state="Boolean(logofile)" placeholder="Choose a file or drop it here..." drop-placeholder="Drop file here..."></b-form-file>
+        </b-input-group>
+        <div class="mt-3">Selected file: {{ logofile ? logofile.name : '' }}</div>
+         <b-button  variant="success">Upload</b-button>
       <template #footer>
-        <em>Upload file 300 x 300 px</em>
+        <em>Max file size 300 x 300 px</em>
       </template>
     </b-card>
 

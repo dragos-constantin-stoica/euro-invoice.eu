@@ -14,10 +14,10 @@ Vue.component("company", {
       	{ value: 'YYYY.MM.DD-XX', text: 'YYYY.MM.DD-##'}
       ],
       currency_list:[
-      	{ value: 'EUR', text: 'EUR' },
-      	{ value: 'DKK', text: 'DKK' },
       	{ value: 'BGN', text: 'BGN' },
       	{ value: 'CZK', text: 'CZK' },
+      	{ value: 'DKK', text: 'DKK' },
+      	{ value: 'EUR', text: 'EUR' },
       	{ value: 'HUF', text: 'HUF' },
       	{ value: 'PLN', text: 'PLN' },
       	{ value: 'RON', text: 'RON' },

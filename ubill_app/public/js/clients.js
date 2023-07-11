@@ -33,19 +33,22 @@ Vue.component("clients", {
     </div>
     
     <div v-else>
-    <b-card title="Company" sub-title="Select one of the companies from the list">
-        <b-form-select v-model="company" :options="company_list"></b-form-select>
-    </b-card>
-
     <b-card title="Clients" sub-title="Add significant sections">
         <b-card-text>
-        We have a list of clients. Ideally they are registered as Companies in the database so that we can naturally invite them to join the platform.
-        For each Company there is a separate list of Clients.
+        	<b-form-select v-model="company" :options="company_list"></b-form-select>
+        	Select one of the companies from the list
         </b-card-text>
 
         <b-card-text>
-        Select company or default select the only company.
+           <b-form-input id="client_search" type="search"></b-form-input>
+           <b-form-text id="client_search-help">Enter any information: company name, national registration number, VAT.</b-form-text>
         </b-card-text>
+        
+        <b-card-text>
+        	We have a list of clients. Ideally they are registered as Companies in the database so that we can naturally invite them to join the platform.
+        	For each Company there is a separate list of Clients.
+        </b-card-text>
+
 
 	<b-card-text>
         Mandatory data: full name, national registration number, vat code, address.
@@ -57,8 +60,6 @@ Vue.component("clients", {
         Optional data: bank name, iban, swift, bic, currency (multiple accounts should be possible)
         </b-card-text>
 
-        <a href="#" class="card-link">Relevant link</a>
-        <b-link href="#" class="card-link">Another link</b-link>
     </b-card>
     </div>
 	`

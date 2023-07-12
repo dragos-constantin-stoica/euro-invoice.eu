@@ -33,20 +33,21 @@ Vue.component("payments", {
     </div>
     
     <div v-else>
-    <b-card title="Company" sub-title="Select one of the companies from the list">
-        <b-form-select v-model="company" :options="company_list"></b-form-select>
-    </b-card>
     <b-card title="Payments" sub-title="Add significant sections">
-        <b-card-text>
-        Manage invoice lifecycle: created, overdue, payed --- no strono, no overdue fees :(
-        </b-card-text>
+      <b-card-text>
+        <b-form-select id="company" v-model="company" :options="company_list"></b-form-select>
+        <b-form-text id="company-help">Select one of the companies from the list.</b-form-text>
+      </b-card-text>  
+      <b-card-text>
+      Manage invoice lifecycle: created, overdue, payed --- no strono, no overdue fees :(
+      </b-card-text>
 
-        <b-card-text>
-        select and invoice that is not fully payed and input the amount that way payed
-        </b-card-text>
+      <b-card-text>
+      select and invoice that is not fully payed and input the amount that way payed
+      </b-card-text>
 
-        <a href="#" class="card-link">Relevant link</a>
-        <b-link href="#" class="card-link">Another link</b-link>
+      <a href="#" class="card-link">Relevant link</a>
+      <b-link href="#" class="card-link">Another link</b-link>
     </b-card>
     </div>
 	`

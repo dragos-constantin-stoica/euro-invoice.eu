@@ -78,14 +78,15 @@ Vue.component("company", {
     
     <div v-else>
 
-    <b-card title="Company" sub-title="Select one of the companies from the list">
-        <b-form-select v-model="company" :options="company_list"></b-form-select>
-    </b-card>
-
     <b-card title="Details" header-tag="header" footer-tag="footer">
       <template #header>
         <h6 class="mb-0">Company data</h6>
       </template>
+
+      <b-card-text>
+        <b-form-select id="company" v-model="company" :options="company_list"></b-form-select>
+        <b-form-text id="company-help">Select one of the companies from the list.</b-form-text>
+      </b-card-text>
       
       <b-form-group :label='$t("company.name")' label-for="company_name" label-cols-sm="3">
         <b-form-input id="company_name" v-model="company.name" plaintext="true"></b-form-input>
@@ -107,7 +108,7 @@ Vue.component("company", {
          <b-form-textarea v-model="item" rows="5" max-rows="7" plaintext="true"></b-form-textarea>
       </b-form-group>
 
-      <b-form-group :label='$t("company.address")' label-cols-sm="3" rows="5">
+      <b-form-group :label='$t("company.address")' label-cols-sm="3">
         <b-form-textarea v-model="newdata.address" rows="5" max-rows="7"></b-form-textarea>
         <b-button variant="primary" @click="addAddress">Add</b-button>
       </b-form-group>
@@ -143,9 +144,8 @@ Vue.component("company", {
          <b-form-select id="invoice" v-model="company.invoice_format" :options="invoice_format"></b-form-select>
       </b-form-group>
 
-      <b-button  variant="success">Save</b-button>
       <template #footer>
-        <em>Fill in all mandatory fields</em>
+        <b-button  variant="success">Save</b-button>
       </template>
     </b-card>
 
@@ -176,9 +176,8 @@ Vue.component("company", {
         <b-form-file v-model="logofile" accept=".jpg, .png, .svg" :state="Boolean(logofile)" placeholder="Choose a file or drop it here..." drop-placeholder="Drop file here..."></b-form-file>
         </b-input-group>
         <div class="mt-3">Selected file: {{ logofile ? logofile.name : '' }}</div>
-         <b-button  variant="success">Upload</b-button>
       <template #footer>
-        <em>Max file size 300 x 300 px</em>
+        <b-button  variant="success">Upload</b-button>
       </template>
     </b-card>
 

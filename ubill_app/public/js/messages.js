@@ -37,6 +37,28 @@ const messages = {
       address: "Address",
       bank_accounts: "Bank Accounts"
     },
+    services:{
+      name: 'Label',
+      description: 'Description',
+      type: 'Type',
+      unit: 'Invoicing Units',
+      unit_price: 'Unit Price w/o Taxes',
+      vat: 'V.A.T',
+      currency: 'Currency',
+      unit_price_vat: 'Price with Taxes'
+    },
+    clients:{
+      email: "Contact",
+      address: "Address",
+      bank_accounts: "Bank Accounts"
+    },
+    contracts:{
+      registration_number: 'Registration number',
+      type: 'Type',
+      start_date: 'Start date',
+      end_date: 'End date',
+      details: 'Details'
+    },
     profile: {
       oldpassword: 'Current Password',
       newpassword: 'New Password',
@@ -56,8 +78,8 @@ const messages = {
     register: {
       grp_user: 'Compte Administrateur',
       grp_company: 'Données Entreprise',
-      name: 'Nom complèt:',
-      number: 'Numèro National:',
+      name: 'Nom complèt',
+      number: 'Numèro National',
       country: 'Pays',
       btn_register: 'Enregistrer Enteprise'
     },
@@ -79,6 +101,28 @@ const messages = {
       vat: "T.V.A",
       address: "Adress",
       bank_accounts: "Comptes bancaires"
+    },
+    services:{
+      name: 'Label',
+      description: 'Description',
+      type: 'Type',
+      unit: 'Unites de Facturation',
+      unit_price: 'Prix HT',
+      vat: 'T.V.A',
+      currency: 'Monnaie',
+      unit_price_vat: 'Prix TTC'
+    },
+    clients:{
+      email: "Contact",
+      address: "Adress",
+      bank_accounts: "Comptes bancaires"
+    },
+    contracts:{
+      registration_number: 'Numero de contract',
+      type: 'Type',
+      start_date: 'Debut',
+      end_date: 'Fin',
+      details: 'Details'
     },
     profile: {
       oldpassword: 'Mot de passe actuel',
@@ -122,6 +166,28 @@ const messages = {
       vat: "Numar T.V.A",
       address: "Adresa",
       bank_accounts: "Conturile bancare"
+    },
+    services:{
+      name: 'Denumire',
+      description: 'Descriere',
+      type: 'Tipe',
+      unit: 'Unitatea de facturare',
+      unit_price: 'Pret unitar',
+      vat: 'T.V.A',
+      currency: 'Valuta',
+      unit_price_vat: 'Pret cu T.V.A'
+    },
+    clients:{
+      email: "Contact",
+      address: "Adresa",
+      bank_accounts: "Conturile bancare"
+    },
+    contracts:{
+      registration_number: 'Numar contract',
+      type: 'Tip',
+      start_date: 'Data de inceput',
+      end_date: 'Data de incetare',
+      details: 'Detalii'
     },
     profile: {
       oldpassword: 'Parola curenta',

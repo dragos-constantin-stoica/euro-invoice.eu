@@ -64,9 +64,9 @@ Vue.component("privateHeader", {
 	</b-dropdown>
         <b-nav-item href="#" @click="doShow('dashboard')">{{$t("mainmenu.dashboard")}}</b-nav-item>
         <b-nav-item href="#" @click="doShow('company')">{{$t("mainmenu.company")}}</b-nav-item>
+        <b-nav-item href="#" @click="doShow('services')">{{$t("mainmenu.services")}}</b-nav-item>
         <b-nav-item href="#" @click="doShow('clients')">{{$t("mainmenu.clients")}}</b-nav-item>
         <b-nav-item href="#" @click="doShow('contracts')">{{$t("mainmenu.contracts")}}</b-nav-item>
-        <b-nav-item href="#" @click="doShow('services')">{{$t("mainmenu.services")}}</b-nav-item>
         <b-nav-item href="#" @click="doShow('invoices')">{{$t("mainmenu.invoice")}}</b-nav-item>
         <b-nav-item href="#" @click="doShow('payments')">{{$t("mainmenu.payments")}}</b-nav-item>
         <b-nav-item href="#" @click="doShow('profile')">{{$t("mainmenu.profile")}}</b-nav-item>

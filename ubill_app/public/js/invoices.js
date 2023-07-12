@@ -33,11 +33,13 @@ Vue.component("Invoices", {
     </div>
     
     <div v-else>
-    <b-card title="Company" sub-title="Select one of the companies from the list">
-        <b-form-select v-model="company" :options="company_list"></b-form-select>
-    </b-card>
     <b-card title="Invoices" sub-title="Add significant sections">
-        <b-card-text>
+      <b-card-text>
+        <b-form-select id="company" v-model="company" :options="company_list"></b-form-select>
+        <b-form-text id="company-help">Select one of the companies from the list.</b-form-text>
+      </b-card-text>    
+          
+      <b-card-text>
         This is where invoices are created. The core of the application :)
         An invoice is a form of formal contract established between Company and Client based on a Contract and contains a list of Products and Services.
         The invoice template contains standard elements and for those that pay for a subsctiption some other elements may be added.

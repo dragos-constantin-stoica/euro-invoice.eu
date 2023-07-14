@@ -1,6 +1,5 @@
 // CommonJS
 const fastify = require('fastify')({ logger: true })
-const gearman = require('gearman')
 // require the module
 var hashes = require('jshashes')
 var RMD160 = new hashes.RMD160;
@@ -13,64 +12,6 @@ const WRK_PORT = process.env.WRK_PORT || 8090,
   APP_USER = process.env.APP_USER,
   APP_PASSWORD = process.env.APP_PASSWORD,
   COUCHDB_USER_NAMESPACE = 'org.couchdb.user';
-
-let worker = gearman('gearmand', GEARMAN_PORT)
-
-// handle jobs assigned by the server
-worker.on('JOB_ASSIGN', async function (job) {
-  console.log(job.func_name + ' job assigned to this worker')
-  console.log(JSON.parse(job.payload.toString()))
-  let payload = JSON.parse(job.payload.toString())
-
-  switch (job.func_name) {
-    case 'create_company':
-      //Compute new - database ID
-      var new_company = {
-        _id: RMD160.hex(payload.name.toUpperCase() + payload.country.toUpperCase() + payload.national_registration_number.toUpperCase()),
-        name: payload.name.toUpperCase(),
-        country: payload.country.toUpperCase(),
-        national_registration_number: payload.national_registration_number.toUpperCase()
-      }
-      console.log(new_company)
-      var company_admin = {
-        name: payload.username,
-        password: payload.password,
-        roles: [`usr_${new_company._id}`],
-        type: 'user'
-      }
-      //Check if the database exists and if exists check if the user is already admin
-      try {
-        let doit = await createCompanyWithAdmin(new_company, company_admin)
-        console.log(doit)
-        worker.sendWorkComplete(job.handle, doit)
-      } catch (e) {
-        console.log(e)
-        worker.sendWorkComplete(job.handle, JSON.stringify({ status: 'error', error: e }))
-      }
-      //Check if the user exists and if it belongs to admin group for the corresponding database
-      worker.sendWorkComplete(job.handle, JSON.stringify({ status: 'ok' }))
-      break;
-    default:
-      console.log(`function ${job.func_name} not implemented :(`)
-      worker.sendWorkComplete(job.handle, JSON.stringify({ status: 'nok', message: 'function not implemented' }))
-  }
-  // go back to sleep, telling the server we're ready for more work
-  worker.preSleep()
-});
-
-// grab a job when the server signals one is available
-worker.on('NOOP', function () {
-  worker.grabJob()
-})
-
-// connect to the gearman server
-worker.connect(function () {
-  // register create company function
-  worker.addFunction('create_company')
-
-  // tell the server the worker is going to sleep, waiting for work
-  worker.preSleep()
-});
 
 //CouchDB user management part
 const nano = require('nano')({
@@ -120,7 +61,7 @@ async function updateCompanyAdmin(newCompany, admin) {
 async function createCompanyWithAdmin(newCompany, admin) {
   try {
     let chkdb = await nano.request({ method: 'head', db: 'companies', doc: newCompany._id })
-    return JSON.stringify({ status: 'error', error: 'Company alreay registered!' })
+    return { status: 'error', error: 'Company alreay registered!' }
   } catch (e) {
     switch (e.statusCode) {
       case 404:
@@ -142,7 +83,7 @@ async function createCompanyWithAdmin(newCompany, admin) {
           let chkuser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${admin.name}` })
           //console.log(chkuser)
           cleanupCompany(newCompany)
-          return JSON.stringify({ status: 'error', error: 'User exists!' })
+          return { status: 'error', error: 'User exists!' }
         } catch (e) {
           if (e.statusCode == 404) {
             //This should be from GET user
@@ -154,23 +95,23 @@ async function createCompanyWithAdmin(newCompany, admin) {
               console.log(result)
               //add admin information to company document
               updateCompanyAdmin(newCompany, admin)
-              return JSON.stringify({ status: 'ok', message: "Company and admin created! Please login.", action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'login', currentFooter: 'privateFooter' } })
+              return { status: 'ok', message: "Company and admin created! Please login.", action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'login', currentFooter: 'privateFooter' } }
             } catch (e) {
               console.log(e)
               cleanupCompany(newCompany)
-              return JSON.stringify({ status: 'error', error: 'User creation failed!' })
+              return { status: 'error', error: 'User creation failed!' }
             }
           }
           console.log(e)
-          return JSON.stringify({ status: 'error', error: 'Application error. Contact hotline.' })
+          return { status: 'error', error: 'Application error. Contact hotline.' }
         }
         break;
       case 401:
-        return JSON.stringify({ status: 'error', error: 'Unauthorized - 401!' })
+        return { status: 'error', error: 'Unauthorized - 401!' }
         break;
       default:
         console.log(e)
-        return JSON.stringify({ status: 'error', error: 'Application error. Contact hotline.' })
+        return { status: 'error', error: 'Application error. Contact hotline.' }
     }
   }
 }
@@ -282,6 +223,43 @@ fastify.post('/companies', async function(request, reply){
     reply.send({status: 'error', error:'Company fetch error.'})
   }
 });
+
+fastify.post('/register', async function(request, reply){
+	let result = []
+	try{
+		//no authentication yet ... this should be handled with care for DDOS
+		let payload = request.body.data
+	     //Compute new - database ID
+	     var new_company = {
+	       _id: RMD160.hex(payload.name.toUpperCase() + payload.country.toUpperCase() + payload.national_registration_number.toUpperCase()),
+	       name: payload.name.toUpperCase(),
+	       country: payload.country.toUpperCase(),
+	       national_registration_number: payload.national_registration_number.toUpperCase()
+	     }
+	     console.log(new_company)
+	     var company_admin = {
+	       name: payload.username,
+	       password: payload.password,
+	       roles: [`usr_${new_company._id}`],
+	       type: 'user'
+	     }
+	     //Check if the database exists and if exists check if the user is already admin
+	     try {
+	       let doit = await createCompanyWithAdmin(new_company, company_admin)
+	       console.log(doit)
+		   reply.send({status: 'ok', message: 'Company created!', dataset: doit})
+	     } catch (e) {
+	       console.log(e)
+	       reply.send({ status: 'error', error: e })
+	     }
+	     //Check if the user exists and if it belongs to admin group for the corresponding database
+	     reply.send({ status: 'ok', message: 'All good!', dataset: null })
+	}catch(err){
+		console.log(err)
+		reply.send({status: 'error', error: 'Company registration failed.'})
+	}
+});
+
 
 (async () => {
   try {

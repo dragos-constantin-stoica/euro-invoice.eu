@@ -104,9 +104,14 @@ Vue.component("register", {
 			axios.post('/register', this.form)
 				.then(function (response) {
 					console.log(response);
+					showToast(response.data.status == 'ok' ? response.data.message : response.data.error, 'Message from Server', response.data.status == 'ok' ? 'success' : 'error')
+					if (response.data.action) {
+						window.app[response.data.action](response.data.args)
+					}
 				})
 				.catch(function (error) {
 					console.log(error);
+					showToast(error.data.error, 'Message from Server', 'danger')
 				})
 				.finally(function () {
 					// always executed

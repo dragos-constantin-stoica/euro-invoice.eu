@@ -11,7 +11,7 @@
 #
 # @company: DataStema Sarl
 # @date: 01.02.2023
-# @version: 3.2.0
+# @version: 3.7.0
 # @author: dragos.stoica@datastema.io
 #----------------------------------------------------------------------------
 
@@ -117,7 +117,7 @@ run(){
 
     echo "CouchDB has successfuly started on http://couch.localhost:5984/_utils"
     echo "        user: $COUCHDB_USER | password: $COUCHDB_PASSWORD"
-    echo "GearmanD, Couch Admin Worker have successfully started"
+    echo "Couch Admin Worker have successfully started"
     echo "UnityBill has successfully started on http://localhost:8080"
     echo -e "\n\nDONE >>> Run stage"
 }

@@ -19,7 +19,6 @@
     "jsonwebtoken": "^8.5.1",
     "pino": "^7.6.2",
     "pino-pretty": "^7.3.0",
-    "gearman": "^2.1",
     "nano": "^10.x",
     "jshashes": "^1.0.x"
   },

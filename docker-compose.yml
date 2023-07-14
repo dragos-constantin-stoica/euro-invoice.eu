@@ -2,26 +2,6 @@ version: '3'
 
 services:
 
-  gearmand:
-    image: "artefactual/gearmand:1.1.19.1-alpine"
-    container_name: gearmand
-    hostname: gearmand
-    restart: always
-    ports:
-      - 4730:4730
-    networks:
-      - unity_bill
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "gearadmin --server-version  | grep -q '1.1.19.1' && exit 0"
-        ]
-      start_period: 10s
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
   couch:
     image: "couchdb:3.3.1"
     container_name: couch
@@ -60,8 +40,6 @@ services:
     ports:
       - 8090:8090
     depends_on:
-      gearmand:
-        condition: service_healthy
       couch:
         condition: service_healthy
     healthcheck:
@@ -88,8 +66,6 @@ services:
     ports:
       - 8080:3000
     depends_on:
-      gearmand:
-        condition: service_healthy
       couch:
         condition: service_healthy
       couch_admin:
@@ -109,6 +85,6 @@ networks:
 
 secrets:
   wrk_secrets:
-    file: ./couch_admin/.npmrc
+    file: ./couch_admin/secrets.app
   app_secrets:
-    file: ./ubill_app/.npmrc
+    file: ./ubill_app/secrets.app

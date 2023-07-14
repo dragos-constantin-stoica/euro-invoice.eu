@@ -29,54 +29,9 @@ const { createTerminus } = require('@godaddy/terminus')
 
 var axios = require('axios')
 
-var SSE = require('express-sse');
-var sse = new SSE();
-
 const app = express()
 
-//Gearman part
-const gearman = require('gearman')
 const { log } = require('console')
-let client = gearman("gearmand", 4730)  // no timeout
-
-// handle timeout - something went really wrong
-client.on('timeout', () => {
-  console.log('Gearman client timeout occurred')
-  //client.close()
-})
-
-// handle finished jobs
-client.on('WORK_COMPLETE', function (job) {
-  console.log('job completed, result:', job.payload.toString())
-  sse.send(JSON.parse(job.payload.toString()))
-  //client.close()
-})
-
-// connect to the gearman server
-client.connect(() => {
-  // submit a job with normal priority in the foreground
-  //client.submitJob('check_company', JSON.stringify({name: 'ACME LLC', country: 'LU', op: 'check_company'}))
-  console.log('Gearman client connected to server')
-})
-
-// connection closed, maybe it is the server.
-client.on('close', had_transmission_error => {
-  console.log('Geraman client connection closed. had transmission error?', had_transmission_error)
-})
-
-
-function submitGearmanJob(job_name, payload) {
-  // connection to the gearman server should be open and alive!!!
-  // submit a job with normal priority in the foreground
-
-  //client.submitJob('check_company', JSON.stringify({name: 'ACME LLC', country: 'LU', op: 'check_company'}))
-  //console.log('___ -> check_company job submitted')
-  //client.submitJob('check_user', JSON.stringify({name: 'ACME LLC', country: 'LU', op: 'check_user', username:'puffy@sds.eu'}))
-  //console.log('___ -> check_user job submitted')
-  payload.op = job_name
-  client.submitJob(job_name, JSON.stringify(payload))
-  console.log(`___ -> ${job_name} send to Gearman`)
-}
 
 //middleware configuration for ExpressJS
 app.use(express.json()) // for parsing application/json
@@ -93,9 +48,6 @@ app.use(compression())
 app.use(pino) // logging with pino-http
 
 app.use(express.static(path.join(__dirname, 'public'))) //all static files go in public folder: html, js, css etc
-
-//SSE endpoint handled through middleware
-app.get('/events', sse.init)
 
 app.engine("handlebars", hdbs.engine());
 app.set("view engine", "handlebars");
@@ -271,8 +223,21 @@ app.post('/register', async function (req, res, next) {
   //check if the company exists and create if does not exist
   //check if the user exists in the company and create/add admin role to the company
   console.log(req.body)
-  submitGearmanJob('create_company', req.body)
-  res.json({ status: 'ok', message: 'Request received. Work in progress ...' });
+
+  try{
+     var company = await axios.post(`${COUCH_ADMIN_URL}/register`, {data: req.body})
+     console.log(company)
+     res.json({
+       status: company.data.status,
+       message: company.data.message,
+       action: 'showLayout',
+       args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
+    })
+  }catch(err){
+    console.log(err)
+    res.json({status: 'error', error: 'Something went double North ^^'})
+  }
+
 })
 
 /*

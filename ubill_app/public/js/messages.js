@@ -59,6 +59,28 @@ const messages = {
       end_date: 'End date',
       details: 'Details'
     },
+    invoices:{
+      company: 'Company',
+      client: 'Client',
+      contract: 'Contract',
+      serial_number: 'Serial Number',
+      issue_date: 'Issue date',
+      due_term: 'Due term',
+      due_date: 'Due date',
+      currency: 'Currency',
+      exchange_rate: 'Exchange rate',
+      template: 'Template',
+      payment_instructions: 'Payment Instructions',
+      newitem: 'New item on invoice',
+      item: 'Item',
+      description: 'Details',
+      unit: 'Unit',
+      quantity: 'Quantity',
+      unit_price: 'Unit Price',
+      vat: 'V.A.T',
+      total: 'Line Total'
+
+    },
     profile: {
       oldpassword: 'Current Password',
       newpassword: 'New Password',
@@ -124,6 +146,28 @@ const messages = {
       end_date: 'Fin',
       details: 'Details'
     },
+    invoices:{
+      company: 'Compagnie',
+      client: 'Client',
+      contract: 'Contrat',
+      serial_number: 'Numero Facture',
+      issue_date: 'Date de la facture',
+      due_term: 'Term',
+      due_date: 'Date de payement',
+      currency: 'Monnaie',
+      exchange_rate: 'Taux d\'exchange',
+      template: 'Modele facture',
+      payment_instructions: 'Instructions de payement',
+      newitem: 'Nouvelle ligne sur la facture',
+      item: 'Item',
+      description: 'Details',
+      unit: 'Unite',
+      quantity: 'Quantite',
+      unit_price: 'Prix Unitaire',
+      vat: 'T.V.A',
+      total: 'Total ligne'
+
+    },
     profile: {
       oldpassword: 'Mot de passe actuel',
       newpassword: 'Nouveau mot de passe',
@@ -188,6 +232,28 @@ const messages = {
       start_date: 'Data de inceput',
       end_date: 'Data de incetare',
       details: 'Detalii'
+    },
+    invoices:{
+      company: 'Companie',
+      client: 'Client',
+      contract: 'Contract',
+      serial_number: 'Numar factura',
+      issue_date: 'Data facturii',
+      due_term: 'Termen de plata',
+      due_date: 'Data de plata',
+      currency: 'Valuta',
+      exchange_rate: 'Rata de schimb',
+      template: 'Model de factura',
+      payment_instructions: 'Instructiuni de plata',
+      newitem: 'Linie noua pe factura',
+      item: 'Articol',
+      description: 'Detalii',
+      unit: 'Unitate',
+      quantity: 'Cantitate',
+      unit_price: 'Pret unitar',
+      vat: 'T.V.A',
+      total: 'Total Linie'
+
     },
     profile: {
       oldpassword: 'Parola curenta',

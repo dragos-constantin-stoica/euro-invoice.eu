@@ -19,6 +19,7 @@ Vue.component("services", {
             show: true
         }
     },
+
     created() {
       axios.get('/companies')
       .then(response => {

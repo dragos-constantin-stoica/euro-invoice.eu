@@ -6,7 +6,6 @@ var RMD160 = new hashes.RMD160;
 
 const WRK_PORT = process.env.WRK_PORT || 8090,
   WRK_HOST = process.env.WRK_HOST || '0.0.0.0',
-  GEARMAN_PORT = process.env.GEARMAN_PORT || 4730,
   COUCHDB_USER = process.env.COUCHDB_USER,
   COUCHDB_PASSWORD = process.env.COUCHDB_PASSWORD,
   APP_USER = process.env.APP_USER,

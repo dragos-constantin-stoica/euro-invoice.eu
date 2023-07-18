@@ -117,6 +117,23 @@ app.get('/companies', function(req, res){
   res.render('index', { layout: 'main' })
 })
 
+app.put('/companies', isAuthenticated, async function(req, res, next){
+	try{
+		console.log(req.body)
+		//send company to be updated in the corresponding database and in the global database
+		//we should receive one single company at a time
+		var result = await axios.put(`${COUCH_ADMIN_URL}/companies`, {username: req.session.user, data: req.body})
+		res.json({
+			stautus: result.data.status,
+			message: result.data.message,
+			dataset: result.data.dataset
+		})
+	}catch(err){
+		console.log(err)
+		res.json({status: 'error', error: 'Something went Far North ´`'})
+	}
+})
+
 app.get('/version', function (req, res) {
   res.json({ application: 'UnityBill', version: '1.0.0' })
 })

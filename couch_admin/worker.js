@@ -192,7 +192,7 @@ fastify.post('/changepassword', async function (request, reply) {
 
 async function getCompanies(company_list){
  let result = []
- const mango_query = {selector: {doctype: "company"}, fields: ["_id", "name","country", "national_registration_number", "bank_accounts", "address"], use_index:"doctype_idx"}
+ const mango_query = {selector: {doctype: "company"}, fields: ["_id", "name","country", "national_registration_number", "invoice_format", "vat",  "bank_accounts", "address"], use_index:"doctype_idx"}
  await Promise.all(company_list.map(async (item)=>{
     try{
       let tmp = nano.use(`c${item}`)
@@ -203,6 +203,22 @@ async function getCompanies(company_list){
     }
    }));
   return result
+}
+
+async function updateCompany(company_data){
+	let result = []
+	try{
+		let company = nano.use(`c${company_data._id}`)
+		let head = await company.head(company_data._id)
+		console.log(head)
+		company_data._rev = head.etag.replaceAll('"', '')
+		company_data.doctype = "company"
+		console.log(company_data)
+		let result = await company.insert(company_data)
+	}catch(err){
+		console.log(err)
+	}
+	return result
 }
 
 fastify.post('/companies', async function(request, reply){
@@ -221,6 +237,22 @@ fastify.post('/companies', async function(request, reply){
     console.log(err)
     reply.send({status: 'error', error:'Company fetch error.'})
   }
+});
+
+fastify.put('/companies', async function(request, reply){
+	let result = []
+	try{
+		//update one single company and return the list of all companies the this user can manage
+		let tmpresult = await updateCompany(request.body.data)
+	   	let theUser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${request.body.username}`})
+   		let company_list = [...new Set([...theUser.companies.admin ,...theUser.companies.members])]
+   		result = await getCompanies(company_list)
+   		console.log(result)
+   		reply.send({status: 'ok', message: 'Company data saved.', dataset: result})
+	}catch(err){
+		console.log(err)
+		reply.send({status: 'error', error: 'Company update error.'})
+	}
 });
 
 fastify.post('/register', async function(request, reply){
@@ -263,7 +295,7 @@ fastify.post('/register', async function(request, reply){
 (async () => {
   try {
     await fastify.listen({ port: WRK_PORT, host: WRK_HOST })
-    console.log(`[ Process id: ${process.pid} on ${WRK_HOST}:${WRK_PORT} ]`)
+    //console.log(`[ Process id: ${process.pid} on ${WRK_HOST}:${WRK_PORT} ]`)
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)

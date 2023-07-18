@@ -46,6 +46,26 @@ Vue.component("company", {
   			}
   			this.company.bank_accounts.unshift(tmp)
   		}
+  	},
+  	saveCompany: function(){
+  	    this.loading = true
+  		axios.put('/companies', this.company)
+  		.then(response =>{
+  			console.log(response.data)
+	        if (response.data.status = 'ok') {
+	          this.company_list = response.data.dataset.map(item => {
+	            let tmp = {}
+	            tmp.value = item
+	            tmp.text = item.name
+	            return tmp
+	          })
+	          //we select by default the 1st company
+	          this.company = this.company_list[0].value
+	          this.company.invoice_format = this.company.invoice_format ?? this.invoice_format[0].value
+	          this.newdata.currency = 'EUR'
+	          this.loading = false
+	        }  			
+  		})
   	}
   	
   },
@@ -114,11 +134,21 @@ Vue.component("company", {
       </b-form-group>
 
       <b-form-group v-for="item in company.bank_accounts" :label='$t("company.bank_accounts")' label-for="bank_name" label-cols-sm="3">
-        <b-form-input id="bank_name" v-model="item.bank_name" readonly="true"></b-form-input>
-        <b-form-input id="iban" v-model="item.iban" readonly="true"></b-form-input>
-        <b-form-input id="swift" v-model="item.swift" readonly="true"></b-form-input>
-        <b-form-input id="bic" v-model="item.bic" readonly="true"></b-form-input>
-        <b-form-input id="currency" v-model="item.currency" readonly="true"></b-form-input>
+		<b-input-group prepend="Bank">
+        	<b-form-input id="bank_name" v-model="item.bank_name" readonly="true"></b-form-input>
+        </b-input-group>
+        <b-input-group prepend="IBAN">
+        	<b-form-input id="iban" v-model="item.iban" readonly="true"></b-form-input>
+        </b-input-group>
+        <b-input-group prepend="SWIFT">
+        	<b-form-input id="swift" v-model="item.swift" readonly="true"></b-form-input>
+        </b-input-group>
+        <b-input-group prepend="BIC">
+        	<b-form-input id="bic" v-model="item.bic" readonly="true"></b-form-input>
+        </b-input-group>
+        <b-input-group prepend="Currency">
+        	<b-form-input id="currency" v-model="item.currency" readonly="true"></b-form-input>
+        </b-input-group>
       </b-form-group>
       
       <b-form-group :label='$t("company.bank_accounts")' label-for="bank_name" label-cols-sm="3">
@@ -145,7 +175,7 @@ Vue.component("company", {
       </b-form-group>
 
       <template #footer>
-        <b-button  variant="success">Save</b-button>
+        <b-button  variant="success" @click="saveCompany">Save</b-button>
       </template>
     </b-card>
 

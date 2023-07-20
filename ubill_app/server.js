@@ -5,7 +5,9 @@ const PORT = 3000,
       HOST = '0.0.0.0',
       NODE_ENV = process.env.NODE_ENV || 'DEV',
       COUCH_ADMIN_URL = 'http://couch_admin:8090',
-      EXPRESS_SESSION = 'The quick brown fox jumps over the lazy dog.';
+      EXPRESS_SESSION = 'The quick brown fox jumps over the lazy dog.',
+      APPLICATION = 'UnityBill',
+      VERSION = '1.0.0';
 
 const http = require('http')
 const express = require('express')
@@ -134,8 +136,23 @@ app.put('/companies', isAuthenticated, async function(req, res, next){
 	}
 })
 
+app.get('/servicesproducts', isAuthenticated, async function(req, res, next){
+	try{
+		var result = await axios.post(`${COUCH_ADMIN_URL}/servicesproducts`, {username: req.session.user, data: req.session.data})
+		//console.log(result.data.dataset)
+		res.json({
+			stautus: result.data.status,
+			message: result.data.message,
+			dataset: result.data.dataset
+		})
+	}catch(err){
+		console.log(err)
+		res.json({status:'error', error:'Something went Far West >>'})
+	}
+})
+
 app.get('/version', function (req, res) {
-  res.json({ application: 'UnityBill', version: '1.0.0' })
+  res.json({ application: APPLICATION, version: VERSION })
 })
 
 app.post('/login', async function (req, res) {

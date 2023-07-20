@@ -1,5 +1,5 @@
 Vue.component("profile", {
-    data() {
+    data: function() {
         return {
             form: {
                 oldpassword: '',
@@ -9,8 +9,9 @@ Vue.component("profile", {
             show: true
         }
     },
+
     methods: {
-        changePassword() {
+        changePassword: function() {
             //TODO - check values for all fields/validate form before sending it to server
             //TODO - check password strength
             axios.post('/changepassword', this.form)
@@ -46,10 +47,11 @@ Vue.component("profile", {
             console.log('change password')
         }
     },
+
     template: `
     <div>
     <b-card title="Change password" header-tag="header" footer-tag="footer">
-    <template #header>
+	  <template #header>
         <h6 class="mb-0">User profile</h6>
       </template>    
     

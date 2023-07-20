@@ -45,7 +45,8 @@ const messages = {
       unit_price: 'Unit Price w/o Taxes',
       vat: 'V.A.T',
       currency: 'Currency',
-      unit_price_vat: 'Price with Taxes'
+      unit_price_vat: 'Price with Taxes',
+      btn_createserviceproduct: 'Save'
     },
     clients:{
       email: "Contact",
@@ -132,7 +133,8 @@ const messages = {
       unit_price: 'Prix HT',
       vat: 'T.V.A',
       currency: 'Monnaie',
-      unit_price_vat: 'Prix TTC'
+      unit_price_vat: 'Prix TTC',
+      btn_createserviceproduct: 'Sauvegarder'
     },
     clients:{
       email: "Contact",
@@ -219,7 +221,8 @@ const messages = {
       unit_price: 'Pret unitar',
       vat: 'T.V.A',
       currency: 'Valuta',
-      unit_price_vat: 'Pret cu T.V.A'
+      unit_price_vat: 'Pret cu T.V.A',
+      btn_createserviceproduct: 'Salveaza'
     },
     clients:{
       email: "Contact",

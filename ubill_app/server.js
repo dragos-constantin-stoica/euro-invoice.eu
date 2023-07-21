@@ -151,6 +151,26 @@ app.get('/servicesproducts', isAuthenticated, async function(req, res, next){
 	}
 })
 
+app.post('/servicesproducts', isAuthenticated, async function(req, res, next){
+  try {
+    //Check if the company is on the user's list
+    console.log(req.body);
+    if (req.session.data.companies.admin.indexOf(req.body.company_id) != -1){
+      var result = await axios.put(`${COUCH_ADMIN_URL}/servicesproducts`, {session: req.session.data , data: req.body})
+      res.json({
+        stautus: result.data.status,
+        message: result.data.message,
+        dataset: result.data.dataset
+      })
+    }else{
+      res.json({status: 'error', error: 'You do not have the right to adminster this company.'})
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({status: 'error', error: 'Somthing went Far South vv'})
+  }
+})
+
 app.get('/version', function (req, res) {
   res.json({ application: APPLICATION, version: VERSION })
 })

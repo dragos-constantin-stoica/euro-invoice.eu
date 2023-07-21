@@ -6,10 +6,10 @@ Vue.component("Invoices", {
             client: null,
             contract: null,
             newdata: { 
-              issue_date: '', 
-              due_date:'', 
-              invoice_due_term: null, 
-              currency: null, 
+              issue_date: (new Date()).toISOString().substring(0,10), 
+              due_date: '', 
+              invoice_due_term: 1, 
+              currency: 'EUR', 
               exchange_rate:1, 
               payment_instructions: '',
               template: ''
@@ -18,12 +18,53 @@ Vue.component("Invoices", {
               service_product:'',
               description: '',
               unit: '',
-              quantity: 0,
+              quantity: 1,
               unit_price: 0,
               price: 0,
               vat: 0,
               total:0
             },
+            currency_list: [
+              { value: 'BGN', text: 'BGN' },
+              { value: 'CZK', text: 'CZK' },
+              { value: 'DKK', text: 'DKK' },
+              { value: 'EUR', text: 'EUR' },
+              { value: 'HUF', text: 'HUF' },
+              { value: 'PLN', text: 'PLN' },
+              { value: 'RON', text: 'RON' },
+              { value: 'SKK', text: 'SKK' },
+            ],
+            vat_list: [
+              { value: 0.0, text: '0%' },
+              { value: 2.1, text: '2.1%' },
+              { value: 3.0, text: '3%' },
+              { value: 4.0, text: '4%' },
+              { value: 4.8, text: '4.8%' },
+              { value: 5.0, text: '5%' },
+              { value: 5.5, text: '5.5%' },
+              { value: 6.0, text: '6%' },
+              { value: 7.0, text: '7%' },
+              { value: 8.0, text: '8%' },
+              { value: 9.0, text: '9%' },
+              { value: 9.5, text: '9.5%' },
+              { value: 10.0, text: '10%' },
+              { value: 12.0, text: '12%' },
+              { value: 13.0, text: '13%' },
+              { value: 13.5, text: '13.5%' },
+              { value: 14.0, text: '14%' },
+              { value: 15.0, text: '15%' },
+              { value: 16.0, text: '16%' },
+              { value: 17.0, text: '17%' },
+              { value: 18.0, text: '18%' },
+              { value: 19.0, text: '19%' },
+              { value: 20.0, text: '20%' },
+              { value: 21.0, text: '21%' },
+              { value: 22.0, text: '22%' },
+              { value: 23.0, text: '23%' },
+              { value: 24.0, text: '24%' },
+              { value: 25.0, text: '25%' },
+              { value: 27.0, text: '27%' },
+            ],
             company_list: [
         		{ value: null, text: 'Please select an option' }
              ],
@@ -34,34 +75,43 @@ Vue.component("Invoices", {
               { value: null, text: 'Please select an option' }
             ],  
             invoice_due_term_list: [
-              { value: null, text: 'Please select an option' }
+              { value:30, text:'30 days' },
+              { value:45, text:'45 days' },
+              { value:60, text:'60 days' },
+              { value:90, text:'90 days' },
+              { value:1, text:'Other' },
             ],
             template_list: [
               { value: null, text: 'Please select an option' }
             ],   
             invoice_fields: [ {key: 'service_product', label:'Item'}, 'price', 'total' ],    
-            invoice_items:[
-            ],      
+            invoice_items:[ ],      
             show: true
         }
     },
 
     methods:{
       addItem: function(){
-        this.newitem.price = this.newitem.quantity * this.newitem.unit_price
-        this.newitem.total = this.newitem.price * this.newitem.vat
+        this.newitem.price = Number.parseFloat(this.newitem.quantity * this.newitem.unit_price).toFixed(2)
+        this.newitem.total = Number.parseFloat(this.newitem.price * (1.00 + this.newitem.vat/100.00)).toFixed(2)
         let tmp = this.newitem
         this.invoice_items.push(tmp)
         this.newitem = {
           service_product:'',
               description: '',
               unit: '',
-              quantity: 0,
+              quantity: 1,
               unit_price: 0,
               price: 0,
               vat: 0,
               total:0
         }
+      }
+    },
+
+    computed: {
+      lineTotal() {
+        return Number.parseFloat(this.newitem.quantity * this.newitem.unit_price * (1.00 + this.newitem.vat / 100.00)).toFixed(2)
       }
     },
 
@@ -125,7 +175,7 @@ Vue.component("Invoices", {
         </b-form-group>
       
         <b-form-group :label='$t("invoices.currency")' label-for="invoice_currency" label-cols-sm="3">
-          <b-form-input id="invoice_currency" v-model="newdata.currency"></b-form-input>
+          <b-form-select id="invoice_currency" v-model="newdata.currency" :options="currency_list"></b-form-select>
         </b-form-group>
 
         <b-form-group :label='$t("invoices.exchange_rate")' label-for="invoice_exchange_rate" label-cols-sm="3">
@@ -182,13 +232,13 @@ Vue.component("Invoices", {
         <template #prepend>
          <b-input-group-text >{{$t("invoices.vat")}}</b-input-group-text>
          </template>
-        <b-form-input v-model="newitem.vat"></b-form-input>
+        <b-form-select v-model="newitem.vat" :options="vat_list"></b-form-select>
         </b-input-group>
         <b-input-group>
         <template #prepend>
          <b-input-group-text >{{$t("invoices.total")}}</b-input-group-text>
          </template>
-        <b-form-input v-model="newitem.total"></b-form-input>
+        <b-form-input v-model="lineTotal" plaintext='true'></b-form-input>
         </b-input-group>
 
         <b-button variant="primary" @click="addItem">Add</b-button>

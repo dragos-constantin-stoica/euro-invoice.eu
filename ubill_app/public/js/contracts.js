@@ -20,7 +20,7 @@ Vue.component("contracts", {
 		{ value: 'product', text: 'Products' },
 		{ value: 'mixed', text: 'Products & Services'}
       ],
-      contract_keys: [{ key: 'registration_number', label: 'Number' }, {key: 'start_date', label: 'Start'}  , { key: 'type', label: 'Type' }],
+      contract_fields: [{ key: 'registration_number', label: 'Number' }, {key: 'start_date', label: 'Start'}  , { key: 'type', label: 'Type' }],
       contract_items : [ ],
       show: true
     }
@@ -65,10 +65,9 @@ Vue.component("contracts", {
 			  })
 
 			  //Create a list with all contract of the slected company and client
-			  this.contract_items = []
-			  this.contract_data.map(item =>{
+			  this.contract_items = this.contract_data.map(item =>{
 			  	if(item.company_id == this.company._id && item.client_id == this.clients._id){
-			  		this.contract_items.push(item)
+			  		return item
 			  	}
 			  })		  
 	          
@@ -108,13 +107,13 @@ Vue.component("contracts", {
 		  		return tmp
 		  	}
 		  })
-		  this.clients = this.client_list[0].value
+		  this.clients = this.client_list[0].value || null
 
 		  //Create a list with all contract of the slected company and client
 		  this.contract_items = []
 		  this.contract_data.map(item =>{
 		  	if(item.company_id == this.company._id && item.client_id == this.clients._id){
-		  		 this.contact_items.push(item)
+		  		 this.contract_items.push(item)
 		  	}
 		  }) 		  
           

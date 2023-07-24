@@ -444,7 +444,7 @@ fastify.put('/contracts', async function(request, reply){
 	let result = {}
 	try{
 		console.log(request.body)
-		let credentials = request.body
+		let credentials = request.body.session
 		let theUser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
 		let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members ])]
 		result.companies = await getCompanies(company_list)

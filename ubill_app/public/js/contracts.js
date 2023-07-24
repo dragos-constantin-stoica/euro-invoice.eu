@@ -1,5 +1,5 @@
 Vue.component("contracts", {
-  data: function() {
+  data: function () {
     return {
       loading: true,
       company_data: null,
@@ -8,75 +8,75 @@ Vue.component("contracts", {
       company: null,
       clients: null,
       contracts: null,
-      newdata: { registration_number:'', type:'service', start_date:'', end_date:'', details:'' },
+      newdata: { registration_number: '', type: 'service', start_date: '', end_date: '', details: '' },
       company_list: [
         { value: null, text: 'Please select an option' }
       ],
       client_list: [
         { value: null, text: 'Please select an option' }
       ],
-      contract_type_list:[ 
-		{ value: 'service', text: 'Services' },
-		{ value: 'product', text: 'Products' },
-		{ value: 'mixed', text: 'Products & Services'}
+      contract_type_list: [
+        { value: 'service', text: 'Services' },
+        { value: 'product', text: 'Products' },
+        { value: 'mixed', text: 'Products & Services' }
       ],
-      contract_fields: [{ key: 'registration_number', label: 'Number' }, {key: 'start_date', label: 'Start'}  , { key: 'type', label: 'Type' }],
-      contract_items : [ ],
+      contract_fields: [{ key: 'registration_number', label: 'Number' }, { key: 'start_date', label: 'Start' }, { key: 'type', label: 'Type' }],
+      contract_items: [],
       show: true
     }
   },
 
   methods: {
-  	createContract: function(){
-  		let payload = {
-			company_id: this.company._id,
-			client_id: this.clients._id,
-			registration_number: this.newdata.registration_number,
-			type: this.newdata.type,
-			start_date: this.newdata.start_date,
-			end_date: this.newdata.end_date,
-			details: this.newdata.details  			
-  		}
-  		axios.post('/contracts', payload)
-  		  .then(response => {
-  		  	console.log(response.data)
-  		  	this.loading = true
-  		  	if (response.data.status == 'ok'){
-	          this.company_data = response.data.dataset.companies
-	          this.client_data = response.data.dataset.clients
-	          this.contract_data = response.data.dataset.contracts
-	          
-	          //Create a list with all companies
-	          this.company_list = this.company_data.map(item => {
-	            let tmp = {}
-	            tmp.value = item
-	            tmp.text = item.name
-	            return tmp
-	          })
+    createContract: function () {
+      let payload = {
+        company_id: this.company._id,
+        client_id: this.clients._id,
+        registration_number: this.newdata.registration_number,
+        type: this.newdata.type,
+        start_date: this.newdata.start_date,
+        end_date: this.newdata.end_date,
+        details: this.newdata.details
+      }
+      axios.post('/contracts', payload)
+        .then(response => {
+          console.log(response.data)
+          this.loading = true
+          if (response.data.status == 'ok') {
+            this.company_data = response.data.dataset.companies
+            this.client_data = response.data.dataset.clients
+            this.contract_data = response.data.dataset.contracts
 
-			  //Create a list with all clients of the selected company
-			  this.client_list=this.client_data.map(item => {
-			  	if (item.company_id == this.company._id){
-			  		let tmp = {}
-			  		tmp.value = item
-			  		tmp.text = item.name
-			  		return tmp
-			  	}
-			  })
+            //Create a list with all companies
+            this.company_list = this.company_data.map(item => {
+              let tmp = {}
+              tmp.value = item
+              tmp.text = item.name
+              return tmp
+            })
 
-			  //Create a list with all contract of the slected company and client
-			  this.contract_items = this.contract_data.map(item =>{
-			  	if(item.company_id == this.company._id && item.client_id == this.clients._id){
-			  		return item
-			  	}
-			  })		  
-	          
-	          this.newdata = { registration_number:'', type:'service', start_date:'', end_date:'', details:'' }
-	          this.loading = false
-  		  		
-  		  	}
-  		  })
-  	}
+            //Create a list with all clients of the selected company
+            this.client_list = this.client_data.map(item => {
+              if (item.company_id == this.company._id) {
+                let tmp = {}
+                tmp.value = item
+                tmp.text = item.name
+                return tmp
+              }
+            })
+
+            //Create a list with all contract of the slected company and client
+            this.contract_items = this.contract_data.map(item => {
+              if (item.company_id == this.company._id && item.client_id == this.clients._id) {
+                return item
+              }
+            })
+
+            this.newdata = { registration_number: '', type: 'service', start_date: '', end_date: '', details: '' }
+            this.loading = false
+
+          }
+        })
+    }
   },
 
   created() {
@@ -87,7 +87,7 @@ Vue.component("contracts", {
           this.company_data = response.data.dataset.companies
           this.client_data = response.data.dataset.clients
           this.contract_data = response.data.dataset.contracts
-          
+
           //Create a list with all companies
           this.company_list = this.company_data.map(item => {
             let tmp = {}
@@ -98,26 +98,26 @@ Vue.component("contracts", {
           //we select by default the 1st company
           this.company = this.company_list[0].value
 
-		  //Create a list with all clients of the selected company
-		  this.client_list=this.client_data.map(item => {
-		  	if (item.company_id == this.company._id){
-		  		let tmp = {}
-		  		tmp.value = item
-		  		tmp.text = item.name
-		  		return tmp
-		  	}
-		  })
-		  this.clients = this.client_list[0].value || null
+          //Create a list with all clients of the selected company
+          this.client_list = this.client_data.map(item => {
+            if (item.company_id == this.company._id) {
+              let tmp = {}
+              tmp.value = item
+              tmp.text = item.name
+              return tmp
+            }
+          })
+          this.clients = this.client_list[0].value || null
 
-		  //Create a list with all contract of the slected company and client
-		  this.contract_items = []
-		  this.contract_data.map(item =>{
-		  	if(item.company_id == this.company._id && item.client_id == this.clients._id){
-		  		 this.contract_items.push(item)
-		  	}
-		  }) 		  
-          
-          this.newdata = { registration_number:'', type:'service', start_date:'', end_date:'', details:'' }
+          //Create a list with all contract of the slected company and client
+          this.contract_items = []
+          this.contract_data.map(item => {
+            if (item.company_id == this.company._id && item.client_id == this.clients._id) {
+              this.contract_items.push(item)
+            }
+          })
+
+          this.newdata = { registration_number: '', type: 'service', start_date: '', end_date: '', details: '' }
           this.loading = false
         }
       })

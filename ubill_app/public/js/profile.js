@@ -1,5 +1,5 @@
 Vue.component("profile", {
-    data: function() {
+    data: function () {
         return {
             form: {
                 oldpassword: '',
@@ -11,7 +11,7 @@ Vue.component("profile", {
     },
 
     methods: {
-        changePassword: function() {
+        changePassword: function () {
             //TODO - check values for all fields/validate form before sending it to server
             //TODO - check password strength
             axios.post('/changepassword', this.form)

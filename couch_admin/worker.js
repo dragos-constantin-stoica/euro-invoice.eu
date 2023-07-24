@@ -436,14 +436,14 @@ fastify.post('/contracts', async function (request, reply){
 		reply.send({status: 'ok', message: 'Contracts data loaded', dataset: result})
 	}catch(err){
 		console.log(err)
-		reply.send({status: 'error', message: 'Contract fethc error.'})
+		reply.send({status: 'error', message: 'Contract fetch error.'})
 	}
 });
 
 fastify.put('/contracts', async function(request, reply){
 	let result = {}
 	try{
-		console.log(request.body)
+		//console.log(request.body)
 		let credentials = request.body.session
 		let theUser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
 		let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members ])]
@@ -451,14 +451,24 @@ fastify.put('/contracts', async function(request, reply){
 		result.clients = await getClients(company_list)
 		let tmp = await updateContracts(request.body)
 		result.contracts = await getContracts(company_list)		
-		console.log(result)
+		//console.log(result)
 		reply.send({status: 'ok', message: 'Contracts data loaded', dataset: result})
 	}catch(err){
 		console.log(err)
-		reply.send({status: 'error', message: 'Contract fethc error.'})
+		reply.send({status: 'error', message: 'Contract fetch error.'})
 	}
-	
 });
+
+fastify.put('/newinvoice', async function(request, reply){
+  let result = {}
+
+  try {
+    
+  } catch (err) {
+    console.log(err);
+    reply.send({status: 'error', message: 'New invoice fetch error'})
+  }
+})
 
 fastify.post('/register', async function (request, reply) {
   let result = []

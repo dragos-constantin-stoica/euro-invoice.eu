@@ -2,6 +2,9 @@ Vue.component("Invoices", {
     data() {
         return {
             loading: true,
+            company_data: null,
+            client_data: null,
+            contract_data: null,
             company:null,
             client: null,
             contract: null,
@@ -12,7 +15,7 @@ Vue.component("Invoices", {
               currency: 'EUR', 
               exchange_rate:1, 
               payment_instructions: '',
-              template: ''
+              template: 'EN'
             },
             newitem:{
               service_product:'',
@@ -82,7 +85,8 @@ Vue.component("Invoices", {
               { value:1, text:'Other' },
             ],
             template_list: [
-              { value: null, text: 'Please select an option' }
+              { value: 'EN', text: 'English Template' },
+              { value: 'RO', text: 'Romanian Template'}
             ],   
             invoice_fields: [ {key: 'service_product', label:'Item'}, 'price', 'total' ],    
             invoice_items:[ ],      
@@ -106,6 +110,59 @@ Vue.component("Invoices", {
               vat: 0,
               total:0
         }
+      },
+      generatePDF: function(){
+        let tmp = Handlebars.compile(templates[this.newdata.template])
+        //TODO - compile the full object with corresponding data
+        let payload = {
+          SERIA: "XXX",
+          NUMARUL: "000",
+          FURNIZOR: {
+            nume: this.company.name,
+            NORG: '0000',
+            CUI: 'RO1234',
+            adresa: this.company.address[0],
+            banca: this.company.bank_accounts[0].bank_name,
+            sucursala: 'none',
+            IBAN: this.company.bank_accounts[0].iban,
+          },
+          BENEFICIAR: {
+            nume: this.client.name,
+            NORG: this.client.national_registry_number,
+            CUI: 'LU0000',
+            adresa: this.client.address[0],
+            banca: this.client.bank_accounts[0].bank_name,
+            sucursala: 'none',
+            IBAN: this.client.bank_accounts[0].iban
+          },
+          TVA: 19.00,
+          INVOICE_DATE: "01.10.2023",
+          DUE_DATE: "01.11.2023",
+          CURS_BNR: {
+              data: "01.10.2023",
+              eur_ron: 4.98
+          },
+          INVOICE_LINE: [
+              {
+                details: 'Sevicii IT',
+                um: 'm2',
+                qty: '22',
+                up: '12,33',
+                line_value: 22*12.33,
+                line_tva: 22*12.33*0.19
+              }
+          ],
+          INVOICE_SUM: 1234.9945,
+          INVOICE_TVA_SUM: 11.998,
+          INVOICE_TOTAL: 11223344.9876
+      }
+        let PDF_DOC = JSON.parse(tmp(payload))
+        pdfMake.createPdf(PDF_DOC).getDataUrl(function(outDoc) {
+          let pdfdoc0 = document.getElementById("pdfdocobj"), 
+          pdfdoc1 = document.getElementById("pdfdocif")
+          pdfdoc0.data = outDoc
+          pdfdoc1.src = outDoc
+        });
       }
     },
 
@@ -116,11 +173,15 @@ Vue.component("Invoices", {
     },
 
     created() {
-      axios.get('/companies')
+      axios.get('/contracts')
       .then(response => {
         console.log(response.data)
         if (response.data.status == 'ok') {
-          this.company_list = response.data.dataset.map(item => {
+          this.company_data = response.data.dataset.companies
+          this.client_data = response.data.dataset.clients
+          this.contract_data = response.data.dataset.contracts
+
+          this.company_list = this.company_data.map(item => {
             let tmp = {}
             tmp.value = item
             tmp.text = item.name
@@ -128,6 +189,29 @@ Vue.component("Invoices", {
           })
           //we select by default the 1st company
           this.company = this.company_list[0].value
+
+          //Create a list with all clients of the selected company
+          this.client_list = this.client_data.map(item => {
+            if (item.company_id == this.company._id) {
+              let tmp = {}
+              tmp.value = item
+              tmp.text = item.name
+              return tmp
+            }
+          })
+          this.client = this.client_list[0].value
+
+          //Create a list with all contract of the slected company and client
+          this.contract_list = this.contract_data.map(item => {
+            if (item.company_id == this.company._id && item.client_id == this.client._id) {
+              return {
+                value: item,
+                text: item.registration_number
+              }
+            }
+          })
+          this.contract = this.contract_list[0].value
+          //TODO - Get the next invoice number
           this.company.invoice_number = 0
           this.loading = false
         }
@@ -246,7 +330,14 @@ Vue.component("Invoices", {
 
       </b-card-text>
 
-      
+      <div class="embed-responsive embed-responsive-4by3">
+        <object class="embed-responsive-item" id='pdfdocobj' data='' type="application/pdf" width="100%">
+        <iframe id="pdfdocif" src="" width="100%" class="embed-responsive-item"  style="border: none;">
+        This browser does not support PDFs. 
+        </iframe>
+        </object>
+      </div>
+      <b-button variant="warning" @click="generatePDF">Preview</b-button>
     </b-card>
     </div>
 	`

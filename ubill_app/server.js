@@ -232,6 +232,20 @@ app.post('/contracts', isAuthenticated, async function(req, res, next){
 	}
 })
 
+app.post('/newinvoice', isAuthenticated, async function(req, res, next) {
+  try {
+		var result = await axios.post(`${COUCH_ADMIN_URL}/newinvoice`, {session: req.session.data, data: req.body})
+		res.json({
+			status: result.data.status,
+			message: result.data.message,
+			dataset: result.data.dataset
+		})    
+  } catch (error) {
+    console.log(error);
+    res.json({status: 'error', message: 'New invoice fetch error.'})
+  }
+})
+
 app.get('/version', function (req, res) {
   res.json({ application: APPLICATION, version: VERSION })
 })

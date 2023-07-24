@@ -1,5 +1,5 @@
 Vue.component("privateHeader", {
-	data() {
+	data: function() {
 		return {
 			locales: ['gb', 'fr', 'ro'],
 			show: true,

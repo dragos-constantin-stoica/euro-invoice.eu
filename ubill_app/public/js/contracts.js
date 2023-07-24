@@ -1,27 +1,96 @@
 Vue.component("contracts", {
-  data() {
+  data: function() {
     return {
       loading: true,
+      company_data: null,
+      client_data: null,
+      contract_data: null,
       company: null,
       clients: null,
       contracts: null,
-      newdata: { registration_number:'', type:'', start_date:'', end_date:'', details:'' },
+      newdata: { registration_number:'', type:'service', start_date:'', end_date:'', details:'' },
       company_list: [
         { value: null, text: 'Please select an option' }
       ],
       client_list: [
         { value: null, text: 'Please select an option' }
       ],
+      contract_type_list:[ 
+		{ value: 'service', text: 'Services' },
+		{ value: 'product', text: 'Products' },
+		{ value: 'mixed', text: 'Products & Services'}
+      ],
+      contract_keys: [{ key: 'registration_number', label: 'Number' }, {key: 'start_date', label: 'Start'}  , { key: 'type', label: 'Type' }],
+      contract_items : [ ],
       show: true
     }
   },
 
+  methods: {
+  	createContract: function(){
+  		let payload = {
+			company_id: this.company._id,
+			client_id: this.clients._id,
+			registration_number: this.newdata.registration_number,
+			type: this.newdata.type,
+			start_date: this.newdata.start_date,
+			end_date: this.newdata.end_date,
+			details: this.newdata.details  			
+  		}
+  		axios.post('/contracts', payload)
+  		  .then(response => {
+  		  	console.log(response.data)
+  		  	this.loading = true
+  		  	if (response.data.status == 'ok'){
+	          this.company_data = response.data.dataset.companies
+	          this.client_data = response.data.dataset.clients
+	          this.contract_data = response.data.dataset.contracts
+	          
+	          //Create a list with all companies
+	          this.company_list = this.company_data.map(item => {
+	            let tmp = {}
+	            tmp.value = item
+	            tmp.text = item.name
+	            return tmp
+	          })
+
+			  //Create a list with all clients of the selected company
+			  this.client_list=this.client_data.map(item => {
+			  	if (item.company_id == this.company._id){
+			  		let tmp = {}
+			  		tmp.value = item
+			  		tmp.text = item.name
+			  		return tmp
+			  	}
+			  })
+
+			  //Create a list with all contract of the slected company and client
+			  this.contract_items = []
+			  this.contract_data.map(item =>{
+			  	if(item.company_id == this.company._id && item.client_id == this.clients._id){
+			  		this.contract_items.push(item)
+			  	}
+			  })		  
+	          
+	          this.newdata = { registration_number:'', type:'service', start_date:'', end_date:'', details:'' }
+	          this.loading = false
+  		  		
+  		  	}
+  		  })
+  	}
+  },
+
   created() {
-    axios.get('/companies')
+    axios.get('/contracts')
       .then(response => {
         console.log(response.data)
-        if (response.data.status = 'ok') {
-          this.company_list = response.data.dataset.map(item => {
+        if (response.data.status == 'ok') {
+          this.company_data = response.data.dataset.companies
+          this.client_data = response.data.dataset.clients
+          this.contract_data = response.data.dataset.contracts
+          
+          //Create a list with all companies
+          this.company_list = this.company_data.map(item => {
             let tmp = {}
             tmp.value = item
             tmp.text = item.name
@@ -29,8 +98,27 @@ Vue.component("contracts", {
           })
           //we select by default the 1st company
           this.company = this.company_list[0].value
-          this.clients = null
-          this.contracts = null
+
+		  //Create a list with all clients of the selected company
+		  this.client_list=this.client_data.map(item => {
+		  	if (item.company_id == this.company._id){
+		  		let tmp = {}
+		  		tmp.value = item
+		  		tmp.text = item.name
+		  		return tmp
+		  	}
+		  })
+		  this.clients = this.client_list[0].value
+
+		  //Create a list with all contract of the slected company and client
+		  this.contract_items = []
+		  this.contract_data.map(item =>{
+		  	if(item.company_id == this.company._id && item.client_id == this.clients._id){
+		  		 this.contact_items.push(item)
+		  	}
+		  }) 		  
+          
+          this.newdata = { registration_number:'', type:'service', start_date:'', end_date:'', details:'' }
           this.loading = false
         }
       })
@@ -44,26 +132,31 @@ Vue.component("contracts", {
     <div v-else>
  
     <b-card title="Contracts" sub-title="Manage B2B Contracts">
-      <b-card-text>
+       <b-card-text>
         <b-form-select id="company" v-model="company" :options="company_list"></b-form-select>
         <b-form-text id="company-help">Select one of the companies from the list.</b-form-text>
         <b-form-select id="client" v-model="clients" :options="client_list"></b-form-select>
         <b-form-text id="client-help">Select one of the Clients from the list.</b-form-text>
-      </b-card-text>
-    
-      <b-card-text>
-        Display the list of existing contracts 
-      </b-card-text>
 
-      <b-card-text>
-      Create new Contract
+        <div>
+          <b-table responsive :items="contract_items" :fields="contract_fields" caption-top>
+          <template #table-caption>Contracts</template>
+          </b-table>
+        </div>
+      </b-card-text>
+    </b-card>
+
+    <b-card title="Manage Contracts" head-tag="header" footer-tag="footer">      
+  	  <template #header>
+        <h6 class="mb-0">Add new Contract</h6>
+      </template>    
 
       <b-form-group :label='$t("contracts.registration_number")' label-for="contracts_registration_number" label-cols-sm="3">
         <b-form-input id="contacts_registration_number" v-model="newdata.registration_number"></b-form-input>
       </b-form-group>
 
       <b-form-group :label='$t("contracts.type")' label-for="contracts_type" label-cols-sm="3">
-        <b-form-input id="contacts_type" v-model="newdata.type"></b-form-input>
+        <b-form-select id="contacts_type" v-model="newdata.type" :options="contract_type_list"></b-form-select>
       </b-form-group>
 
       <b-form-group :label='$t("contracts.start_date")' label-for="contracts_start_date" label-cols-sm="3">
@@ -77,7 +170,10 @@ Vue.component("contracts", {
       <b-form-group :label='$t("contracts.details")' label-for="contracts_details" label-cols-sm="3">
         <b-form-textarea id="contacts_details" v-model="newdata.details" rows="3"></b-form-textarea>
       </b-form-group>
-      </b-card-text>
+
+      <template #footer>
+		<b-button variant="success" @click="createContract">Save</b-button>
+      </template>
 
     </b-card>
     </div>

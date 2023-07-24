@@ -1,9 +1,4 @@
-// CommonJS
-const fastify = require('fastify')({ logger: true })
-// require the module
-var hashes = require('jshashes')
-var RMD160 = new hashes.RMD160;
-
+//CONTATNTS Section
 const WRK_PORT = process.env.WRK_PORT || 8090,
   WRK_HOST = process.env.WRK_HOST || '0.0.0.0',
   COUCHDB_USER = process.env.COUCHDB_USER,
@@ -12,11 +7,22 @@ const WRK_PORT = process.env.WRK_PORT || 8090,
   APP_PASSWORD = process.env.APP_PASSWORD,
   COUCHDB_USER_NAMESPACE = 'org.couchdb.user';
 
-//CouchDB user management part
+// CommonJS
+const fastify = require('fastify')({ logger: true })
+// require the module
+var hashes = require('jshashes')
+var RMD160 = new hashes.RMD160;
+//CouchDB management part
 const nano = require('nano')({
   url: `http://${encodeURIComponent(COUCHDB_USER)}:${encodeURIComponent(COUCHDB_PASSWORD)}@couch:5984`,
   log: console.log,
 });
+
+/* 
+   -----------------------------
+   End of initialization section
+   -----------------------------
+*/
 
 //Cleanup in case of failure. The Company may be created an the user not
 async function cleanupCompany(newCompany) {
@@ -207,6 +213,7 @@ async function getServicesProducts(company_list) {
 
 async function updateServicesProducts(payload) {
   let result = []
+  //TODO - Implement upsert
   try {
     let company = await nano.use(`c${payload.data.company_id}`)
     let doc = payload.data
@@ -216,6 +223,36 @@ async function updateServicesProducts(payload) {
     console.log(error)
   }
   return result
+}
+
+async function getClients(company_list) {
+	let result = []
+	  const mango_query = { selector: { doctype: "client" }, fields: ["_id", "company_id",  "name", "country", "national_registration_number", "invoice_format", "vat", "bank_accounts", "address", "email"], use_index: "doctype_idx" }
+	  await Promise.all(company_list.map(async (item) => {
+	    try {
+	      let tmp = nano.use(`c${item}`)
+	      let q = await tmp.find(mango_query)
+	      result = result.concat(...q.docs)
+	    } catch (err) {
+	      console.log(err)
+	    }
+	  }));
+	return result
+}
+
+async function updateClients(payload){
+	let result = []
+	//TODO - Detect if it needs to create new company too
+	//TODO - Implement upsert
+    try {
+      let company = await nano.use(`c${payload.data.company_id}`)
+      let doc = payload.data
+      doc.doctype = "client"
+      let result = await company.insert(doc)
+    } catch (error) {
+      console.log(error)
+    }
+	return result
 }
 
 async function getCompanies(company_list) {
@@ -247,6 +284,36 @@ async function updateCompany(company_data) {
     console.log(err)
   }
   return result
+}
+
+async function getContracts(company_list){
+  let result = []
+  const mango_query = { selector: { doctype: "contract" }, fields: ["_id", "company_id", "client_id", "registration_number", "type", "start_date", "end_date", "details"], use_index: "doctype_idx" }
+  await Promise.all(company_list.map(async (item) => {
+    try {
+      let tmp = nano.use(`c${item}`)
+      let q = await tmp.find(mango_query)
+      result = result.concat(...q.docs)
+    } catch (err) {
+      console.log(err)
+    }
+  }));
+  return result	
+}
+
+async function updateContracts(payload){
+	let result = []
+	//TODO - Detect if it needs to create new company too
+	//TODO - Implement upsert
+    try {
+      let company = await nano.use(`c${payload.data.company_id}`)
+      let doc = payload.data
+      doc.doctype = "contract"
+      let result = await company.insert(doc)
+    } catch (error) {
+      console.log(error)
+    }
+	return result	
 }
 
 fastify.post('/companies', async function (request, reply) {
@@ -293,7 +360,7 @@ fastify.post('/servicesproducts', async function (request, reply) {
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result.companies = await getCompanies(company_list)
     result.servicesproducts = await getServicesProducts(company_list)
-    console.log(result)
+    //console.log(result)
     reply.send({ status: 'ok', message: 'Service-Product data loaded.', dataset: result })
   } catch (err) {
     console.log(err)
@@ -304,20 +371,94 @@ fastify.post('/servicesproducts', async function (request, reply) {
 fastify.put('/servicesproducts', async function (request, reply) {
   let result = {}
   try {
-    console.log(request.body)
+    //console.log(request.body)
     let credentials = request.body.session
     let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result.companies = await getCompanies(company_list)
     let tmp = await updateServicesProducts(request.body)
     result.servicesproducts = await getServicesProducts(company_list)
-    console.log(result)
-    reply.send({ status: 'ok', message: 'Service-Product data loaded.', dataset: result })
+    //console.log(result)
+    reply.send({ status: 'ok', message: 'Service-Product data saved.', dataset: result })
   } catch (err) {
     console.log(err);
     reply.send({ status: 'error', message: 'Service-Product update error.' })
   }
-})
+});
+
+fastify.post('/clients', async function (request, reply){
+	let result = {}
+	try{
+		//console.log(request.body)
+		let credentials = request.body
+		let theUser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+		let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members ])]
+		result.companies = await getCompanies(company_list)
+		result.clients = await getClients(company_list)
+		console.log(result)
+		reply.send({status: 'ok', message: 'Clients data loaded', dataset: result})
+	}catch(err){
+		console.log(err)
+		reply.send({status: 'error', message: 'Client fetch error.'})
+	}
+});
+
+fastify.put('/clients', async function(request, reply){
+	let result = {}
+	try{
+		console.log(request.body)
+		let credentials = request.body.session
+	    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
+    	let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
+    	result.companies = await getCompanies(company_list)
+    	let tmp = await updateClients(request.body)
+		result.clients = await getClients(company_list)
+		console.log(result)
+		reply.send({status:'ok', message: 'Client data saved', dataset: result})
+	}catch(err){
+		console.log(err)
+		reply.send({status: 'error', message: 'Client update error'})
+	}
+});
+
+
+fastify.post('/contracts', async function (request, reply){
+	let result = {}
+	try{
+		console.log(request.body)
+		let credentials = request.body
+		let theUser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+		let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members ])]
+		result.companies = await getCompanies(company_list)
+		result.clients = await getClients(company_list)
+		result.contracts = await getContracts(company_list)		
+		console.log(result)
+		reply.send({status: 'ok', message: 'Contracts data loaded', dataset: result})
+	}catch(err){
+		console.log(err)
+		reply.send({status: 'error', message: 'Contract fethc error.'})
+	}
+});
+
+fastify.put('/contracts', async function(request, reply){
+	let result = {}
+	try{
+		console.log(request.body)
+		let credentials = request.body
+		let theUser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+		let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members ])]
+		result.companies = await getCompanies(company_list)
+		result.clients = await getClients(company_list)
+		let tmp = await updateContracts(request.body)
+		result.contracts = await getContracts(company_list)		
+		console.log(result)
+		reply.send({status: 'ok', message: 'Contracts data loaded', dataset: result})
+	}catch(err){
+		console.log(err)
+		reply.send({status: 'error', message: 'Contract fethc error.'})
+	}
+	
+});
 
 fastify.post('/register', async function (request, reply) {
   let result = []

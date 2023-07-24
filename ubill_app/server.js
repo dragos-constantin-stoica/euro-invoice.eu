@@ -92,7 +92,7 @@ app.post('/changepassword', isAuthenticated, async function(req, res, next){
     });
    }catch(err){
     console.log(err)
-    res.json({status:'error', error: 'Something went South v'})
+    res.json({status:'error', error: 'Password update error.'})
    }
 })
 
@@ -111,7 +111,7 @@ app.get('/companies', isAuthenticated, async function(req, res, next){
      })
   }catch(err){
     console.log(err)
-    res.json({status: 'error', error: 'Something went North ^'})
+    res.json({status: 'error', error: 'Companies fetch error.'})
   }
 })
 
@@ -126,13 +126,13 @@ app.put('/companies', isAuthenticated, async function(req, res, next){
 		//we should receive one single company at a time
 		var result = await axios.put(`${COUCH_ADMIN_URL}/companies`, {username: req.session.user, data: req.body})
 		res.json({
-			stautus: result.data.status,
+			status: result.data.status,
 			message: result.data.message,
 			dataset: result.data.dataset
 		})
 	}catch(err){
 		console.log(err)
-		res.json({status: 'error', error: 'Something went Far North ´`'})
+		res.json({status: 'error', error: 'Company update error.'})
 	}
 })
 
@@ -141,13 +141,13 @@ app.get('/servicesproducts', isAuthenticated, async function(req, res, next){
 		var result = await axios.post(`${COUCH_ADMIN_URL}/servicesproducts`, {username: req.session.user, data: req.session.data})
 		//console.log(result.data.dataset)
 		res.json({
-			stautus: result.data.status,
+			status: result.data.status,
 			message: result.data.message,
 			dataset: result.data.dataset
 		})
 	}catch(err){
 		console.log(err)
-		res.json({status:'error', error:'Something went Far West >>'})
+		res.json({status:'error', error:'Services and Products fetch error.'})
 	}
 })
 
@@ -158,7 +158,7 @@ app.post('/servicesproducts', isAuthenticated, async function(req, res, next){
     if (req.session.data.companies.admin.indexOf(req.body.company_id) != -1){
       var result = await axios.put(`${COUCH_ADMIN_URL}/servicesproducts`, {session: req.session.data , data: req.body})
       res.json({
-        stautus: result.data.status,
+        status: result.data.status,
         message: result.data.message,
         dataset: result.data.dataset
       })
@@ -167,8 +167,69 @@ app.post('/servicesproducts', isAuthenticated, async function(req, res, next){
     }
   } catch (err) {
     console.log(err);
-    res.json({status: 'error', error: 'Somthing went Far South vv'})
+    res.json({status: 'error', error: 'Services and Products update error.'})
   }
+})
+
+app.get('/clients', isAuthenticated, async function(req, res, next){
+	try{
+		var result = await axios.post(`${COUCH_ADMIN_URL}/clients`, {username: req.session.user, data: req.session.data})
+		res.json({
+			status: result.data.status,
+			message: result.data.message,
+			dataset: result.data.dataset
+		})
+	}catch(err){
+		console.log(err)
+		res.json({status: 'error', error: 'Clients fetch error.'})
+	}
+})
+
+app.post('/clients', isAuthenticated, async function(req, res, next){
+	try{
+	 if(req.session.data.companies.admin.indexOf(req.body.company_id) != -1){
+		var result = await axios.put(`${COUCH_ADMIN_URL}/clients`, {session: req.session.data, data: req.body})
+		res.json({
+			status: result.data.status,
+			message: result.data.message,
+			dataset: result.data.dataset
+		})
+	 }else{
+	 	res.json({status: 'error', error: 'You do not have the right to administer this company.'})
+	 }
+	}catch(err){
+		console.log(err)
+		res.json({status: 'error', error: 'Clients update error.'})
+	}
+})
+
+
+app.get('/contracts', isAuthenticated, async function(req, res, next){
+	try{
+		var result = await axios.post(`${COUCH_ADMIN_URL}/contracts`, {username: req.session.user, data: req.session.data})
+		res.json({
+			status: result.data.status,
+			message: result.data.message,
+			dataset: result.data.dataset
+		})
+	}catch(err){
+		console.log(err)
+		res.json({status: 'error', error: 'Contracts fetch error.'})
+	}
+})
+
+app.post('/contracts', isAuthenticated, async function(req, res, next){
+	try{
+		var result = await axios.put(`${COUCH_ADMIN_URL}/contracts`, {session: req.session.data, data: req.body})
+		res.json({
+			status: result.data.status,
+			message: result.data.message,
+			dataset: result.data.dataset
+		})
+	}catch(err){
+		console.log(err)
+		res.json({status: 'error', message: 'Contract updated error.'})
+	}
 })
 
 app.get('/version', function (req, res) {

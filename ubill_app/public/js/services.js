@@ -1,5 +1,5 @@
 Vue.component("services", {
-  data() {
+  data: function() {
     return {
       loading: true,
       company: null,
@@ -126,7 +126,7 @@ Vue.component("services", {
     axios.get('/servicesproducts')
       .then(response => {
         console.log(response.data)
-        if (response.data.status = 'ok') {
+        if (response.data.status == 'ok') {
           this.company_list = response.data.dataset.companies.map(item => {
             let tmp = {}
             tmp.value = item

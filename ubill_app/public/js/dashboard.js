@@ -15,7 +15,7 @@ Vue.component("dashboard", {
       .get('/companies')
       .then(response => {
         console.log(response.data)
-        if (response.data.status = 'ok') {
+        if (response.data.status == 'ok') {
           this.company_list = response.data.dataset.map(item => {
             let tmp = {}
             tmp.value = item

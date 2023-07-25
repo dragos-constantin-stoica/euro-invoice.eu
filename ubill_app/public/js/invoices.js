@@ -112,9 +112,11 @@ Vue.component("Invoices", {
         }
       },
       generatePDF: function(){
-        let tmp = Handlebars.compile(templates[this.newdata.template])
+        let draft = templates[this.newdata.template]
+        let tmp = Handlebars.compile(draft)
         //TODO - compile the full object with corresponding data
         let payload = {
+          DRAFT: true,
           SERIA: "XXX",
           NUMARUL: "000",
           FURNIZOR: {
@@ -157,12 +159,7 @@ Vue.component("Invoices", {
           INVOICE_TOTAL: 11223344.9876
       }
         let PDF_DOC = JSON.parse(tmp(payload))
-        pdfMake.createPdf(PDF_DOC).getDataUrl(function(outDoc) {
-          let pdfdoc0 = document.getElementById("pdfdocobj"), 
-          pdfdoc1 = document.getElementById("pdfdocif")
-          pdfdoc0.data = outDoc
-          pdfdoc1.src = outDoc
-        });
+        pdfMake.createPdf(PDF_DOC).open();
       }
     },
 
@@ -330,14 +327,8 @@ Vue.component("Invoices", {
 
       </b-card-text>
 
-      <div class="embed-responsive embed-responsive-4by3">
-        <object class="embed-responsive-item" id='pdfdocobj' data='' type="application/pdf" width="100%">
-        <iframe id="pdfdocif" src="" width="100%" class="embed-responsive-item"  style="border: none;">
-        This browser does not support PDFs. 
-        </iframe>
-        </object>
-      </div>
       <b-button variant="warning" @click="generatePDF">Preview</b-button>
+	  
     </b-card>
     </div>
 	`

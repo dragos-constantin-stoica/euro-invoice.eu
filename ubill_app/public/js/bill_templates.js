@@ -9,6 +9,9 @@ const templates = {
         "pageSize": "A4",
         "pageOrientation": "portrait",
         "pageMargins": [40, 60],
+        {{#if DRAFT}}
+        "watermark": { "text": "DARFT", "color": "purple", "opacity": 0.2, "angle": -60 },
+        {{/if}}
 
         "content": [
             {
@@ -208,6 +211,10 @@ const templates = {
         "pageSize": "A4",
         "pageOrientation": "portrait",
         "pageMargins": [40, 60],
+
+        {{#if DRAFT}}
+        "watermark": { "text": "DARFT", "color": "purple", "opacity": 0.2, "angle": -60 },
+        {{/if}}
 
         "content": [
             {

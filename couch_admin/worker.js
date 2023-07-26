@@ -1,4 +1,4 @@
-//CONTATNTS Section
+//CONSTANTS Section
 const WRK_PORT = process.env.WRK_PORT || 8090,
   WRK_HOST = process.env.WRK_HOST || '0.0.0.0',
   COUCHDB_USER = process.env.COUCHDB_USER,

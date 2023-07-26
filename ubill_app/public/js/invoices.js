@@ -86,7 +86,9 @@ Vue.component("Invoices", {
             ],
             template_list: [
               { value: 'EN', text: 'English Template' },
-              { value: 'RO', text: 'Romanian Template'}
+              { value: 'RO', text: 'Romanian Template'},
+              { value: 'DS0', text: 'DataStema EN-RO'},
+              { value: 'DS1', text: 'DataStema EN'}
             ],   
             invoice_fields: [ {key: 'service_product', label:'Item'}, 'price', 'total' ],    
             invoice_items:[ ],      
@@ -117,46 +119,53 @@ Vue.component("Invoices", {
         //TODO - compile the full object with corresponding data
         let payload = {
           DRAFT: true,
-          SERIA: "XXX",
-          NUMARUL: "000",
-          FURNIZOR: {
-            nume: this.company.name,
-            NORG: '0000',
-            CUI: 'RO1234',
-            adresa: this.company.address[0],
-            banca: this.company.bank_accounts[0].bank_name,
-            sucursala: 'none',
-            IBAN: this.company.bank_accounts[0].iban,
+          INVOICE_NUMBER: "2023.01/##",
+		  INVOICE_DETAILS: "some payment instructions",
+          INVOICE_DATE: this.newdata.issue_date,
+          INVOICE_DUE_DATE: this.newdata.due_date,
+          INVOICE_DUE_TERM: "someday over the rainbow",
+          VAT: 16.00,
+          SUPPLIER: {
+            name: this.company.name,
+            NRNo: this.company.national_registration_number,
+            vat: this.company.vat,
+            address: this.company.address[0],
+            bank_name: this.company.bank_accounts[0].bank_name,
+            bank_iban: this.company.bank_accounts[0].iban,
+            bank_swift: this.company.bank_accounts[0].swift,
+            bank_bic: this.company.bank_accounts[0].bic,
+            mobile: '+0123456789',
+            contact: 'contact@acme.com'
           },
-          BENEFICIAR: {
-            nume: this.client.name,
-            NORG: this.client.national_registry_number,
-            CUI: 'LU0000',
-            adresa: this.client.address[0],
-            banca: this.client.bank_accounts[0].bank_name,
-            sucursala: 'none',
-            IBAN: this.client.bank_accounts[0].iban
+          CUSTOMER: {
+            name: this.client.name,
+            NRNo: this.client.national_registration_number,
+            vat: this.client.vat,
+            address: this.client.address[0],
+            bank_name: this.client.bank_accounts[0].bank_name,
+            bank_iban: this.client.bank_accounts[0].iban,
+            bank_swift: this.client.bank_accounts[0].swift,
+            bank_bic:   this.client.bank_accounts[0].bic,
+            contact: 'contact@aol.com'
           },
-          TVA: 19.00,
-          INVOICE_DATE: "01.10.2023",
-          DUE_DATE: "01.11.2023",
-          CURS_BNR: {
-              data: "01.10.2023",
-              eur_ron: 4.98
+          EXCHANGE_RATE: {
+              "from": "EUR",
+              to: "RON",
+              conversion_rate: 4.9889
           },
           INVOICE_LINE: [
               {
                 details: 'Sevicii IT',
-                um: 'm2',
-                qty: '22',
-                up: '12,33',
-                line_value: 22*12.33,
-                line_tva: 22*12.33*0.19
+                um: 'days',
+                qty: '20',
+                up: '500',
+                line_value: 20*500,
+                line_vat: 20*500*0.16
               }
           ],
-          INVOICE_SUM: 1234.9945,
-          INVOICE_TVA_SUM: 11.998,
-          INVOICE_TOTAL: 11223344.9876
+          INVOICE_SUM: 20*500,
+          INVOICE_VAT_SUM: 20*500*0.16,
+          INVOICE_TOTAL: 20*500*1.16
       }
         let PDF_DOC = JSON.parse(tmp(payload))
         pdfMake.createPdf(PDF_DOC).open();

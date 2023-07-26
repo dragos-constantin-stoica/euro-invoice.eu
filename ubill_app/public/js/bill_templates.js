@@ -526,7 +526,7 @@ const templates = {
                             "text": [
                                 { "text": "INVOICE", "style": "header" },
                                 "\\nInvoice No.: ",
-                                { "text": "{{INVOICE_NUMBER}", "fontSize": 13, "bold": true },
+                                { "text": "{{INVOICE_NUMBER}}", "fontSize": 13, "bold": true },
                                 { "text": "\\nDate (day/month/year): {{INVOICE_DATE}}" },
                                 { "text": "\\nVAT: {{VAT}}%" }
                             ],
@@ -551,7 +551,7 @@ const templates = {
                                 "Nat. Reg. No.: {{NRNo}}\\n",
                                 "VAT Code: {{vat}}\\n",
                                 "Address:\\n{{normalized_address address}}\\n",
-                                "IBAN (IBAN): {{bank_iban}\\n",
+                                "IBAN (IBAN): {{bank_iban}}\\n",
                                 "Bank (Banca): {{bank_name}}\\n",
                                 "BIC: {{bank_bic}}\\n",
                                 "Contact: {{contact}}"
@@ -603,7 +603,7 @@ const templates = {
                                 {"text":"5 (3x4)", "style":"tableHeader"},
                                 {"text":"6 (5xTVA)", "style":"tableHeader"}
                             ],
-                            {{@each INVOICE_LINE}}
+                            {{#each INVOICE_LINE}}
                             [
                                 {"text": {{addOne @index}}, "alignment":"center"}, 
                                 {"text":"{{this.details}}"},

@@ -86,7 +86,7 @@ const templates = {
                     { "width": "50%", "text": "TVA = {{VAT}}%" },
                     {
                         "width": "50%",
-                        "text": "Curs valutar din {{INVOICE_DATE}}: 1{{EXCHANGE_RATE.from}} = {{EXCHANGE_RATE.conversion_rate}}{{EXCHANGE_RATE.to}}",
+                        "text": "Curs valutar din {{INVOICE_DATE}}: 1 {{EXCHANGE_RATE.from}} = {{EXCHANGE_RATE.conversion_rate}} {{EXCHANGE_RATE.to}}",
                         "alignment": "right"
                     }
                 ]
@@ -117,12 +117,12 @@ const templates = {
                         {{#each INVOICE_LINE}}
                         [
                             {"text": {{addOne @index}}, "alignment":"center"}, 
-                            {"text":"{{this.details}}"},
-                            {"text":"{{this.um}}", "alignment":"center"},
-                            {"text":"{{this.qty}}", "alignment":"center"},
-                            {"text":"{{this.up}}", "alignment":"right"},
-                            {"text":"{{toDecimals this.line_value}}", "alignment":"right"},
-                            {"text":"{{toDecimals this.line_vat}}", "alignment":"right"}
+                            {"text":"{{this.service_product}} {{this.description}}"},
+                            {"text":"{{this.unit}}", "alignment":"center"},
+                            {"text":"{{this.quantity}}", "alignment":"center"},
+                            {"text":"{{this.unit_price}}", "alignment":"right"},
+                            {"text":"{{toDecimals this.unit_price this.quantity}}", "alignment":"right"},
+                            {"text":"{{toDecimals this.unit_price this.quantity this.vat 0.01}}", "alignment":"right"}
                         ],
                         {{/each}}
                         [
@@ -206,7 +206,7 @@ const templates = {
                 "columns": [
                     {
                         "width":80,
-                        "text": "Put the logo here"
+                        "text": "[=> YOUR logo here <=]"
                     },
                     {
                         "width": "80%",
@@ -247,7 +247,7 @@ const templates = {
                             "BILL TO:\\n",
                             {{#with CUSTOMER}}
                             { "text": "{{name}}\\n", "bold": true },
-                            "VAT N°: {{VAT}}\\n",
+                            "VAT N°: {{vat}}\\n",
                             "Address: {{normalized_address address}}\\n"
                             {{/with}}
                         ]
@@ -262,7 +262,7 @@ const templates = {
                             "body": [
                                 [{ "text": "Invoice: {{INVOICE_NUMBER}}", "style": "tableCell" }],
                                 [{ "text": "Invoice date: {{INVOICE_DATE}}", "style": "tableCell" }],
-                                [{ "text": "VAT: {{vat}}%", "style": "tableCell" }]
+                                [{ "text": "VAT: {{VAT}}%", "style": "tableCell" }]
                             ],
                             "widths": [180]
                         }
@@ -295,11 +295,11 @@ const templates = {
                         {{#each INVOICE_LINE}}
                         [
                             { "text": {{addOne @index}}, "alignment": "center" },
-                            { "text": "{{this.details}}" },
-                            { "text": "{{this.um}}", "alignment": "center" },
-                            { "text": "{{this.qty}}", "alignment": "right" },
-                            { "text": "{{this.up}}", "alignment": "right" },
-                            { "text": "{{toDecimals this.line_value}}", "alignment": "right" }
+                            { "text": "{{this.service_product}} {{this.description}}" },
+                            { "text": "{{this.unit}}", "alignment": "center" },
+                            { "text": "{{this.quantity}}", "alignment": "right" },
+                            { "text": "{{this.unit_price}}", "alignment": "right" },
+                            { "text": "{{toDecimals this.unit_price this.quantity}}", "alignment": "right" }
                         ],
                         {{/each}}
                         [
@@ -437,12 +437,12 @@ const templates = {
                            {{#each INVOICE_LINE}}
                            [
                                {"text": "{{addOne @index}}", "alignment":"center"}, 
-                               {"text":"{{this.details}}"},
-                               {"text":"{{this.um}}", "alignment":"center"},
-                               {"text":"{{this.qty}}", "alignment":"center"},
-                               {"text":"{{this.up}}", "alignment":"right"},
-                               {"text":"{{toDecimals this.line_value}}", "alignment":"right"},
-                               {"text":"{{toDecimals this.line_vat}}", "alignment":"right"}
+                               {"text":"{{this.service_product}} {{this.description}}"},
+                               {"text":"{{this.unit}}", "alignment":"center"},
+                               {"text":"{{this.quantity}}", "alignment":"center"},
+                               {"text":"{{this.unit_price}}", "alignment":"right"},
+                               {"text":"{{toDecimals this.unit_price this.quantity}}", "alignment":"right"},
+                               {"text":"{{toDecimals this.unit_price this.quantity this.vat 0.01}}", "alignment":"right"}
                            ],
                            {{/each}}
                            [
@@ -463,7 +463,7 @@ const templates = {
              "\\n",
                { "text": "Exchange rate (Curs) {{INVOICE_DATE}}: 1{{EXCHANGE_RATE.from}} = {{EXCHANGE_RATE.conversion_rate}}{{EXCHANGE_RATE.to}}", "bold":true},
                { "text": "Payment term (Termen de plata): {{INVOICE_DUE_TERM}}"},
-               { "text": "{{INVOICE_DETAILS}}", "bold":true},
+               { "text": "{{normalized_address INVOICE_DETAILS}}", "bold":true},
                "\\n\\n\\n",
                {
                    "table": {
@@ -606,12 +606,12 @@ const templates = {
                             {{#each INVOICE_LINE}}
                             [
                                 {"text": {{addOne @index}}, "alignment":"center"}, 
-                                {"text":"{{this.details}}"},
-                                {"text":"{{this.um}}", "alignment":"center"},
-                                {"text":"{{this.qty}}", "alignment":"center"},
-                                {"text":"{{this.up}}", "alignment":"right"},
-                                {"text":"{{toDecimals this.line_value}}", "alignment":"right"},
-                                {"text":"{{toDecimals this.line_vat}}", "alignment":"right"}
+                                {"text":"{{this.service_product}} {{this.description}}"},
+                                {"text":"{{this.unit}}", "alignment":"center"},
+                                {"text":"{{this.quantity}}", "alignment":"center"},
+                                {"text":"{{this.unit_price}}", "alignment":"right"},
+                                {"text":"{{toDecimals this.unit_price this.quantity}}", "alignment":"right"},
+                                {"text":"{{toDecimals this.unit_price this.quantity this.vat 0.01}}", "alignment":"right"}
                             ],
                             {{/each}}
                             [
@@ -631,7 +631,7 @@ const templates = {
                 },
                 "\\n",
                 { "text": "Payment term (Termen de plata): {{INVOICE_DUE_TERM}}"},
-                { "text": "{{INVOICE_DETAILS}}", "bold":true},                    
+                { "text": "{{normalized_address INVOICE_DETAILS}}", "bold":true},                    
                 "\\n\\n\\n",                
                 {
                     "table": {
@@ -680,8 +680,13 @@ Handlebars.registerHelper("normalized_address", function(address) {
     return new Handlebars.SafeString(address.replace(/(?:\r\n|\r|\n)/g, "\\n"));
 });
 
-Handlebars.registerHelper("toDecimals", function(amount) {
-    return amount.toFixed(2);
+Handlebars.registerHelper("toDecimals", function(...terms) {
+    let acc = 1.0
+    terms.pop()
+    for (const arg of terms){
+        acc *= Number.parseFloat(arg)
+    }
+    return acc.toFixed(2);
 });
 
 Handlebars.registerHelper("addOne", function(integer) {

@@ -79,7 +79,8 @@ const messages = {
       quantity: 'Quantity',
       unit_price: 'Unit Price',
       vat: 'V.A.T',
-      total: 'Line Total'
+      vat_value: 'VAT to pay',
+      total: 'Value with VAT'
 
     },
     profile: {
@@ -167,7 +168,8 @@ const messages = {
       quantity: 'Quantite',
       unit_price: 'Prix Unitaire',
       vat: 'T.V.A',
-      total: 'Total ligne'
+      vat_value: 'TVA a payer',
+      total: 'Valeur TTC'
 
     },
     profile: {
@@ -255,7 +257,8 @@ const messages = {
       quantity: 'Cantitate',
       unit_price: 'Pret unitar',
       vat: 'T.V.A',
-      total: 'Total Linie'
+      vat_value: 'TVA de plata',
+      total: 'Valoare cu TVA'
 
     },
     profile: {

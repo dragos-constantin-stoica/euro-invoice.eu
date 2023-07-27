@@ -1,4 +1,4 @@
-# unitybill.eu
+# DSB 000 002 - unitybill.eu
 Invoicing platform for EU companies.  
 DSB 000 002 - CouchDB based data solution blueprint.
 
@@ -32,7 +32,7 @@ WRK_HOST='0.0.0.0'
 ```
 ./dsb.sh setup
 ```
-after a couple of seconds you are ready to go.
+after a couple of seconds you are ready to go.  
 4. Launch **DSB 000 002**
 ```
 ./dsb.sh run

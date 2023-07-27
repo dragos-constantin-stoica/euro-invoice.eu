@@ -28,16 +28,14 @@ APP_PASSWORD=VeryStrongPassword
 WRK_PORT=8090
 WRK_HOST='0.0.0.0'
 ```
-3. Create the intial setup for **CouchDB**
+3. Create the intial setup for **CouchDB**, and after a couple of seconds you are ready to go:
 ```
 ./dsb.sh setup
-```
-after a couple of seconds you are ready to go.  
-4. Launch **DSB 000 002**
+```  
+4. Launch **DSB 000 002**. This should start: **CouchDB**, **Couch Admin**, **UnityBill App** containers. **Couch Admin** and **UnityBill App** are not public images and are not available on *Docker HUB*, they are build and available only on the local machine. The application is avaliable at `http://localhost:8080/app`.
 ```
 ./dsb.sh run
 ```
-This should start: **CouchDB**, **Couch Admin**, **UnityBill App**. The application is avaliable at `http://localhost:8080/app`.
 
 ## Runing Operations
 

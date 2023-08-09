@@ -1,4 +1,4 @@
-Vue.component("Invoices", {
+Vue.component("invoices", {
   data() {
     return {
       loading: true,
@@ -389,7 +389,11 @@ Vue.component("Invoices", {
 
       </b-card-text>
 
-      <b-button variant="warning" @click="generatePDF">Preview</b-button>
+<b-row>
+  <b-col class="pb-2"><b-button pill variant="warning" @click="generatePDF">Preview</b-button></b-col>
+  <b-col class="pb-2 text-right"><b-button variant="success">Create Invoice</b-button></b-col>
+</b-row>
+
 	  
     </b-card>
     </div>

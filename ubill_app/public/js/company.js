@@ -11,7 +11,7 @@ Vue.component("company", {
       invoice_format: [
       	{ value: 'YYYY.MM XX', text: 'YYYY.MM ##' },
       	{ value: 'YYYY.MM/XX', text: 'YYYY.MM/##' },
-      	{ value: 'YYYY.MM.DD-XX', text: 'YYYY.MM.DD-##'}
+      	{ value: 'YYYY.MM-XX', text: 'YYYY.MM-##'}
       ],
       currency_list:[
       	{ value: 'BGN', text: 'BGN' },

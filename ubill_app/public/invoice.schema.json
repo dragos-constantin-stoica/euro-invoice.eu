@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unitybill.eu/invoice.schema.json",
+  "title": "Invoice",
+  "description": "Invoice data model for UnityBill",
+  "type": "object",
+  "properties": {
+	"DRAFT": {
+		"description": "Boolean value for preview of final version. Do not save in final invoice.",
+		"type": "boolean"
+	},
+	"INVOICE_NUMBER":{
+		"description": "Unique serial number of the invoice. The format of the invoice number has to be constant for at least one year.",
+		"type": "string"
+	},
+	"INVOICE_DATE":{
+		"description": "The date at which the invoice was issued.",
+		"default": "today's date",
+		"type": "string",
+		"format": "date"
+	},
+	"INVOICE_DUE_DATE":{
+		"description": "The due date of the invoice. Has to be INVOICE_DATE + INVOICE_DUE_TERM",
+		"default": "today's date + 7 days",
+		"type": "string",
+		"format": "date"
+	},	
+	"INVOICE_DUE_TERM":{
+		"description": "The due term of the invoice. It can be fixed terms or free value. For fixed terms the INVOICE_DUE_DATE is computed automatically, for the free value the user selects a due date value",
+		"type":"string",
+		"enum": [ "30 days", "45 days", "60 days", "90 days", "other" ]
+	},
+	"INVOICE_DETAILS":{
+		"description": "Invoice general instructions and details for payment.",
+		"type": "string"
+	},
+	"VAT":{
+		"description": "The VAT value according to each EU country. Must be selected from a list",
+		"type": "number",
+		"minimum": 0.0
+	},
+	"SUPPLIER":{
+		"description": "",
+		"type": "object",
+		"properties":{
+			"name": {"type": "string"},
+			"NRNo": {"type": "string"},
+			"vat": {"type": "string"},
+			"address": {"type": "string"},
+			"bank_name": {"type": "string"},
+			"bank_iban": {"type": "string"},
+			"bank_swift": {"type": "string"},
+			"bank_bic": {"type": "string"},
+			"bank_currency": {"type": "string"},
+			"mobile": {"type": "string"},
+			"contact": {"type": "string"}
+		},
+		"required": [ "name", "NRNo", "vat", "address", "bank_name", "bank_iban", "bank_swift", "bank_bic", "bank_currency", "mobile", "contact"],
+		"additionalProperties": false
+	},
+	"CUSTOMER": {
+		"description": "",
+		"type": "object",
+		"properties": {
+			"name": {"type": "string"},
+			"NRNo": {"type": "string"},
+			"vat": {"type": "string"},
+			"address": {"type": "string"},
+			"bank_name": {"type": "string"},
+			"bank_iban": {"type": "string"}
+		},
+		"required": [ "name", "NRNo", "vat", "address", "bank_name", "bank_iban" ],
+		"additionalProperties" : false
+	},
+	"EXCHANGE_RATE":{
+		"description": "The exchange rate if the invoice value has to be converted to anothe currency.",
+		"type": "object",
+		"properties":{
+			"from": { "type": "string" },
+			"to": { "type": "string" },
+			"conversion_rate": { "type": "number", "minimum": 0.0}
+		},
+		"required": [ "from", "to", "conversion_rate" ],
+		"additionalProperties": false
+	},
+	"INVOICE_LINE": {
+		"description": "Each invidual line on the invioce.",
+		"type": "array",
+		"items": { "$ref": "#/$defs/line"}
+	},
+	"INVOICE_SUM":{
+		"description": "The total sum of the invoice lines without taxes.",
+		"type": "number",
+		"minimum": 0.0
+	},
+	"INVOICE_TVA_SUM":{
+		"description": "The total sum of the invoice lines for taxes.",
+		"type": "number",
+		"minimum": 0.0
+	},
+	"INVOICE_TOTAL":{
+		"description": "The total sum of the invoice lines with taxes.",
+		"type": "number",
+		"minimum": 0.0
+	}
+  },
+  "$defs":{
+	  "line" :{
+		"type": "object",
+		"properties":{
+			"details": { "type": "string" },
+			"um": { "type": "string" },
+			"qty": { "type": "number"},
+			"up": { "type": "number" },
+			"line_value": { "type": "number" },
+			"line_tva": { "type": "number"}
+		},
+		"required":[ "details", "um", "qty", "up", "line_value", "line_tva" ],
+		"additionalProperties": false
+	  }
+  },
+  "required": [ "DRAFT", "INVOICE_NUMBER", "INVOICE_DATE", "INVOICE_DUE_DATE", "VAT", "SUPPLIER", "CUSTOMER", "INVOICE_LINE"  ]
+}

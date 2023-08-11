@@ -179,6 +179,7 @@ Vue.component("company", {
       </template>
     </b-card>
 
+    <!--
     <b-card title="Admin" header-tag="header" footer-tag="footer">
       <template #header>
         <h6 class="mb-0">User management</h6>
@@ -193,7 +194,7 @@ Vue.component("company", {
         <em>User will be notified via email.</em>
       </template> 
     </b-card>
-
+    -->
 
     <b-card title="Logo" header-tag="header" footer-tag="footer">
       <template #header>

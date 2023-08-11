@@ -113,12 +113,12 @@ Vue.component("invoices", {
       tmp.quantity = Number.parseFloat(tmp.quantity)
       this.invoice_items.push(tmp)
       this.newitem = {
-        service_product: '',
+        service_product: this.serviceproduct.name,
         description: '',
-        unit: '',
+        unit: this.serviceproduct.unit,
         quantity: 1,
-        unit_price: 0.0,
-        vat: 0.0
+        unit_price: this.serviceproduct.unit_price,
+        vat: this.serviceproduct.vat
       }
     },
 
@@ -126,6 +126,72 @@ Vue.component("invoices", {
       this.newdata.due_date = new Date((new Date()).setDate(new Date().getDate() + event)).toISOString().substring(0,10)
     },
 
+    selectServiceProduct(event){
+      this.newitem = {
+        service_product: this.serviceproduct.name,
+        description: '',
+        unit: this.serviceproduct.unit,
+        quantity: 1,
+        unit_price: this.serviceproduct.unit_price,
+        vat: this.serviceproduct.vat
+      }
+    },
+
+    createInvoice: function(){
+      let draft = templates[this.newdata.template]
+      let tmp = Handlebars.compile(draft)
+      //TODO - compile the full object with corresponding data
+      let payload = {
+        DRAFT: false,
+        STATUS: 'new',
+        INVOICE_NUMBER: "2023.01/##",
+        INVOICE_FORMAT: this.company.invoice_format,
+        INVOICE_DETAILS: this.newdata.payment_instructions,
+        INVOICE_DATE: this.newdata.issue_date,
+        INVOICE_DUE_DATE: this.newdata.due_date,
+        INVOICE_DUE_TERM: this.invoice_due_term_list.find(({value})=> value === this.newdata.invoice_due_term).text || "See Due Date",
+        VAT: this.invoice_items[0].vat,
+        SUPPLIER: {
+          name: this.company.name,
+          NRNo: this.company.national_registration_number,
+          vat: this.company.vat,
+          address: this.company.address[0],
+          bank_name: this.company.bank_accounts[0].bank_name,
+          bank_iban: this.company.bank_accounts[0].iban,
+          bank_swift: this.company.bank_accounts[0].swift,
+          bank_bic: this.company.bank_accounts[0].bic,
+          mobile: '+0123456789',
+          contact: 'contact@acme.com'
+        },
+        CUSTOMER: {
+          name: this.client.name,
+          NRNo: this.client.national_registration_number,
+          vat: this.client.vat,
+          address: this.client.address[0],
+          bank_name: this.client.bank_accounts[0].bank_name,
+          bank_iban: this.client.bank_accounts[0].iban,
+          bank_swift: this.client.bank_accounts[0].swift,
+          bank_bic: this.client.bank_accounts[0].bic,
+          contact: 'contact@aol.com'
+        },
+        EXCHANGE_RATE: {
+          from: this.newdata.currency,
+          to: this.newdata.convert_to,
+          conversion_rate: this.newdata.exchange_rate
+        },
+        INVOICE_LINE: this.invoice_items,
+        INVOICE_SUM: this.invoice_items.reduce((acc, crtv)=>acc + crtv.unit_price*crtv.quantity, 0),
+        INVOICE_VAT_SUM: this.invoice_items.reduce((acc, crtv)=>acc + crtv.quantity*crtv.unit_price*crtv.vat/100.0, 0),
+        INVOICE_TOTAL: this.invoice_items.reduce((acc, crtv)=> acc + crtv.quantity*crtv.unit_price*(1.0 + crtv.vat/100.0), 0)
+      }
+      //console.log(payload);
+      let PDF_DOC = JSON.parse(tmp(payload))
+      let invoice_doc = {
+        payload: payload,
+        document: PDF_DOC
+      }
+      //TODO push data to server
+    },
 
     generatePDF: function () {
       let draft = templates[this.newdata.template]
@@ -172,7 +238,7 @@ Vue.component("invoices", {
         INVOICE_VAT_SUM: this.invoice_items.reduce((acc, crtv)=>acc + crtv.quantity*crtv.unit_price*crtv.vat/100.0, 0),
         INVOICE_TOTAL: this.invoice_items.reduce((acc, crtv)=> acc + crtv.quantity*crtv.unit_price*(1.0 + crtv.vat/100.0), 0)
       }
-      //sconsole.log(payload);
+      //console.log(payload);
       let PDF_DOC = JSON.parse(tmp(payload))
       pdfMake.createPdf(PDF_DOC).open();
     }
@@ -241,7 +307,14 @@ Vue.component("invoices", {
             }
           })
           this.serviceproduct = this.serviceproduct_list[0].value
-
+          this.newitem = {
+            service_product: this.serviceproduct.name,
+            description: '',
+            unit: this.serviceproduct.unit,
+            quantity: 1,
+            unit_price: this.serviceproduct.unit_price,
+            vat: this.serviceproduct.vat
+          }
           //TODO - Get the next invoice number
           this.company.invoice_number = this.company.invoice_format
           this.loading = false
@@ -260,7 +333,10 @@ Vue.component("invoices", {
     </div>
     
     <div v-else>
-    <b-card title="Invoices" sub-title="Create new invoice">
+    <b-card title="Create new invoice" header-tag="header" footer-tag="footer">
+      <template #header>
+        <h6 class="mb-0">Invoice</h6>
+      </template>  
       <b-card-text>
         <b-form-group :label='$t("invoices.company")' label-for="company" label-cols-sm="3">
         <b-form-select id="company" v-model="company" :options="company_list"></b-form-select>
@@ -339,7 +415,7 @@ Vue.component("invoices", {
          <template #prepend>
          <b-input-group-text >{{$t("invoices.item")}}</b-input-group-text>
          </template>
-        <b-form-select v-model="serviceproduct" :options="serviceproduct_list"></b-form-select>  
+        <b-form-select v-model="serviceproduct" :options="serviceproduct_list" @change="selectServiceProduct($event)"></b-form-select>  
         </b-input-group>
         <b-input-group> 
         <template #prepend>
@@ -389,11 +465,12 @@ Vue.component("invoices", {
 
       </b-card-text>
 
-<b-row>
-  <b-col class="pb-2"><b-button pill variant="warning" @click="generatePDF">Preview</b-button></b-col>
-  <b-col class="pb-2 text-right"><b-button variant="success">Create Invoice</b-button></b-col>
-</b-row>
-
+      <template #footer>
+      <b-row>
+        <b-col class="pb-2"><b-button pill variant="warning" @click="generatePDF">Preview</b-button></b-col>
+        <b-col class="pb-2 text-right"><b-button variant="success" @click="createInvoice">Create</b-button></b-col>
+      </b-row>
+      </template>
 	  
     </b-card>
     </div>

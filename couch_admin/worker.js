@@ -57,6 +57,8 @@ async function updateCompanyAdmin(newCompany, admin) {
     //create indexes
     const doctype_idx = { index: { fields: ["doctype"] }, name: "doctype_idx", type: "json", ddoc: "doctype_idx" }
     result = await thisCompany.createIndex(doctype_idx)
+    //create design documents
+    
   } catch (e) {
     console.log(e)
   }

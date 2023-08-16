@@ -5,6 +5,7 @@ Vue.component("invoices", {
       company_data: null,
       client_data: null,
       contract_data: null,
+      serialnumber_data: null,
       serviceproduct_data: null,
       company: null,
       client: null,
@@ -139,8 +140,7 @@ Vue.component("invoices", {
 
     createInvoice: function(){
       let draft = templates[this.newdata.template]
-      let tmp = Handlebars.compile(draft)
-      //TODO - compile the full object with corresponding data
+      //handle the new invoice number on server side
       let payload = {
         DRAFT: false,
         STATUS: 'new',
@@ -185,12 +185,11 @@ Vue.component("invoices", {
         INVOICE_TOTAL: this.invoice_items.reduce((acc, crtv)=> acc + crtv.quantity*crtv.unit_price*(1.0 + crtv.vat/100.0), 0)
       }
       //console.log(payload);
-      let PDF_DOC = JSON.parse(tmp(payload))
       let invoice_doc = {
         payload: payload,
-        document: PDF_DOC
+        template: draft
       }
-      //TODO push data to server
+      //TODO push data to server and create new invoice number
     },
 
     generatePDF: function () {
@@ -199,7 +198,7 @@ Vue.component("invoices", {
       //TODO - compile the full object with corresponding data
       let payload = {
         DRAFT: true,
-        INVOICE_NUMBER: "2023.01/##",
+        INVOICE_NUMBER: this.company.invoice_number,
         INVOICE_DETAILS: this.newdata.payment_instructions,
         INVOICE_DATE: this.newdata.issue_date,
         INVOICE_DUE_DATE: this.newdata.due_date,
@@ -254,18 +253,19 @@ Vue.component("invoices", {
   },
 
   created() {
-    const dataURLs = ['/contracts', '/servicesproducts']
+    const dataURLs = ['/contracts', '/servicesproducts', '/serialnumber']
 
     const getData = async () => {
       try{
-        const [ contracts, servicesproducts ] = await Promise.all(dataURLs.map(url => axios.get(url).then(res => res.data))) 
-        console.log(contracts, servicesproducts)
+        const [ contracts, servicesproducts, serialnumbers ] = await Promise.all(dataURLs.map(url => axios.get(url).then(res => res.data))) 
+        console.log(contracts, servicesproducts, serialnumbers)
 
-        if (contracts.status == 'ok' && servicesproducts.status == 'ok') {
+        if (contracts.status == 'ok' && servicesproducts.status == 'ok' && serialnumbers.status == 'ok') {
           this.company_data = contracts.dataset.companies
           this.client_data = contracts.dataset.clients
           this.contract_data = contracts.dataset.contracts
           this.serviceproduct_data = servicesproducts.dataset.servicesproducts
+          this.serialnumber_data = serialnumbers.dataset.serialnumbers
 
           this.company_list = this.company_data.map(item => {
             let tmp = {}
@@ -315,8 +315,10 @@ Vue.component("invoices", {
             unit_price: this.serviceproduct.unit_price,
             vat: this.serviceproduct.vat
           }
-          //TODO - Get the next invoice number
-          this.company.invoice_number = this.company.invoice_format
+          //Get the current invoice number for the draft version
+          this.company.invoice_number = this.company.invoice_format.replace('YYYY', (new Date()).getUTCFullYear()) 
+                                        .replace('MM', ((new Date()).getUTCMonth() + 1).toString().padStart(2, '0'))
+                                        .replace('XX',this.serialnumber_data[this.company._id][this.company.invoice_format].toString().padStart(2,'0'));
           this.loading = false
         }
       }catch(err){
@@ -439,7 +441,7 @@ Vue.component("invoices", {
         <template #prepend>
          <b-input-group-text >{{$t("invoices.unit_price")}}</b-input-group-text>
          </template>
-        <b-form-input type="number" v-model="serviceproduct.unit_price"></b-form-input>
+        <b-form-input type="number" v-model="newitem.unit_price"></b-form-input>
         </b-input-group>
         <b-input-group>
         <template #prepend>

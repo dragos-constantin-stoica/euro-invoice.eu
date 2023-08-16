@@ -246,6 +246,20 @@ app.post('/newinvoice', isAuthenticated, async function(req, res, next) {
   }
 })
 
+app.get('/serialnumber', isAuthenticated, async function(req, res, next) {
+  try {
+    var result = await axios.post(`${COUCH_ADMIN_URL}/serialnumber`, { session: req.session.data, data: req.body})
+    res.json({
+      status: result.data.status,
+      message: result.data.message,
+      dataset: result.data.dataset
+    })
+  } catch (error) {
+    console.log(error);
+    res.json({ status: 'error', message: 'Serial number fethc error'})
+  }
+})
+
 app.get('/version', function (req, res) {
   res.json({ application: APPLICATION, version: VERSION })
 })

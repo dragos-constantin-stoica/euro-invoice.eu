@@ -57,8 +57,20 @@ async function updateCompanyAdmin(newCompany, admin) {
     //create indexes
     const doctype_idx = { index: { fields: ["doctype"] }, name: "doctype_idx", type: "json", ddoc: "doctype_idx" }
     result = await thisCompany.createIndex(doctype_idx)
+    //create serial_number document
+    if (myCompany.invoice_format){
+      let sn_doc = {_id: 'serialnumber', doctype: 'serialnumber'}
+      sn_doc[`${myCompany.invoice_format}`]= 1
+      result = await thisCompany.insert(sn_doc)
+    }
     //create design documents
-    
+    const ddoc_update_sn = {
+      "_id": "_design/serialnumber",
+      "language": "javascript",
+      "updates": {
+        "upsert": "function(doc, req) {\n\n    if (req.method == \"PUT\") {\n        var payload = JSON.parse(req.body);\n        if (doc === null) {\n            //Create new document\n            newdoc = {};\n            newdoc._id = 'serialnumber';\n            newdoc.doctype = \"serialnumber\";\n            \n            newdoc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;\n\n            return [newdoc, JSON.stringify({\n                \"action\": \"created\",\n                \"doc\": newdoc\n            })];\n        } else {\n            //Update existing document\n            if(typeof doc[payload.filed] === 'undefined'){\n                doc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;\n            }else{\n                doc[payload.field]++\n            }\n            \n            return [doc, JSON.stringify({\n                \"action\": \"updated\",\n                \"doc\": doc\n            })];\n        }\n    }\n\n    //unknown request - send error with request payload\n    return [null, JSON.stringify({\n        \"action\": \"error\",\n        \"req\": req\n    })];\n}"
+      }
+    }
   } catch (e) {
     console.log(e)
   }
@@ -282,6 +294,12 @@ async function updateCompany(company_data) {
     company_data.doctype = "company"
     console.log(company_data)
     let result = await company.insert(company_data)
+    //Should create serial number document via upsert
+    let sn_doc = {
+      field: company_data.invoice_format,
+      serial: 1
+    }
+    let sn = await company.atomic('serialnumber', 'upsert', 'serialnumber', sn_doc)
   } catch (err) {
     console.log(err)
   }
@@ -316,6 +334,23 @@ async function updateContracts(payload){
       console.log(error)
     }
 	return result	
+}
+
+async function getSerialNumbers(company_list) {
+  let result = {}
+
+  await Promise.all(company_list.map(async (item) =>{
+    try {
+      let tmpdb = nano.use(`c${item}`)
+      let sn_doc = await tmpdb.get('serialnumber')
+      let db_doc = await tmpdb.get(`${item}`)
+      if (typeof result[item] === 'undefined') result[item] = {}
+      result[item][db_doc.invoice_format] = sn_doc[db_doc.invoice_format]
+    } catch (error) {
+      console.log(error);
+    }
+  }))
+  return result  
 }
 
 fastify.post('/companies', async function (request, reply) {
@@ -460,6 +495,21 @@ fastify.put('/contracts', async function(request, reply){
 		reply.send({status: 'error', message: 'Contract fetch error.'})
 	}
 });
+
+fastify.post('/serialnumber', async function(request, reply){
+  let result={}
+  try {
+    console.log(request.body);
+    let credentials = request.body.session
+    let theUser = await nano.request({method:'get', db:'_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+    let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
+    result.serialnumbers = await getSerialNumbers(company_list)
+    reply.send({status:'ok', message:'Serial number loaded', dataset: result})
+  } catch (err) {
+    console.log(err);
+    reply.send({status: 'error', message: 'Serila number fetch error'})
+  }
+})
 
 fastify.put('/newinvoice', async function(request, reply){
   let result = {}

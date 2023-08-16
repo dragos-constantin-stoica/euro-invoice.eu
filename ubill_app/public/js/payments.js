@@ -39,11 +39,11 @@ Vue.component("payments", {
         <b-form-text id="company-help">Select one of the companies from the list.</b-form-text>
       </b-card-text>  
       <b-card-text>
-      Manage invoice lifecycle: created, overdue, payed --- no strono, no overdue fees :(
+      Manage invoice lifecycle: created, overdue, payed --- no strono, no overdue fees maybe in pro version
       </b-card-text>
 
       <b-card-text>
-      select and invoice that is not fully payed and input the amount that way payed
+      select an invoice that is not fully payed and input the amount that was payed
       </b-card-text>
 
       <a href="#" class="card-link">Relevant link</a>

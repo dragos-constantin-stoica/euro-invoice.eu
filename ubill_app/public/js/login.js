@@ -36,7 +36,7 @@ Vue.component("login", {
 		},
 	},
 	template: `
-	<b-container fluid>
+	<b-container fluid class="w-100 m-auto" style="max-width: 530px;padding: 1rem;">
 	<b-card  title="Login">
 		<b-form-group :label='$t("login.username")' label-for="username" label-cols-sm="3">
 		  <b-form-input id="username" v-model="form.username"></b-form-input>

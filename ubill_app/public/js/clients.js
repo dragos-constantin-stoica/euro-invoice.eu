@@ -225,8 +225,11 @@ Vue.component("clients", {
         <b-form-input id="vat" v-model="newdata.vat"></b-form-input>
       </b-form-group>
 
+      <b-form-group :label='$t("clients.mobile")' label-for="mobile" label-cols-sm="3">
+        <b-form-input id="mobile" type="tel" v-model="newdata.mobile"></b-form-input>
+      </b-form-group>
       <b-form-group :label='$t("clients.email")' label-for="email" label-cols-sm="3">
-        <b-form-input id="email" v-model="newdata.email"></b-form-input>
+        <b-form-input id="email" type="email" v-model="newdata.email"></b-form-input>
       </b-form-group>
 
       <b-form-group v-for="item in newdata.address" :label='$t("clients.address")' label-cols-sm="3">

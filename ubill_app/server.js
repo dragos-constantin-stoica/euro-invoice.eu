@@ -73,7 +73,7 @@ app.get('/app', function (req, res) {
   res.render('index', { layout: 'main' })
 })
 
-app.get("/checksession", isAuthenticated, function (req, res) {
+app.get('/checksession', isAuthenticated, function (req, res) {
   if (req.session.user) {
     res.json({ status: "ok", user_data: req.session.user })
   } else {
@@ -234,7 +234,7 @@ app.post('/contracts', isAuthenticated, async function(req, res, next){
 
 app.post('/newinvoice', isAuthenticated, async function(req, res, next) {
   try {
-		var result = await axios.post(`${COUCH_ADMIN_URL}/newinvoice`, {session: req.session.data, data: req.body})
+		var result = await axios.put(`${COUCH_ADMIN_URL}/newinvoice`, {session: req.session.data, data: req.body})
 		res.json({
 			status: result.data.status,
 			message: result.data.message,
@@ -242,7 +242,7 @@ app.post('/newinvoice', isAuthenticated, async function(req, res, next) {
 		})    
   } catch (error) {
     console.log(error);
-    res.json({status: 'error', message: 'New invoice fetch error.'})
+    res.json({status: 'error', message: 'New invoice creation error.'})
   }
 })
 

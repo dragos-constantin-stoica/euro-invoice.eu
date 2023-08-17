@@ -121,7 +121,14 @@ Vue.component("company", {
       </b-form-group>
 
       <b-form-group :label='$t("company.vat")' label-for="vat" label-cols-sm="3">
-        <b-form-input id="vat" v-model="company.vat"></b-form-input>
+        <b-form-input id="vat" v-model="company.vat" plaintext={{company.vat.length > 0}}></b-form-input>
+      </b-form-group>
+
+      <b-form-group :label='$t("company.mobile")' label-for="mobile" label-cols-sm="3">
+        <b-form-input id="mobile" type="tel" v-model="company.mobile"></b-form-input>
+      </b-form-group>
+      <b-form-group :label='$t("company.email")' label-for="email" label-cols-sm="3">
+        <b-form-input id="email" type="email" v-model="company.email"></b-form-input>
       </b-form-group>
 
       <b-form-group v-for="item in company.address" :label='$t("company.address")' label-cols-sm="3">
@@ -171,7 +178,7 @@ Vue.component("company", {
       </b-form-group>
 
       <b-form-group label="Invoice format"  label-for="invoice" label-cols-sm="3">
-         <b-form-select id="invoice" v-model="company.invoice_format" :options="invoice_format"></b-form-select>
+         <b-form-select id="invoice" v-model="company.invoice_format" :options="invoice_format" disabled={{company.invoice_format.length > 0}}></b-form-select>
       </b-form-group>
 
       <template #footer>
@@ -196,6 +203,7 @@ Vue.component("company", {
     </b-card>
     -->
 
+    <!--
     <b-card title="Logo" header-tag="header" footer-tag="footer">
       <template #header>
         <h6 class="mb-0">Visual identity</h6>
@@ -211,7 +219,7 @@ Vue.component("company", {
         <b-button  variant="success">Upload</b-button>
       </template>
     </b-card>
-
+    -->
     </div>
 	`
 });

@@ -160,8 +160,8 @@ Vue.component("invoices", {
           bank_iban: this.company.bank_accounts[0].iban,
           bank_swift: this.company.bank_accounts[0].swift,
           bank_bic: this.company.bank_accounts[0].bic,
-          mobile: '+0123456789',
-          contact: 'contact@acme.com'
+          mobile: this.company.mobile,
+          contact: this.company.email
         },
         CUSTOMER: {
           name: this.client.name,
@@ -172,7 +172,8 @@ Vue.component("invoices", {
           bank_iban: this.client.bank_accounts[0].iban,
           bank_swift: this.client.bank_accounts[0].swift,
           bank_bic: this.client.bank_accounts[0].bic,
-          contact: 'contact@aol.com'
+          contact: this.client.email,
+          mobile: this.client.mobile
         },
         EXCHANGE_RATE: {
           from: this.newdata.currency,
@@ -187,9 +188,25 @@ Vue.component("invoices", {
       //console.log(payload);
       let invoice_doc = {
         payload: payload,
-        template: draft
+        template: draft,
+        company_id: this.company._id,
+        invoice_format: this.company.invoice_format
       }
       //TODO push data to server and create new invoice number
+      
+      axios.post('/newinvoice', invoice_doc)
+           .then(response =>{
+          console.log(response.data)
+	        if (response.data.status = 'ok') {
+            showToast(response.data.status == 'ok' ? response.data.message : response.data.error, 'Message from Server', response.data.status == 'ok' ? 'success' : 'error')
+            this.serialnumber_data = response.data.dataset.serialnumbers
+            this.company.invoice_number = this.company.invoice_format.replace('YYYY', (new Date()).getUTCFullYear()) 
+                                        .replace('MM', ((new Date()).getUTCMonth() + 1).toString().padStart(2, '0'))
+                                        .replace('XX',this.serialnumber_data[this.company._id][this.company.invoice_format].toString().padStart(2,'0'));
+            this.invoice_items = []
+          }
+      })
+      
     },
 
     generatePDF: function () {
@@ -213,8 +230,8 @@ Vue.component("invoices", {
           bank_iban: this.company.bank_accounts[0].iban,
           bank_swift: this.company.bank_accounts[0].swift,
           bank_bic: this.company.bank_accounts[0].bic,
-          mobile: '+0123456789',
-          contact: 'contact@acme.com'
+          mobile: this.company.mobile,
+          contact: this.company.email
         },
         CUSTOMER: {
           name: this.client.name,
@@ -225,7 +242,8 @@ Vue.component("invoices", {
           bank_iban: this.client.bank_accounts[0].iban,
           bank_swift: this.client.bank_accounts[0].swift,
           bank_bic: this.client.bank_accounts[0].bic,
-          contact: 'contact@aol.com'
+          contact: this.client.email,
+          mobile: this.client.mobile
         },
         EXCHANGE_RATE: {
           from: this.newdata.currency,
@@ -249,6 +267,11 @@ Vue.component("invoices", {
     },
     lineVATValue() {
       return (this.newitem.quantity * this.newitem.unit_price * this.newitem.vat / 100.00).toFixed(2)
+    },
+    formatInvoiceNumber(){
+      return (this.company.invoice_format.replace('YYYY', (new Date()).getUTCFullYear()) 
+      .replace('MM', ((new Date()).getUTCMonth() + 1).toString().padStart(2, '0'))
+      .replace('XX',this.serialnumber_data[this.company._id][this.company.invoice_format].toString().padStart(2,'0')))
     }
   },
 
@@ -356,7 +379,7 @@ Vue.component("invoices", {
         </b-form-group>        
 
         <b-form-group :label='$t("invoices.serial_number")' label-for="invoice_number" label-cols-sm="3">
-          <b-form-input id="invoice_number" v-model="company.invoice_number" readonly></b-form-input>
+          <b-form-input id="invoice_number" v-model="formatInvoiceNumber" readonly></b-form-input>
         </b-form-group>
             
         <b-form-group :label='$t("invoices.issue_date")' label-for="invoice_issue_date" label-cols-sm="3">

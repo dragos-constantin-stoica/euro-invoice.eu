@@ -1,4 +1,4 @@
-// Ready translated locale messages
+//Translated locale messages
 const messages = {
   gb: {
     message: {
@@ -35,7 +35,9 @@ const messages = {
       country: "Country",
       vat: "V.A.T",
       address: "Address",
-      bank_accounts: "Bank Accounts"
+      bank_accounts: "Bank Accounts",
+      mobile: 'Mobile',
+      email: 'Email'
     },
     services:{
       name: 'Label',
@@ -50,6 +52,7 @@ const messages = {
     },
     clients:{
       email: "Contact",
+      mobile: 'Mobile',
       address: "Address",
       bank_accounts: "Bank Accounts"
     },
@@ -124,7 +127,9 @@ const messages = {
       country: "Pays",
       vat: "T.V.A",
       address: "Adress",
-      bank_accounts: "Comptes bancaires"
+      bank_accounts: "Comptes bancaires",
+      mobile: 'GSM',
+      email: 'Couriel'
     },
     services:{
       name: 'Label',
@@ -138,7 +143,8 @@ const messages = {
       btn_createserviceproduct: 'Sauvegarder'
     },
     clients:{
-      email: "Contact",
+      email: "Couriel",
+      mobile: 'GSM',
       address: "Adress",
       bank_accounts: "Comptes bancaires"
     },
@@ -213,7 +219,9 @@ const messages = {
       country: "Tara",
       vat: "Numar T.V.A",
       address: "Adresa",
-      bank_accounts: "Conturile bancare"
+      bank_accounts: "Conturile bancare",
+      mobile: 'Mobil',
+      email: 'Email'
     },
     services:{
       name: 'Denumire',
@@ -227,7 +235,8 @@ const messages = {
       btn_createserviceproduct: 'Salveaza'
     },
     clients:{
-      email: "Contact",
+      email: "Email",
+      mobile: "Mobil",
       address: "Adresa",
       bank_accounts: "Conturile bancare"
     },

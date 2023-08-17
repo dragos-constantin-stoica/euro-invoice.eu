@@ -68,7 +68,7 @@ async function updateCompanyAdmin(newCompany, admin) {
       "_id": "_design/serialnumber",
       "language": "javascript",
       "updates": {
-        "upsert": "function(doc, req) {\n\n    if (req.method == \"PUT\") {\n        var payload = JSON.parse(req.body);\n        if (doc === null) {\n            //Create new document\n            newdoc = {};\n            newdoc._id = 'serialnumber';\n            newdoc.doctype = \"serialnumber\";\n            \n            newdoc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;\n\n            return [newdoc, JSON.stringify({\n                \"action\": \"created\",\n                \"doc\": newdoc\n            })];\n        } else {\n            //Update existing document\n            if(typeof doc[payload.filed] === 'undefined'){\n                doc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;\n            }else{\n                doc[payload.field]++\n            }\n            \n            return [doc, JSON.stringify({\n                \"action\": \"updated\",\n                \"doc\": doc\n            })];\n        }\n    }\n\n    //unknown request - send error with request payload\n    return [null, JSON.stringify({\n        \"action\": \"error\",\n        \"req\": req\n    })];\n}"
+        "upsert": "function(doc, req) {\n\n    if (req.method == \"PUT\") {\n        var payload = JSON.parse(req.body);\n        if (doc === null) {\n            //Create new document\n            newdoc = {};\n            newdoc._id = 'serialnumber';\n            newdoc.doctype = \"serialnumber\";\n            \n            newdoc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;\n\n            return [newdoc, JSON.stringify({\n                \"action\": \"created\",\n                \"doc\": newdoc\n            })];\n        } else {\n            //Update existing document\n            if(typeof doc[payload.field] === 'undefined'){\n                doc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;\n            }else{\n                doc[payload.field]++\n            }\n            \n            return [doc, JSON.stringify({\n                \"action\": \"updated\",\n                \"doc\": doc\n            })];\n        }\n    }\n\n    //unknown request - send error with request payload\n    return [null, JSON.stringify({\n        \"action\": \"error\",\n        \"req\": req\n    })];\n}"
       }
     }
   } catch (e) {
@@ -241,7 +241,7 @@ async function updateServicesProducts(payload) {
 
 async function getClients(company_list) {
 	let result = []
-	  const mango_query = { selector: { doctype: "client" }, fields: ["_id", "company_id",  "name", "country", "national_registration_number", "invoice_format", "vat", "bank_accounts", "address", "email"], use_index: "doctype_idx" }
+	  const mango_query = { selector: { doctype: "client" }, fields: ["_id", "company_id",  "name", "country", "national_registration_number", "invoice_format", "vat", "bank_accounts", "address", "email", "mobile"], use_index: "doctype_idx" }
 	  await Promise.all(company_list.map(async (item) => {
 	    try {
 	      let tmp = nano.use(`c${item}`)
@@ -271,7 +271,7 @@ async function updateClients(payload){
 
 async function getCompanies(company_list) {
   let result = []
-  const mango_query = { selector: { doctype: "company" }, fields: ["_id", "name", "country", "national_registration_number", "invoice_format", "vat", "bank_accounts", "address"], use_index: "doctype_idx" }
+  const mango_query = { selector: { doctype: "company" }, fields: ["_id", "name", "country", "national_registration_number", "invoice_format", "vat", "bank_accounts", "address", "email", "mobile"], use_index: "doctype_idx" }
   await Promise.all(company_list.map(async (item) => {
     try {
       let tmp = nano.use(`c${item}`)
@@ -297,7 +297,7 @@ async function updateCompany(company_data) {
     //Should create serial number document via upsert
     let sn_doc = {
       field: company_data.invoice_format,
-      serial: 1
+      serial: 0
     }
     let sn = await company.atomic('serialnumber', 'upsert', 'serialnumber', sn_doc)
   } catch (err) {
@@ -515,7 +515,27 @@ fastify.put('/newinvoice', async function(request, reply){
   let result = {}
 
   try {
-    
+    console.log(request.body);
+    let companydb = nano.use(`c${request.body.data.company_id}`)
+    let next_sn = await companydb.atomic('serialnumber', 'upsert', 'serialnumber', {
+      field: request.body.data.invoice_format
+    })
+    console.log(next_sn);
+    let new_sn = request.body.data.invoice_format.replace('YYYY', (new Date()).getUTCFullYear()) 
+                  .replace('MM', ((new Date()).getUTCMonth() + 1).toString().padStart(2, '0'))
+                  .replace('XX',next_sn.doc[request.body.data.invoice_format].toString().padStart(2,'0'));
+    request.body.data.payload.INVOICE_NUMBER = new_sn
+    let new_invoice_doc = {
+      _id: new_sn,
+      payload: request.body.data.payload,
+      template: request.body.data.template
+    }
+    let tmp = await companydb.insert(new_invoice_doc)
+    let credentials = request.body.session
+    let theUser = await nano.request({method:'get', db:'_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+    let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
+    result.serialnumbers = await getSerialNumbers(company_list)
+    reply.send({status:'ok', message:`Invoice ${new_sn} created` ,dataset: result})
   } catch (err) {
     console.log(err);
     reply.send({status: 'error', message: 'New invoice fetch error'})

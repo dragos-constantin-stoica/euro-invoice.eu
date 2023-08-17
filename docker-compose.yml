@@ -1,30 +1,31 @@
 version: '3'
-
 services:
-
   couch:
-    image: "couchdb:3.3.1"
+    image: 'couchdb:3.3.1'
     container_name: couch
     hostname: couch
     restart: always
     environment:
-      - COUCHDB_USER=${COUCHDB_USER}
-      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
+      - 'COUCHDB_USER=${COUCHDB_USER}'
+      - 'COUCHDB_PASSWORD=${COUCHDB_PASSWORD}'
     ports:
-      - 5984:5984
+      - '5984:5984'
     volumes:
-      - ./dbcouch/etc:/opt/couchdb/etc/local.d
-      - ./dbcouch/data:/opt/couchdb/data
-      - ./dbcouch/log:/opt/couchdb/var/log
+      - './dbcouch/etc:/opt/couchdb/etc/local.d'
+      - './dbcouch/data:/opt/couchdb/data'
+      - './dbcouch/log:/opt/couchdb/var/log'
     networks:
       - unity_bill
     healthcheck:
-      test: [ "CMD", "curl", "--fail", "http://localhost:5984/_up" ]
+      test:
+        - CMD
+        - curl
+        - '--fail'
+        - 'http://localhost:5984/_up'
       start_period: 5s
       interval: 10s
       timeout: 5s
       retries: 3
-
   couch_admin:
     image: 'datastemalux/couch_admin:1.0.0'
     build:
@@ -38,19 +39,21 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - 8090:8090
+      - '8090:8090'
     depends_on:
       couch:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "node", "hck.js" ]
+      test:
+        - CMD
+        - node
+        - hck.js
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 10s
     networks:
       - unity_bill
-
   unitybillapp:
     image: 'datastemalux/unitybill:1.0.0'
     build:
@@ -64,25 +67,26 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - 8080:3000
+      - '8080:3000'
     depends_on:
       couch:
         condition: service_healthy
       couch_admin:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "node", "hck.js" ]
+      test:
+        - CMD
+        - node
+        - hck.js
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 10s
     networks:
       - unity_bill
-
 networks:
   unity_bill:
     driver: bridge
-
 secrets:
   wrk_secrets:
     file: ./couch_admin/secrets.app

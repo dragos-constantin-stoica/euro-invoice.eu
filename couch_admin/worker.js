@@ -68,9 +68,59 @@ async function updateCompanyAdmin(newCompany, admin) {
       "_id": "_design/serialnumber",
       "language": "javascript",
       "updates": {
-        "upsert": "function(doc, req) {\n\n    if (req.method == \"PUT\") {\n        var payload = JSON.parse(req.body);\n        if (doc === null) {\n            //Create new document\n            newdoc = {};\n            newdoc._id = 'serialnumber';\n            newdoc.doctype = \"serialnumber\";\n            \n            newdoc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;\n\n            return [newdoc, JSON.stringify({\n                \"action\": \"created\",\n                \"doc\": newdoc\n            })];\n        } else {\n            //Update existing document\n            if(typeof doc[payload.field] === 'undefined'){\n                doc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;\n            }else{\n                doc[payload.field]++\n            }\n            \n            return [doc, JSON.stringify({\n                \"action\": \"updated\",\n                \"doc\": doc\n            })];\n        }\n    }\n\n    //unknown request - send error with request payload\n    return [null, JSON.stringify({\n        \"action\": \"error\",\n        \"req\": req\n    })];\n}"
+        "upsert": `function(doc, req) {    
+          if (req.method == "PUT") {        
+            var payload = JSON.parse(req.body);
+            if (doc === null) {
+              //Create new document
+              newdoc = {};            
+              newdoc._id = 'serialnumber';
+              newdoc.doctype = "serialnumber";
+              newdoc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;            
+              return [newdoc, JSON.stringify({"action": "created","doc": newdoc})];
+            } else {            
+              //Update existing document            
+              if(typeof doc[payload.field] === 'undefined'){                
+                doc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;           
+              }else{                
+                doc[payload.field]++            
+              }           
+              return [doc, JSON.stringify({"action": "updated","doc": doc})];
+            }    
+          }    
+          //unknown request - send error with request payload
+          return [null, JSON.stringify({"action": "error","req": req})];
+        }`
       }
     }
+    result = await thisCompany.insert(ddoc_update_sn)
+    const ddoc_update_payment = {
+      "_id": "_design/payments",
+      "language": "javascript",
+      "updates": {
+        "register" : `function(doc, req){
+          if (req.method == "PUT"){
+            var payload = JSON.parse(req.body);
+            if (doc){
+              //Update payment for exisiting invoice
+              doc.payload.PAYMENTS.push(payload);
+              //compute the state of the inovice
+              //consider all payments made in the same currency and this is the same initial invoice
+              var total_payments = doc.payload.PAYMENTS.reduce((acc, crtitem)=> acc + crtitem.amount, 0);
+              doc.payload.STATUS = (total_payments < doc.payload.INVOICE_TOTAL)?"partially_payed":"payed"
+              return [doc, JSON.stringify({"action":"updated", "doc":doc})];
+            }else{
+              //No invoice provided send error message back
+              return [null, JSON.stringify({ "action":"error", "error": "No invoice provided."})];
+            }
+          }
+          //Unknown request - send error message with request payload
+          return [null, JSON.stringify({ "action":"error", "req": req})];
+        }`
+      }
+    }    
+    result = await thisCompany.insert(ddoc_update_payment)
+
   } catch (e) {
     console.log(e)
   }
@@ -321,6 +371,22 @@ async function getContracts(company_list){
   return result	
 }
 
+async function getInvoices(company_list){
+  let result = {}
+  const mango_query = { selector: { doctype: "invoice" }, fields: ["_id", "payload"], use_index: "doctype_idx" }
+  await Promise.all(company_list.map(async (item) => {
+    try {
+      let tmp = nano.use(`c${item}`)
+      let q = await tmp.find(mango_query)
+      if (typeof result[item] === 'undefined') result[item] = []
+      result[item] = result[item].concat(...q.docs)
+    } catch (err) {
+      console.log(err)
+    }
+  }));
+  return result
+}
+
 async function updateContracts(payload){
 	let result = []
 	//TODO - Detect if it needs to create new company too
@@ -496,6 +562,21 @@ fastify.put('/contracts', async function(request, reply){
 	}
 });
 
+fastify.post('/invoices', async function(request, reply){
+  let result = {}
+  try {
+    console.log(request.body)
+    let credentials = request.body.session
+    let theUser = await nano.request({method:'get', db:'_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+    let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
+    result = await getInvoices(company_list)
+    reply.send({status: 'ok', message:'Invoices loaded', dataset: result})
+  } catch (error) {
+    console.log(error)
+    reply.send({status: 'error', message:'Invoices load error.'})
+  }
+});
+
 fastify.post('/serialnumber', async function(request, reply){
   let result={}
   try {
@@ -507,9 +588,9 @@ fastify.post('/serialnumber', async function(request, reply){
     reply.send({status:'ok', message:'Serial number loaded', dataset: result})
   } catch (err) {
     console.log(err);
-    reply.send({status: 'error', message: 'Serila number fetch error'})
+    reply.send({status: 'error', message: 'Serial number fetch error'})
   }
-})
+});
 
 fastify.put('/newinvoice', async function(request, reply){
   let result = {}
@@ -527,6 +608,7 @@ fastify.put('/newinvoice', async function(request, reply){
     request.body.data.payload.INVOICE_NUMBER = new_sn
     let new_invoice_doc = {
       _id: new_sn,
+      doctype: 'invoice',
       payload: request.body.data.payload,
       template: request.body.data.template
     }
@@ -541,6 +623,23 @@ fastify.put('/newinvoice', async function(request, reply){
     reply.send({status: 'error', message: 'New invoice fetch error'})
   }
 })
+
+fastify.put('/registerpayment', async function(request, reply){
+  let result = {}
+  try {
+    console.log(request.body)
+    let companydb = nano.use(`c${request.body.data.company_id}`)
+    let tmp = await companydb.atomic('payments', 'register', request.body.data.invoice_number, request.body.data.payment)
+    let credentials = request.body.session
+    let theUser = await nano.request({method:'get', db:'_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+    let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
+    result = await getInvoices(company_list)
+    reply.send({status: 'ok', message:`Payment of ${request.body.data.payment.amount} ${request.body.data.payment.currency} resistered for invoice ${request.body.data.invoice_number}`, dataset: result})
+  } catch (error) {
+    console.log(error)
+    reply.send({status: 'error', message: 'Payment registration error.'})
+  }
+});
 
 fastify.post('/register', async function (request, reply) {
   let result = []

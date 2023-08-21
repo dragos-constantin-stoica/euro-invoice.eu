@@ -260,6 +260,34 @@ app.get('/serialnumber', isAuthenticated, async function(req, res, next) {
   }
 })
 
+app.get('/invoices', isAuthenticated, async function(req, res, next){
+  try {
+    var result = await axios.post(`${COUCH_ADMIN_URL}/invoices`, { session: req.session.data, data: req.body})
+    res.json({
+      status: result.data.status,
+      message: result.data.message,
+      dataset: result.data.dataset
+    })
+  } catch (error) {
+    console.log(error);
+    res.json({ status: 'error', message: 'Invioces fethc error'})
+  }
+})
+
+app.post('/registerpayment', isAuthenticated, async function(req, res, next){
+  try {
+    var result = await axios.put(`${COUCH_ADMIN_URL}/registerpayment`, {session: req.session.data, data: req.body})
+    res.json({
+      status: result.data.status,
+      message: result.data.message,
+      dataset: result.data.dataset
+    })
+  } catch (error) {
+    console.log(error)
+    res.json({ status: 'error', message: 'Payment registartion error.' })
+  }
+});
+
 app.get('/version', function (req, res) {
   res.json({ application: APPLICATION, version: VERSION })
 })

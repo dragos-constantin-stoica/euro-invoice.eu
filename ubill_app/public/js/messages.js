@@ -84,7 +84,12 @@ const messages = {
       vat: 'V.A.T',
       vat_value: 'VAT to pay',
       total: 'Value with VAT'
-
+    },
+    payment:{
+      date: 'Payment date',
+      type: 'Payment type',
+      amount: 'Amount',
+      currency: 'Currency'
     },
     profile: {
       oldpassword: 'Current Password',
@@ -176,7 +181,12 @@ const messages = {
       vat: 'T.V.A',
       vat_value: 'TVA a payer',
       total: 'Valeur TTC'
-
+    },
+    payment:{
+      date: 'Date',
+      type: 'Type',
+      amount: 'Somme paye',
+      currency: 'Monnaie'
     },
     profile: {
       oldpassword: 'Mot de passe actuel',
@@ -268,7 +278,12 @@ const messages = {
       vat: 'T.V.A',
       vat_value: 'TVA de plata',
       total: 'Valoare cu TVA'
-
+    },
+    payment:{
+      date: 'Data',
+      type: 'Tip',
+      amount: 'Suma',
+      currency: 'Valuta'
     },
     profile: {
       oldpassword: 'Parola curenta',

@@ -183,7 +183,8 @@ Vue.component("invoices", {
         INVOICE_LINE: this.invoice_items,
         INVOICE_SUM: this.invoice_items.reduce((acc, crtv)=>acc + crtv.unit_price*crtv.quantity, 0),
         INVOICE_VAT_SUM: this.invoice_items.reduce((acc, crtv)=>acc + crtv.quantity*crtv.unit_price*crtv.vat/100.0, 0),
-        INVOICE_TOTAL: this.invoice_items.reduce((acc, crtv)=> acc + crtv.quantity*crtv.unit_price*(1.0 + crtv.vat/100.0), 0)
+        INVOICE_TOTAL: this.invoice_items.reduce((acc, crtv)=> acc + (1.0 + crtv.vat/100.0)*crtv.quantity*crtv.unit_price, 0),
+        PAYMENTS: []
       }
       //console.log(payload);
       let invoice_doc = {
@@ -253,7 +254,7 @@ Vue.component("invoices", {
         INVOICE_LINE: this.invoice_items,
         INVOICE_SUM: this.invoice_items.reduce((acc, crtv)=>acc + crtv.unit_price*crtv.quantity, 0),
         INVOICE_VAT_SUM: this.invoice_items.reduce((acc, crtv)=>acc + crtv.quantity*crtv.unit_price*crtv.vat/100.0, 0),
-        INVOICE_TOTAL: this.invoice_items.reduce((acc, crtv)=> acc + crtv.quantity*crtv.unit_price*(1.0 + crtv.vat/100.0), 0)
+        INVOICE_TOTAL: this.invoice_items.reduce((acc, crtv)=> acc + (1.0 + crtv.vat/100.0)*crtv.quantity*crtv.unit_price, 0)
       }
       //console.log(payload);
       let PDF_DOC = JSON.parse(tmp(payload))
@@ -263,7 +264,7 @@ Vue.component("invoices", {
 
   computed: {
     lineTotal() {
-      return (this.newitem.quantity * this.newitem.unit_price * (1.00 + this.newitem.vat / 100.00)).toFixed(2)
+      return ((1.00 + this.newitem.vat / 100.00) * this.newitem.quantity * this.newitem.unit_price).toFixed(2)
     },
     lineVATValue() {
       return (this.newitem.quantity * this.newitem.unit_price * this.newitem.vat / 100.00).toFixed(2)
@@ -430,7 +431,7 @@ Vue.component("invoices", {
             {{ (data.item.unit_price*data.item.quantity*data.item.vat/100.0).toFixed(2) }}
           </template>
           <template #cell(final_price)="data">
-          {{ (data.item.unit_price*data.item.quantity*(1.0 + data.item.vat/100.0)).toFixed(2) }}
+          {{ ((1.0 + data.item.vat/100.0)*data.item.unit_price*data.item.quantity).toFixed(2) }}
         </template>
           </b-table>
         </div>

@@ -3,6 +3,7 @@ Vue.component("company", {
     return {
       loading: true,
       logofile: null,
+      vatRO: false,
       newdata: { address: '', bank_name:'', iban: '', swift: '', bic: '', currency: ''},
       company: null,
       company_list: [
@@ -63,6 +64,7 @@ Vue.component("company", {
 	          this.company = this.company_list[0].value
 	          this.company.invoice_format = this.company.invoice_format ?? this.invoice_format[0].value
 	          this.newdata.currency = 'EUR'
+            this.vatRO = this.company.vat.length > 0
 	          this.loading = false
 	        }  			
   		})
@@ -86,6 +88,7 @@ Vue.component("company", {
           this.company = this.company_list[0].value
           this.company.invoice_format = this.company.invoice_format ?? this.invoice_format[0].value
           this.newdata.currency = 'EUR'
+          this.vatRO = this.company.vat.length > 0
           this.loading = false
         }
       })
@@ -121,7 +124,7 @@ Vue.component("company", {
       </b-form-group>
 
       <b-form-group :label='$t("company.vat")' label-for="vat" label-cols-sm="3">
-        <b-form-input id="vat" v-model="company.vat" plaintext={{company.vat.length > 0}}></b-form-input>
+        <b-form-input id="vat" v-model="company.vat" :plaintext="vatRO"></b-form-input>
       </b-form-group>
 
       <b-form-group :label='$t("company.mobile")' label-for="mobile" label-cols-sm="3">
@@ -178,7 +181,7 @@ Vue.component("company", {
       </b-form-group>
 
       <b-form-group label="Invoice format"  label-for="invoice" label-cols-sm="3">
-         <b-form-select id="invoice" v-model="company.invoice_format" :options="invoice_format" disabled={{company.invoice_format.length > 0}}></b-form-select>
+         <b-form-select id="invoice" v-model="company.invoice_format" :options="invoice_format" :disabled="company.invoice_format.length > 0"></b-form-select>
       </b-form-group>
 
       <template #footer>

@@ -1,16 +1,105 @@
-Vue.component("dashboard", {
-    data() {
-        return {
-            loading: true,
-            company: null,
-            company_list: [
-        		{ value: null, text: 'Please select an option' }
-             ],
-            show: true
-        }
-    },
+// register globally (or you can do it locally)
+Vue.component("v-chart", VueECharts);
 
-    created() {
+
+Vue.component("dashboard", {
+  data() {
+    return {
+      loading: true,
+      company: null,
+      company_list: [{ value: null, text: 'Please select an option' }],
+      option_bar:{
+        textStyle: {
+          fontFamily: 'Inter, "Helvetica Neue", Arial, sans-serif',
+          fontWeight: 300
+        },
+        dataset: {
+          dimensions: ["Product", "2015", "2016", "2017"],
+          source: [
+            {
+              Product: "Matcha Latte",
+              2015: 20,
+              2016: 20,
+              2017: 20
+            },
+            {
+              Product: "Milk Tea",
+              2015: 20,
+              2016: 20,
+              2017: 20
+            },
+            {
+              Product: "Cheese Cocoa",
+              2015: 20,
+              2016: 20,
+              2017: 20
+            },
+            {
+              Product: "Walnut Brownie",
+              2015: 20,
+              2016: 20,
+              2017: 20
+            }
+          ]
+        },
+        xAxis: { type: "category" },
+        yAxis: {},
+        // Declare several bar series, each will be mapped
+        // to a column of dataset.source by default.
+        series: [{ type: "bar" }, { type: "bar" }, { type: "bar" }]
+      },
+      option_pie: {
+        textStyle: {
+          fontFamily: 'Inter, "Helvetica Neue", Arial, sans-serif',
+        },
+        title: {
+          text: 'Traffic Sources',
+          left: 'center',
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b} : {c} ({d}%)',
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left',
+          data: [
+            'Direct',
+            'Email',
+            'Ad Networks',
+            'Video Ads',
+            'Search Engines',
+          ],
+        },
+        series: [
+          {
+            name: 'Traffic Sources',
+            type: 'pie',
+            radius: '55%',
+            center: ['50%', '60%'],
+            data: [
+              { value: 335, name: 'Direct' },
+              { value: 310, name: 'Email' },
+              { value: 234, name: 'Ad Networks' },
+              { value: 135, name: 'Video Ads' },
+              { value: 1548, name: 'Search Engines' },
+            ],
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)',
+              },
+            },
+          },
+        ],
+      },
+
+      show: true
+    }
+  },
+
+  created() {
     axios
       .get('/companies')
       .then(response => {
@@ -28,8 +117,8 @@ Vue.component("dashboard", {
         }
       })
   },
-    
-    template: `
+
+  template: `
 
     <div class="d-flex justify-content-center mb-3" v-if="loading">
           <b-spinner type="grow" label="Loading..."></b-spinner>
@@ -41,6 +130,14 @@ Vue.component("dashboard", {
         <b-form-select id="company" v-model="company" :options="company_list"></b-form-select>
         <b-form-text id="company-help">Select one of the companies from the list.</b-form-text>
       </b-card-text>
+
+      <div style="height:400px">
+      <v-chart :option="option_pie" autoresize/>
+      </div>
+      
+      <div style="height:400px">
+      <v-chart :option="option_bar" autoresize/>
+      </div>
 
       <b-card-text>
       Invoice situation: due, outstanding

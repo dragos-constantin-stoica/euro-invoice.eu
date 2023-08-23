@@ -634,7 +634,7 @@ fastify.put('/registerpayment', async function(request, reply){
     let theUser = await nano.request({method:'get', db:'_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result = await getInvoices(company_list)
-    reply.send({status: 'ok', message:`Payment of ${request.body.data.payment.amount} ${request.body.data.payment.currency} resistered for invoice ${request.body.data.invoice_number}`, dataset: result})
+    reply.send({status: 'ok', message:`Payment of ${request.body.data.payment.amount} ${request.body.data.payment.currency} registered for invoice ${request.body.data.invoice_number}`, dataset: result})
   } catch (error) {
     console.log(error)
     reply.send({status: 'error', message: 'Payment registration error.'})

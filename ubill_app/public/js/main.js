@@ -86,7 +86,7 @@ Vue.component("privateFooter", {
 	},
 	template: `
 	<div class="footercontainer">
-        <span class="text-muted">&copy;DataStema 2023</span>
+        <span class="text-muted">&copy;&nbsp;DataStema 2023</span>
     </div>
 	`
 });

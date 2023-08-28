@@ -288,6 +288,18 @@ app.post('/registerpayment', isAuthenticated, async function(req, res, next){
   }
 });
 
+app.post('/app/contact', async function(req, res){
+  //Not logged - the information has to come form the homepage of the site
+  console.log(req.body);
+  res.send('OK')
+})
+
+app.post('/app/subscribe', async function(req, res){
+  //Not logged - the information has to come form the homepage of the site
+  console.log(req.body);
+  res.send('OK')
+})
+
 app.get('/version', function (req, res) {
   res.json({ application: APPLICATION, version: VERSION })
 })

@@ -213,7 +213,7 @@ Vue.component("publicFooter", {
 	},
 	template: `
 	<div class="footercontainer">
-        <span class="text-muted">&copy;DataStema 2023</span>
+        <span class="text-muted">&copy; <a href="https://datastema.io/">DataStema</a> 2023</span>
     </div>
 	`
 });

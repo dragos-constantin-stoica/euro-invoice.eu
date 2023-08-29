@@ -5,16 +5,18 @@
 # Data Solution Blueprint (c) serial number 000002
 # Compnents:
 # - CouchDB
-# - gearmand
+# - Nginx
+# - CertBot
 # - APP - CouchDB management
 # - APP - Unitiy Bill
 #
 # @company: DataStema Sarl
 # @date: 01.02.2023
-# @version: 3.7.0
+# @version: 2.9.0
 # @author: dragos.stoica@datastema.io
 #----------------------------------------------------------------------------
 
+# Local variables shared with docker compose and each container
 source .env
 
 # display usage and help
@@ -23,6 +25,8 @@ usage(){
     -~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
     $0 setup
         setup each container
+    $0 ssl
+        setup SSL certificates from Letsencrypt via cerbot
     $0 redeploy [service_name]
         stop and restart with rebuild the service
     $0 run
@@ -48,7 +52,7 @@ where [service_name] is:
 setup(){
     echo "Setup stage"
     #create docker folders
-    local FOLDERS=( "./dbcouch" "./dbcouch/data" "./dbcouch/etc" "./dbcouch/log" )
+    local FOLDERS=( "./dbcouch" "./dbcouch/data" "./dbcouch/etc" "./dbcouch/log" "./nginx" "./nginx/conf")
     for i in "${FOLDERS[@]}"
     do
 	if [ ! -d "$i" ]; then
@@ -87,6 +91,20 @@ setup(){
     echo "DONE >>> Setup stage"
 }
 
+# certbot ssl management
+cerbotssl(){
+    echo "Setup SSL certificates from Letencrypt using certbot"
+    local FOLDERS=( "./certbot" "./cerbot/www" "./certbot/conf")
+    for i in "${FOLDERS[@]}"
+    do
+	if [ ! -d "$i" ]; then
+        mkdir -m 0777 -p $i
+    fi
+    done
+    docker compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ --force-renewal --email ${CERT_EMAIL} -d ${CERT_DOMAIN} --agree-tos
+    echo "DONE >>> SSL certificates"
+}
+
 # redeploy function
 redeploy(){
     echo "Redeploy stage for service $1"
@@ -98,7 +116,7 @@ redeploy(){
 # clean up all folders
 cleanup(){
     echo "Cleanup stage"
-    #delete docker folders
+    #delete CouchDB folders
     local FOLDERS=("./dbcouch")
     for i in "${FOLDERS[@]}"
     do
@@ -155,6 +173,7 @@ fi
 
 case $1 in
     "setup")    setup ;;
+    "ssl")      cerbotssl ;;
     "cleanup")  cleanup ;;
     "redeploy") redeploy $2;;
     "run")      run ;;
@@ -163,7 +182,7 @@ case $1 in
     "prune")    prune;;
     "usage")    usage ;;
     *)      	echo "unknown command: $1"
-	        usage ;;
+	            usage ;;
 esac
 
 exit 0

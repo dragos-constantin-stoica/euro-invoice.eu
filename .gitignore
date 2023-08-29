@@ -105,3 +105,6 @@ dist
 
 #CouchDB local folders
 dbcouch/
+
+#Certbot local files
+certbot/

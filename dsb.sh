@@ -94,14 +94,14 @@ setup(){
 # certbot ssl management
 cerbotssl(){
     echo "Setup SSL certificates from Letencrypt using certbot"
-    local FOLDERS=( "./certbot" "./cerbot/www" "./certbot/conf")
+    local FOLDERS=( "./certbot" "./certbot/www" "./certbot/conf")
     for i in "${FOLDERS[@]}"
     do
 	if [ ! -d "$i" ]; then
         mkdir -m 0777 -p $i
     fi
     done
-    docker compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ --force-renewal --email ${CERT_EMAIL} -d ${CERT_DOMAIN} --agree-tos
+    docker compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ --force-renewal --email ${CERT_EMAIL} -d ${CERT_DOMAIN} --agree-tos --non-interactive
     echo "DONE >>> SSL certificates"
 }
 

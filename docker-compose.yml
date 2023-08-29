@@ -116,8 +116,6 @@ services:
       - ./certbot/conf/:/etc/letsencrypt/:rw
     networks:
       - unity_bill
-    command: certonly --webroot -w /var/www/certbot --force-renewal --email ${CERT_EMAIL} -d ${CERT_DOMAIN} --agree-tos
-
 
 networks:
   unity_bill:

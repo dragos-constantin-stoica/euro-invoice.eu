@@ -93,7 +93,7 @@ setup(){
 
 # certbot ssl management
 cerbotssl(){
-    echo "Setup SSL certificates from Letencrypt using certbot"
+    echo "Setup SSL certificates from Lets Encrypt using Certbot"
     local FOLDERS=( "./certbot" "./certbot/www" "./certbot/conf")
     for i in "${FOLDERS[@]}"
     do
@@ -117,7 +117,7 @@ redeploy(){
 cleanup(){
     echo "Cleanup stage"
     #delete CouchDB folders
-    local FOLDERS=("./dbcouch")
+    local FOLDERS=("./dbcouch" "./certbot")
     for i in "${FOLDERS[@]}"
     do
 	    if [ -d "$i" ]; then

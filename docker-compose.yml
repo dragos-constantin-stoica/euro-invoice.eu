@@ -72,8 +72,6 @@ services:
     ports:
       - '8080:3000'
     depends_on:
-      nginx:
-        condition: service_started
       couch:
         condition: service_healthy
       couch_admin:
@@ -97,6 +95,9 @@ services:
     ports:
       - 80:80
       - 443:443
+    depends_on:
+      unitybillapp:
+        condition: service_healthy
     restart: always
     volumes:
       - ./nginx/conf/:/etc/nginx/conf.d/:ro

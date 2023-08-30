@@ -26,11 +26,13 @@ usage(){
     $0 setup
         setup each container
     $0 ssl
-        setup SSL certificates from Letsencrypt via cerbot
+        setup SSL certificates from Lets Encrypt via Cerbot
     $0 redeploy [service_name]
         stop and restart with rebuild the service
     $0 run
         main execution loops, launch Data Solution Blueprint
+    $0 dev
+        local development execution, no Internet access, no SSL
     $0 stop
         stop execution loop
     $0 cleanup
@@ -135,9 +137,23 @@ run(){
 
     echo "CouchDB has successfuly started on http://couch.localhost:5984/_utils"
     echo "        user: $COUCHDB_USER | password: $COUCHDB_PASSWORD"
-    echo "Couch Admin Worker have successfully started"
+    echo "Couch Admin Worker have successfully started on http://localhost:$WRK_PORT"
     echo "UnityBill has successfully started on http://localhost:8080"
+    echo "Application available at https://$CERT_DOMAIN"
     echo -e "\n\nDONE >>> Run stage"
+}
+
+# dev function
+dev(){
+    echo "DEV stage"
+    docker compose up -d unitybillapp
+    
+    echo "CouchDB has successfuly started on http://couch.localhost:5984/_utils"
+    echo "        user: $COUCHDB_USER | password: $COUCHDB_PASSWORD"
+    echo "Couch Admin Worker have successfully started on http://localhost:$WRK_PORT"
+    echo "UnityBill has successfully started on http://localhost:8080"
+    
+    echo -e "\n\nDONE >>> DEV"
 }
 
 # stop function
@@ -177,6 +193,7 @@ case $1 in
     "cleanup")  cleanup ;;
     "redeploy") redeploy $2;;
     "run")      run ;;
+    "dev")      dev ;;
     "stop")     stop ;;
     "build")    build $2;;
     "prune")    prune;;

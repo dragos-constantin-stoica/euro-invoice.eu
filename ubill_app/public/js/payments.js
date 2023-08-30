@@ -128,7 +128,7 @@ Vue.component("payments", {
         <b-form-text id="company-help">Select one of the companies from the list.</b-form-text>
       </b-card-text>  
       
-      <b-table hover :items="invoices" :fields="invoices_fields" :tbody-tr-class="rowRG" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :busy="isBusy" sort-icon-left>
+      <b-table hover responsive :items="invoices" :fields="invoices_fields" :tbody-tr-class="rowRG" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :busy="isBusy" sort-icon-left>
       <template #cell(INVOICE_TOTAL)="row">
         {{ row.value.toFixed(2) }} {{row.item.EXCHANGE_RATE.from}}
       </template>
@@ -158,15 +158,15 @@ Vue.component("payments", {
           <b-row class="mb-2">
             <b-col sm="3" class="text-sm-right"><b>Customer:</b></b-col>
             <b-col>{{ row.item.CUSTOMER.name }}</b-col>
+          </b-row>           
+          <b-row class="mb-2">
+            <b-col sm="3" class="text-sm-right"><b>Total:</b></b-col>
+            <b-col>{{ row.item.INVOICE_TOTAL.toFixed(2) }}</b-col>
           </b-row>  
           <b-row class="mb-2">
             <b-col sm="3" class="text-sm-right"><b>Payed:</b></b-col>
             <b-col>{{ displayPayments(row.item) }}</b-col>
-          </b-row>          
-          <b-row class="mb-2">
-            <b-col sm="3" class="text-sm-right"><b>Total:</b></b-col>
-            <b-col>{{ row.item.INVOICE_TOTAL.toFixed(2) }}</b-col>
-          </b-row>          
+          </b-row>         
           <b-button pill variant="warning" size="sm" @click="row.toggleDetails">Hide Details</b-button>
         </b-card>
         <b-card v-if="row.item.STATUS!= 'payed'">

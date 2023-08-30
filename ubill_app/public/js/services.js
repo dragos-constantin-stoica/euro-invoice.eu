@@ -13,7 +13,11 @@ Vue.component("services", {
         vat: 0.0,
         currency: ''
       },
-      services_fields: [{ key: 'name', label: 'Item' }, { key: 'unit_price', label: 'Price' }],
+      services_fields: [
+        { key: 'name', label: 'Item' }, 
+        { key: 'unit_price', label: 'Price' },
+        'show_details'
+      ],
       services_items: [],
       company_list: [
         { value: null, text: 'Please select an option' }
@@ -112,6 +116,10 @@ Vue.component("services", {
             //we select by default the 1st company
             this.company = this.company_list[0].value
             this.services_items = this.services[this.company._id]
+            this.newdata.name = ''
+            this.newdata.description = ''
+            this.newdata.unit_price = 0.0
+            this.newdata.vat = 0.0
             this.newdata.type = 'service'
             this.newdata.currency = 'EUR'
             this.newdata.unit = this.unit_list[this.newdata.type][0].value
@@ -160,11 +168,48 @@ Vue.component("services", {
         <b-form-text id="company-help">Select one of the companies from the list.</b-form-text>
       </b-card-text>
 
-      <div>
-          <b-table responsive :items="services_items" :fields="services_fields" caption-top>
-          <template #table-caption>Services and Products</template>
-          </b-table>
-       </div>
+      <b-table responsive :items="services_items" :fields="services_fields" caption-top>
+      <template #table-caption>Services and Products</template>
+      <template #cell(show_details)="row">
+        <b-button pill variant="warning" size="sm" @click="row.toggleDetails" class="mr-2">
+          {{ row.detailsShowing ? 'Hide' : 'Show'}} Details
+        </b-button>
+      </template>
+      <template #row-details="row">
+        <b-card>
+          <b-row class="mb-2">
+            <b-col sm="3" class="text-sm-right"><b>Label:</b></b-col>
+            <b-col>{{ row.item.name }}</b-col>
+          </b-row>
+          <b-row class="mb-2">
+            <b-col sm="3" class="text-sm-right"><b>Desription:</b></b-col>
+            <b-col>{{ row.item.description }}</b-col>
+          </b-row>
+          <b-row class="mb-2">
+            <b-col sm="3" class="text-sm-right"><b>Type:</b></b-col>
+            <b-col>{{ row.item.type }}</b-col>
+          </b-row>
+          <b-row class="mb-2">
+            <b-col sm="3" class="text-sm-right"><b>Unit:</b></b-col>
+            <b-col>{{ row.item.unit }}</b-col>
+          </b-row>
+          <b-row class="mb-2">
+            <b-col sm="3" class="text-sm-right"><b>Price:</b></b-col>
+            <b-col>{{ Number.parseFloat(row.item.unit_price).toFixed(2) }} {{row.item.currency}}</b-col>
+          </b-row>  
+          <b-row class="mb-2">
+            <b-col sm="3" class="text-sm-right"><b>VAT:</b></b-col>
+            <b-col>{{ row.item.vat }}%</b-col>
+          </b-row>          
+          <b-row class="mb-2">
+            <b-col sm="3" class="text-sm-right"><b>Price with Tax:</b></b-col>
+            <b-col>{{ Number.parseFloat(row.item.unit_price * (1.00 + row.item.vat / 100.00)).toFixed(2) }} {{row.item.currency}}</b-col>
+          </b-row>          
+          <b-button pill variant="warning" size="sm" @click="row.toggleDetails">Hide Details</b-button>
+        </b-card>
+      </template>
+      </b-table>
+       
     </b-card>
 
     <b-card title="Add Services and Products"  header-tag="header" footer-tag="footer">

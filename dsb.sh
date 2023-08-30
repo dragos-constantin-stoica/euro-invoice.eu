@@ -67,13 +67,52 @@ setup(){
     COUCH_URL=http://$COUCHDB_USER:$COUCHDB_PASSWORD@couch.localhost:5984
     sleep 10
 
-    curl -X PUT $COUCH_URL/_node/_local/_config/couchdb/single_node -d '"true"'
-    curl -X PUT $COUCH_URL/_node/_local/_config/cluster/n -d '"1"'
-    curl -X POST $COUCH_URL/_node/_local/_config/_reload
+    #curl -X PUT $COUCH_URL/_node/_local/_config/couchdb/single_node -d '"true"'
+    #curl -X PUT $COUCH_URL/_node/_local/_config/cluster/n -d '"1"'
+    #curl -X POST $COUCH_URL/_node/_local/_config/_reload
 
-    curl -X PUT $COUCH_URL/_users
-    curl -X PUT $COUCH_URL/_replicator
-    curl -X PUT $COUCH_URL/_global_changes
+    curl -X GET $COUCH_URL/_cluster_setup
+
+    curl -H 'Content-Type: application/json' -X POST $COUCH_URL/_cluster_setup --data-binary @- <<EOF
+{
+  "action":"enable_single_node",
+  "singlenode":true,
+  "bind_address":"0.0.0.0",
+  "port":5984,
+  "username":"${COUCHDB_USER}",
+  "password":"${COUCHDB_PASSWORD}",
+  "ensure_dbs_exist": ["_users", "_replicator", "_global_changes"]
+}
+EOF
+
+    function setting {
+        local NODE_NAME="nonode@nohost"
+        echo
+        echo "setting: $1 $2 \"$3\""
+        echo -n "   prev: "
+        curl -H 'Content-Type: application/json' -X PUT $COUCH_URL/_node/$NODE_NAME/_config/$1/$2 -d "\"$3\""
+    }
+
+    setting uuids algorithm   "random"
+    setting cors  credentials "true"
+    setting cors  headers     "accept, authorization, content-type, origin, referer"
+    setting cors  methods     "GET, PUT, POST, HEAD, DELETE"
+    setting cors  origins     "http://localhost:3000,http://localhost:8080,http://localhost:$WRK_PORT"
+    setting chttpd enable_cors "true"
+    setting chttpd require_valid_user "true"
+    setting chttpd require_valid_user_except_for_up "true"
+
+    # Set session timeout to 8 hours (default is 10 mins)
+    setting chttpd_auth timeout "10800"
+
+    curl -X POST $COUCH_URL/_node/_local/_config/_reload
+    curl -X GET $COUCH_URL/_cluster_setup
+
+
+    # Create mandatory databases
+    #curl -X PUT $COUCH_URL/_users
+    #curl -X PUT $COUCH_URL/_replicator
+    #curl -X PUT $COUCH_URL/_global_changes
 
     # Companies database
     curl -X PUT $COUCH_URL/_users/org.couchdb.user:$APP_USER \
@@ -86,6 +125,14 @@ setup(){
        -H 'content-type: application/json' \
        -H 'accept: application/json' \
        -d '{"admins":{"names":[],"roles":["_admin"]},"members":{"names": [],"roles": ["technical_usr"]}}'
+
+    # Contact and newsletter subscription database
+    curl -X PUT $COUCH_URL/contact
+    curl -X PUT $COUCH_URL/contact/_security \
+       -H 'content-type: application/json' \
+       -H 'accept: application/json' \
+       -d '{"admins":{"names":[],"roles":["_admin"]},"members":{"names": [],"roles": ["technical_usr"]}}'
+
 
     sleep 10
     docker compose down
@@ -118,13 +165,24 @@ redeploy(){
 # clean up all folders
 cleanup(){
     echo "Cleanup stage"
-    #delete CouchDB folders
-    local FOLDERS=("./dbcouch" "./certbot")
-    for i in "${FOLDERS[@]}"
+    echo "Do you want to delete ALL data?"
+    select yn in "Yes" "No"
     do
-	    if [ -d "$i" ]; then
-            sudo rm -fr $i
-        fi
+        case $yn in
+            Yes )
+                #delete CouchDB and Lets Encrypt folders
+                local FOLDERS=("./dbcouch" "./certbot")
+                for i in "${FOLDERS[@]}"
+                do
+                    if [ -d "$i" ]; then
+                        sudo rm -fr $i
+                    fi
+                done; break ;;
+            No )
+                echo "Wise decission! This actions would have been irreversible :)"; break;;
+            * )
+                echo "Select one option from the list." ;;
+        esac
     done
 
     echo "DONE >>> Cleanup stage"

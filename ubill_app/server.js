@@ -291,13 +291,31 @@ app.post('/registerpayment', isAuthenticated, async function(req, res, next){
 app.post('/app/contact', async function(req, res){
   //Not logged - the information has to come form the homepage of the site
   console.log(req.body);
-  res.send('OK')
+  try {
+    var payload = req.body
+    payload.doctype = "contact"
+    payload.timestamp = Date.now()
+    var result = await axios.post(`${COUCH_ADMIN_URL}/contact`,{session:null, data: payload})
+    res.send((result.data.status == 'ok')?'OK':result.data.message)
+  } catch (error) {
+    console.log(error);
+    res.send('NOK')
+  }
 })
 
 app.post('/app/subscribe', async function(req, res){
   //Not logged - the information has to come form the homepage of the site
   console.log(req.body);
-  res.send('OK')
+  try {
+    var payload = req.body
+    payload.doctype = "newsletter"
+    payload.timestamp = Date.now()
+    var result = await axios.post(`${COUCH_ADMIN_URL}/contact`,{session:null, data: payload})
+    res.send((result.data.status == 'ok')?'OK':result.data.message)
+  } catch (error) {
+    console.log(error);
+    res.send('NOK')
+  }
 })
 
 app.get('/version', function (req, res) {

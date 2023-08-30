@@ -53,14 +53,18 @@ async function updateCompanyAdmin(newCompany, admin) {
     //data structure iban, bank, swift, bic, currency, (office)
     myCompany.address = []
     //address is a string with newlines and will be displayed in a textarea
+    myCompany.vat = myCompany.vat || ''
+    myCompany.email = ''
+    myCompany.contact = ''
     result = await thisCompany.insert(myCompany)
     //create indexes
     const doctype_idx = { index: { fields: ["doctype"] }, name: "doctype_idx", type: "json", ddoc: "doctype_idx" }
     result = await thisCompany.createIndex(doctype_idx)
     //create serial_number document
+    //this should not happen here?!
     if (myCompany.invoice_format){
       let sn_doc = {_id: 'serialnumber', doctype: 'serialnumber'}
-      sn_doc[`${myCompany.invoice_format}`]= 1
+      sn_doc[`${myCompany.invoice_format}`]= 0
       result = await thisCompany.insert(sn_doc)
     }
     //create design documents
@@ -524,7 +528,6 @@ fastify.put('/clients', async function(request, reply){
 	}
 });
 
-
 fastify.post('/contracts', async function (request, reply){
 	let result = {}
 	try{
@@ -677,6 +680,17 @@ fastify.post('/register', async function (request, reply) {
   }
 });
 
+fastify.post('/contact', async function(request, reply){
+  let result = {}
+  try{
+    let contactdb = nano.use('contact')
+    result = contactdb.insert(request.body.data)
+    reply.send({status:'ok', message: 'Message saved successfully.', dataset: result})
+  }catch(err){
+    console.log(err);
+    reply.send({status:'error', message: 'Contact or newsletter subscribe error'})
+  }
+});
 
 (async () => {
   try {

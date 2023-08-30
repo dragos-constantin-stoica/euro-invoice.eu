@@ -4,7 +4,7 @@ Vue.component("company", {
       loading: true,
       logofile: null,
       vatRO: false,
-      newdata: { address: '', bank_name:'', iban: '', swift: '', bic: '', currency: ''},
+      newdata: { address: '', bank_name:'', iban: '', swift: '', bic: '', currency: '', invoice_format:''},
       company: null,
       company_list: [
         { value: null, text: 'Please select an option' }
@@ -48,11 +48,15 @@ Vue.component("company", {
   			this.company.bank_accounts.unshift(tmp)
   		}
   	},
+    selectInvoiceFormat(event){
+      this.newdata.invoice_format = event
+    },
   	saveCompany: function(){
-  	    this.loading = true
+  	  this.loading = true
+      this.company.invoice_format = this.newdata.invoice_format 
   		axios.put('/companies', this.company)
   		.then(response =>{
-  			console.log(response.data)
+  			//console.log(response.data)
 	        if (response.data.status = 'ok') {
 	          this.company_list = response.data.dataset.map(item => {
 	            let tmp = {}
@@ -62,7 +66,8 @@ Vue.component("company", {
 	          })
 	          //we select by default the 1st company
 	          this.company = this.company_list[0].value
-	          this.company.invoice_format = this.company.invoice_format ?? this.invoice_format[0].value
+	          this.newdata.invoice_format = this.company.invoice_format ?? this.invoice_format[0].value
+            this.company.invoice_format = this.company.invoice_format ?? ''
 	          this.newdata.currency = 'EUR'
             this.vatRO = this.company.vat.length > 0
 	          this.loading = false
@@ -86,7 +91,8 @@ Vue.component("company", {
           })
           //we select by default the 1st company
           this.company = this.company_list[0].value
-          this.company.invoice_format = this.company.invoice_format ?? this.invoice_format[0].value
+          this.newdata.invoice_format = this.company.invoice_format ?? this.invoice_format[0].value
+          this.company.invoice_format = this.company.invoice_format ?? ''
           this.newdata.currency = 'EUR'
           this.vatRO = this.company.vat.length > 0
           this.loading = false
@@ -181,7 +187,7 @@ Vue.component("company", {
       </b-form-group>
 
       <b-form-group label="Invoice format"  label-for="invoice" label-cols-sm="3">
-         <b-form-select id="invoice" v-model="company.invoice_format" :options="invoice_format" :disabled="company.invoice_format.length > 0"></b-form-select>
+         <b-form-select id="invoice" v-model="newdata.invoice_format" :options="invoice_format" :disabled="company.invoice_format.length > 0" @change="selectInvoiceFormat($event)"></b-form-select>
       </b-form-group>
 
       <template #footer>

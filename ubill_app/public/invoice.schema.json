@@ -5,6 +5,11 @@
   "description": "Invoice data model for UnityBill",
   "type": "object",
   "properties": {
+	"STATUS":{
+		"description": "The status of the invoice according to the lifecycle",
+		"type": "string",
+		"enum": [ "new", "partially-payed", "payed"]
+	},
 	"DRAFT": {
 		"description": "Boolean value for preview of final version. Do not save in final invoice.",
 		"type": "boolean"
@@ -67,9 +72,14 @@
 			"vat": {"type": "string"},
 			"address": {"type": "string"},
 			"bank_name": {"type": "string"},
-			"bank_iban": {"type": "string"}
+			"bank_iban": {"type": "string"},
+			"bank_swift": {"type": "string"},
+			"bank_bic": {"type": "string"},
+			"bank_currency": {"type": "string"},
+			"mobile": { "type": "string"},
+			"contact": { "type": "string"}
 		},
-		"required": [ "name", "NRNo", "vat", "address", "bank_name", "bank_iban" ],
+		"required": [ "name", "NRNo", "vat", "address", "bank_name", "bank_iban", "bank_swift", "bank_bic", "bank_currency", "mobile", "contact" ],
 		"additionalProperties" : false
 	},
 	"EXCHANGE_RATE":{
@@ -102,6 +112,11 @@
 		"description": "The total sum of the invoice lines with taxes.",
 		"type": "number",
 		"minimum": 0.0
+	},
+	"PAYMENTS":{
+		"description": "Each registered payment",
+		"type": "array",
+		"items": { "$ref": "#/$def/payment"}
 	}
   },
   "$defs":{
@@ -117,7 +132,18 @@
 		},
 		"required":[ "details", "um", "qty", "up", "line_value", "line_tva" ],
 		"additionalProperties": false
+	  },
+	  "payment": {
+		"type": "object",
+		"properties": {
+			"date": { "type": "string", "format": "date"},
+			"type": { "type": "string"},
+			"amount": { "type": "string"},
+			"currency": { "type": "string"}
+		},
+		"required": ["date", "type", "amount", "currency"],
+		"additionalProperties": false
 	  }
   },
-  "required": [ "DRAFT", "INVOICE_NUMBER", "INVOICE_DATE", "INVOICE_DUE_DATE", "VAT", "SUPPLIER", "CUSTOMER", "INVOICE_LINE"  ]
+  "required": [ "STATUS", "DRAFT", "INVOICE_NUMBER", "INVOICE_DATE", "INVOICE_DUE_DATE", "INVOICE_DUE_TERM", "INVOICE_DETAILS", "VAT", "SUPPLIER", "CUSTOMER", "INVOICE_LINE", "INVOICE_SUM", "INVOICE_TVA_SUM", "INVOICE_TOTAL", "PAYMENTS" ]
 }

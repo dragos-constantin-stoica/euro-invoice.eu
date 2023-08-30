@@ -16,10 +16,23 @@ Vue.component("login", {
 			console.log('show register')
 		},
 		userLogin() {
-			//TODO - check values for all fields
+			//check values for all fields
+			//check email
+			let emailregex = new RegExp("([!#-'*+/-9=?A-Z^-~-]+(\.[!#-'*+/-9=?A-Z^-~-]+)*|\"\(\[\]!#-[^-~ \t]|(\\[\t -~]))+\")@([!#-'*+/-9=?A-Z^-~-]+(\.[!#-'*+/-9=?A-Z^-~-]+)*|\[[\t -Z^-~]*])");
+			if (!emailregex.test(this.form.username)){
+				showToast('The username must be your email', 'Login validation', 'danger')
+				return
+			}
+			//check password
+			let passwordregex = /^(?=.*[0-9])(?=.*[!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~])[a-zA-Z0-9!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~*]{8,}$/;
+			if (!passwordregex.test(this.form.password)){
+				showToast('The password should match the one from registration', 'Login validation', 'danger')
+				return
+			}
+
 			axios.post('/login', this.form)
 				.then(function (response) {
-					console.log(response);
+					//console.log(response);
 					showToast(response.data.status == 'ok' ? response.data.message : response.data.error, 'Message from Server', response.data.status == 'ok' ? 'success' : 'error')
 					if (response.data.action) {
 						window.app[response.data.action](response.data.args)
@@ -32,7 +45,7 @@ Vue.component("login", {
 				.finally(function () {
 					// always executed
 				});
-			console.log('user login')
+			//console.log('user login')
 		},
 	},
 	template: `
@@ -65,6 +78,7 @@ Vue.component("register", {
 				country: null,
 				national_registration_number: ''
 			},
+			password_bis:'',
 			countries: [
 				{ value: null, text: 'Please select an option' },
 				{ value: 'AT', text: 'Austria' },
@@ -99,11 +113,47 @@ Vue.component("register", {
 		}
 	},
 	methods: {
+		showLogin(){
+			window.app.showLayout({ currentHeader: 'publicHeader', mainComponent: 'login', currentFooter: 'publicFooter' })
+			console.log('show login')
+		},
+
 		companyRegister() {
-			//TODO - check values for all fields
+			//check values for all fields
+			//check email
+			let emailregex = new RegExp("([!#-'*+/-9=?A-Z^-~-]+(\.[!#-'*+/-9=?A-Z^-~-]+)*|\"\(\[\]!#-[^-~ \t]|(\\[\t -~]))+\")@([!#-'*+/-9=?A-Z^-~-]+(\.[!#-'*+/-9=?A-Z^-~-]+)*|\[[\t -Z^-~]*])");
+			if (!emailregex.test(this.form.username)){
+				showToast('The username must be your email', 'Form validation', 'danger')
+				return
+			}
+			//check password
+			let passwordregex = /^(?=.*[0-9])(?=.*[!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~])[a-zA-Z0-9!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~*]{8,}$/;
+			if (!passwordregex.test(this.form.password)){
+				showToast('Password must contain at least one lower case letter, upper case letter, digit and special symbol. Password length is minimum 8 characters.', 'Form validation', 'danger')
+				return
+			}
+			//passwords must match
+			if (this.password_bis != this.form.password){
+				showToast('The two passwords must be identical.', 'Form validation', 'danger')
+				return
+			}
+			if (this.form.name.length == 0){
+				showToast('Please input your Company.', 'Form validation', 'danger')
+				return
+			}
+			if (this.form.national_registration_number.length == 0){
+				showToast('Please input National Registration Number of your Company.', 'Form validation', 'danger')
+				return
+			}
+			if (!this.form.country){
+				showToast('Please select a country from the list', 'Form validation', 'danger')
+				return
+			}
+			
+			//It seems that we got some valid data
 			axios.post('/register', this.form)
 				.then(function (response) {
-					console.log(response);
+					//console.log(response);
 					showToast(response.data.status == 'ok' ? response.data.message : response.data.error, 'Message from Server', response.data.status == 'ok' ? 'success' : 'error')
 					if (response.data.action) {
 						window.app[response.data.action](response.data.args)
@@ -117,7 +167,7 @@ Vue.component("register", {
 					// always executed
 				});
 
-			console.log('company register')
+			//console.log('company register')
 		},
 	},
 	template: `
@@ -134,7 +184,7 @@ Vue.component("register", {
 		</b-form-group>
 
 		<b-form-group :label='$t("login.password")' label-for="password_check" label-cols-sm="3" label-align-sm="right">
-			<b-form-input id="password_check" type="password" placeholder="the same password as above"  required></b-form-input>
+			<b-form-input id="password_check" v-model="password_bis" type="password" placeholder="the same password as above"  required></b-form-input>
 		</b-form-group>
 	</b-form-group>
 
@@ -152,6 +202,7 @@ Vue.component("register", {
 
 	<b-button variant="success" @click="companyRegister">{{$t("register.btn_register")}}</b-button>
 	</b-card>
+	<b-button variant="link" @click="showLogin">{{$t("login.btn_login")}}</b-button>
 	</b-container>
 	`
 });

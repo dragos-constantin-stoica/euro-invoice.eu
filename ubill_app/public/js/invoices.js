@@ -71,6 +71,7 @@ Vue.component("invoices", {
   },
 
   methods: {
+    
     addItem: function () {
       let tmp = this.newitem
       tmp.unit_price = Number.parseFloat(tmp.unit_price)
@@ -87,7 +88,12 @@ Vue.component("invoices", {
     },
 
     selectDueTerm(event) {
-      this.newdata.due_date = new Date((new Date()).setDate(new Date().getDate() + event)).toISOString().substring(0,10)
+      this.newdata.due_date = new Date((new Date()).setDate(new Date(this.newdata.issue_date).getDate() + event)).toISOString().substring(0,10)
+    },
+
+    selectIssueDate(event){
+      this.newdata.due_date = new Date((new Date()).setDate(new Date(event).getDate() + this.newdata.invoice_due_term)).toISOString().substring(0,10)
+      this.newdata.payment_instructions = getCS(new Date(event), this.serialnumber_data[this.company._id][this.company.invoice_format].toString())
     },
 
     selectServiceProduct(event){
@@ -107,7 +113,7 @@ Vue.component("invoices", {
       let payload = {
         DRAFT: false,
         STATUS: 'new',
-        INVOICE_NUMBER: "2023.01/##",
+        INVOICE_NUMBER: "YYYY.MM/##",
         INVOICE_FORMAT: this.company.invoice_format,
         INVOICE_DETAILS: this.newdata.payment_instructions,
         INVOICE_DATE: this.newdata.issue_date,
@@ -156,7 +162,7 @@ Vue.component("invoices", {
         company_id: this.company._id,
         invoice_format: this.company.invoice_format
       }
-      //TODO push data to server and create new invoice number
+      //Push data to server and create new invoice number
       
       axios.post('/newinvoice', invoice_doc)
            .then(response =>{
@@ -164,9 +170,10 @@ Vue.component("invoices", {
 	        if (response.data.status = 'ok') {
             showToast(response.data.status == 'ok' ? response.data.message : response.data.error, 'Message from Server', response.data.status == 'ok' ? 'success' : 'error')
             this.serialnumber_data = response.data.dataset.serialnumbers
-            this.company.invoice_number = this.company.invoice_format.replace('YYYY', (new Date()).getUTCFullYear()) 
-                                        .replace('MM', ((new Date()).getUTCMonth() + 1).toString().padStart(2, '0'))
+            this.company.invoice_number = this.company.invoice_format.replace('YYYY', (new Date(this.newdata.issue_date)).getUTCFullYear()) 
+                                        .replace('MM', ((new Date(this.newdata.issue_date)).getUTCMonth() + 1).toString().padStart(2, '0'))
                                         .replace('XX',this.serialnumber_data[this.company._id][this.company.invoice_format].toString().padStart(2,'0'));
+            this.newdata.payment_instructions = getCS(new Date(this.newdata.issue_date), this.serialnumber_data[this.company._id][this.company.invoice_format].toString())                
             this.invoice_items = []
           }
       })
@@ -176,7 +183,8 @@ Vue.component("invoices", {
     generatePDF: function () {
       let draft = templates[this.newdata.template]
       let tmp = Handlebars.compile(draft)
-      //TODO - compile the full object with corresponding data
+      //Compile the full object with corresponding data
+      this.newdata.payment_instructions = getCS(new Date(this.newdata.issue_date), this.serialnumber_data[this.company._id][this.company.invoice_format].toString())
       let payload = {
         DRAFT: true,
         INVOICE_NUMBER: this.company.invoice_number,
@@ -226,6 +234,14 @@ Vue.component("invoices", {
   },
 
   computed: {
+    minDate(){
+      const t = new Date()
+      return `${t.getFullYear().toString().padStart(4,'0')}-${(t.getMonth()+1).toString().padStart(2,'0')}-01`
+    },
+    minDueDate(){
+      const t= new Date((new Date()).setDate(new Date(this.newdata.issue_date).getDate()+1))
+      return t.toISOString().substring(0, 10)
+    },
     lineTotal() {
       return ((1.00 + this.newitem.vat / 100.00) * this.newitem.quantity * this.newitem.unit_price).toFixed(2)
     },
@@ -233,8 +249,8 @@ Vue.component("invoices", {
       return (this.newitem.quantity * this.newitem.unit_price * this.newitem.vat / 100.00).toFixed(2)
     },
     formatInvoiceNumber(){
-      return (this.company.invoice_format.replace('YYYY', (new Date()).getUTCFullYear()) 
-      .replace('MM', ((new Date()).getUTCMonth() + 1).toString().padStart(2, '0'))
+      return (this.company.invoice_format.replace('YYYY', (new Date(this.newdata.issue_date)).getUTCFullYear()) 
+      .replace('MM', ((new Date(this.newdata.issue_date)).getUTCMonth() + 1).toString().padStart(2, '0'))
       .replace('XX',this.serialnumber_data[this.company._id][this.company.invoice_format].toString().padStart(2,'0')))
     }
   },
@@ -304,9 +320,10 @@ Vue.component("invoices", {
             vat: this.serviceproduct.vat
           }
           //Get the current invoice number for the draft version
-          this.company.invoice_number = this.company.invoice_format.replace('YYYY', (new Date()).getUTCFullYear()) 
-                                        .replace('MM', ((new Date()).getUTCMonth() + 1).toString().padStart(2, '0'))
+          this.company.invoice_number = this.company.invoice_format.replace('YYYY', (new Date(this.newdata.issue_date)).getUTCFullYear()) 
+                                        .replace('MM', ((new Date(this.newdata.issue_date)).getUTCMonth() + 1).toString().padStart(2, '0'))
                                         .replace('XX',this.serialnumber_data[this.company._id][this.company.invoice_format].toString().padStart(2,'0'));
+          this.newdata.payment_instructions = getCS(new Date(this.newdata.issue_date), this.serialnumber_data[this.company._id][this.company.invoice_format].toString())
           this.loading = false
         }
       }catch(err){
@@ -348,7 +365,7 @@ Vue.component("invoices", {
         </b-form-group>
             
         <b-form-group :label='$t("invoices.issue_date")' label-for="invoice_issue_date" label-cols-sm="3">
-          <b-form-input id="invoice_issue_date" type="date" v-model="newdata.issue_date"></b-form-input>
+          <b-form-input id="invoice_issue_date" type="date" v-model="newdata.issue_date" :min="minDate" @change="selectIssueDate($event)"></b-form-input>
         </b-form-group>
 
         <b-form-group :label='$t("invoices.due_term")' label-for="invoice_due_date" label-cols-sm="3">
@@ -357,7 +374,7 @@ Vue.component("invoices", {
         </b-form-group>
         
         <b-form-group :label='$t("invoices.due_date")' label-for="invoice_due_date" label-cols-sm="3">
-          <b-form-input id="invoice_due_date" type="date" v-model="newdata.due_date"></b-form-input>
+          <b-form-input id="invoice_due_date" type="date" v-model="newdata.due_date" :min="minDueDate" :readonly="newdata.invoice_due_term>1"></b-form-input>
         </b-form-group>
       
         <b-form-group :label='$t("invoices.currency")' label-for="invoice_currency" label-cols-sm="3">

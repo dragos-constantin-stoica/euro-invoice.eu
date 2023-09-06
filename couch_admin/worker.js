@@ -605,10 +605,17 @@ fastify.put('/newinvoice', async function(request, reply){
       field: request.body.data.invoice_format
     })
     console.log(next_sn);
-    let new_sn = request.body.data.invoice_format.replace('YYYY', (new Date()).getUTCFullYear()) 
-                  .replace('MM', ((new Date()).getUTCMonth() + 1).toString().padStart(2, '0'))
-                  .replace('XX',next_sn.doc[request.body.data.invoice_format].toString().padStart(2,'0'));
+    let new_sn = request.body.data.invoice_format.replace('YYYY', (new Date(request.body.data.payload.INVOICE_DATE)).getUTCFullYear()) 
+                  .replace('MM', ((new Date(request.body.data.payload.INVOICE_DATE)).getUTCMonth() + 1).toString().padStart(2, '0'))
+                  .replace('XX', next_sn.doc[request.body.data.invoice_format].toString().padStart(2,'0'));
     request.body.data.payload.INVOICE_NUMBER = new_sn
+    
+    const fy = (new Date(request.body.data.payload.INVOICE_DATE)).getUTCFullYear(), 
+          ddd = Math.floor((new Date(request.body.data.payload.INVOICE_DATE) - new Date(fy, 0, 0)) / (1000 * 60 * 60 * 24)), 
+          magic_number = parseInt("".concat(ddd, fy, next_sn.doc[request.body.data.invoice_format].toString()).padStart(4,'0'), 10);
+    let cc = (magic_number%97 == 0)? 97:(magic_number%97)
+ 
+    request.body.data.payload.INVOICE_DETAILS = `+++${ddd.toString().padStart(3,'0')}/${fy.toString().padStart(4,'0')}/${next_sn.doc[request.body.data.invoice_format].toString().padStart(4,'0')}${cc.toString().padStart(2,'0')}+++`
     let new_invoice_doc = {
       _id: new_sn,
       doctype: 'invoice',

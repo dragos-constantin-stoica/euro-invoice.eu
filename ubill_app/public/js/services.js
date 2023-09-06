@@ -40,46 +40,9 @@ Vue.component("services", {
           { value: 'mth', text: 'Month' }
         ]
       },
-      currency_list: [
-        { value: 'BGN', text: 'BGN' },
-        { value: 'CZK', text: 'CZK' },
-        { value: 'DKK', text: 'DKK' },
-        { value: 'EUR', text: 'EUR' },
-        { value: 'HUF', text: 'HUF' },
-        { value: 'PLN', text: 'PLN' },
-        { value: 'RON', text: 'RON' },
-        { value: 'SKK', text: 'SKK' },
-      ],
+      currency_list: CURRENCY_LIST,
       vat_list: [
-        { value: 0.0, text: '0%' },
-        { value: 2.1, text: '2.1%' },
-        { value: 3.0, text: '3%' },
-        { value: 4.0, text: '4%' },
-        { value: 4.8, text: '4.8%' },
-        { value: 5.0, text: '5%' },
-        { value: 5.5, text: '5.5%' },
-        { value: 6.0, text: '6%' },
-        { value: 7.0, text: '7%' },
-        { value: 8.0, text: '8%' },
-        { value: 9.0, text: '9%' },
-        { value: 9.5, text: '9.5%' },
-        { value: 10.0, text: '10%' },
-        { value: 12.0, text: '12%' },
-        { value: 13.0, text: '13%' },
-        { value: 13.5, text: '13.5%' },
-        { value: 14.0, text: '14%' },
-        { value: 15.0, text: '15%' },
-        { value: 16.0, text: '16%' },
-        { value: 17.0, text: '17%' },
-        { value: 18.0, text: '18%' },
-        { value: 19.0, text: '19%' },
-        { value: 20.0, text: '20%' },
-        { value: 21.0, text: '21%' },
-        { value: 22.0, text: '22%' },
-        { value: 23.0, text: '23%' },
-        { value: 24.0, text: '24%' },
-        { value: 25.0, text: '25%' },
-        { value: 27.0, text: '27%' },
+        { value: null, text: 'Please select an option' }
       ],
       show: true
     }
@@ -147,6 +110,7 @@ Vue.component("services", {
           })
           //we select by default the 1st company
           this.company = this.company_list[0].value
+          this.vat_list = VAT_TABLE[this.company.country]
           this.services_items = this.services[this.company._id] || []
           this.newdata.type = 'service'
           this.newdata.currency = 'EUR'

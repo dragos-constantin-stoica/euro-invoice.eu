@@ -1,146 +1,115 @@
 Vue.component("clients", {
-    data: function() {
-        return {
-            loading: true,
-            company:null,
-            clients: {},
-            newdata: { 
-              email: '', 
-              name:'',
-              national_registration_number: null, 
+  data: function () {
+    return {
+      loading: true,
+      company: null,
+      clients: {},
+      newdata: {
+        email: '',
+        mobile: '',
+        name: '',
+        national_registration_number: null,
+        country: null,
+        vat: null,
+        address: [],
+        newaddress: '',
+        bank_accounts: [],
+        bank_name: '',
+        iban: '',
+        swift: '',
+        bic: '',
+        currency: 'EUR'
+      },
+      clients_fields: [
+        { key: 'name', label: 'Client' },
+        { key: 'country', label: 'Country' },
+        'show_details'
+      ],
+      clients_items: [],
+      company_list: [
+        { value: null, text: 'Please select an option' }
+      ],
+      countries_list: COUNTRY_LIST,
+      currency_list: CURRENCY_LIST,
+      show: true
+    }
+  },
+
+  methods: {
+    addAddress: function () {
+      if (this.newdata.newaddress.length > 0) {
+        //add the address to the corresponding company from the list
+        this.newdata.address.unshift(this.newdata.newaddress)
+        this.newdata.newaddress = null
+      }
+    },
+    addBankAccount: function () {
+      if (this.newdata.bank_name.length > 0 && this.newdata.iban.length > 0) {
+        let tmp = {
+          bank_name: this.newdata.bank_name,
+          iban: this.newdata.iban,
+          swift: this.newdata.swift,
+          bic: this.newdata.bic,
+          currency: this.newdata.currency
+        }
+        this.newdata.bank_accounts.unshift(tmp)
+      }
+    },
+    createClient: function () {
+      this.loading = true
+      let payload = {
+        email: this.newdata.email,
+        mobile: this.newdata.mobile,
+        address: this.newdata.address,
+        name: this.newdata.name,
+        national_registration_number: this.newdata.national_registration_number,
+        country: this.newdata.country,
+        vat: this.newdata.vat,
+        bank_accounts: this.newdata.bank_accounts,
+        company_id: this.company._id
+      };
+      axios.post('/clients', payload)
+        .then(response => {
+          console.log(response.data)
+          if (response.data.status = 'ok') {
+            this.company_list = response.data.dataset.companies.map(item => {
+              let tmp = {}
+              tmp.value = item
+              tmp.text = item.name
+              this.clients[item._id] = []
+              return tmp
+            })
+            response.data.dataset.clients.map(item => {
+              this.clients[item.company_id].push(item)
+            })
+            //we select by default the 1st company
+            this.company = this.company_list[0].value
+            this.clients_items = this.clients[this.company._id]
+            this.newdata = {
+              email: '',
+              mobile: '',
+              name: '',
+              national_registration_number: null,
               country: null,
               vat: null,
               address: [],
-              newaddress: '', 
+              newaddress: '',
               bank_accounts: [],
-              bank_name:'', 
-              iban: '', 
+              bank_name: '',
+              iban: '',
               swift: '',
-              bic: '', 
+              bic: '',
               currency: 'EUR'
-            },
-            clients_fields: [{ key: 'name', label: 'Client' }, { key: 'country', label: 'Country' }],
-            clients_items: [],
-            company_list: [
-        		  { value: null, text: 'Please select an option' }
-             ], 
-             countries_list: [
-				{ value: null, text: 'Please select an option' },
-				{ value: 'AT', text: 'Austria' },
-				{ value: 'BE', text: 'Belgium' },
-				{ value: 'BG', text: 'Bulgaria' },
-				{ value: 'HR', text: 'Croatia' },
-				{ value: 'CY', text: 'Cyprus' },
-				{ value: 'CZ', text: 'Czechia' },
-				{ value: 'DK', text: 'Denmark' },
-				{ value: 'EE', text: 'Estonia' },
-				{ value: 'FI', text: 'Finland' },
-				{ value: 'FR', text: 'France' },
-				{ value: 'DE', text: 'Germany' },
-				{ value: 'GR', text: 'Greece' },
-				{ value: 'HU', text: 'Hungary' },
-				{ value: 'IE', text: 'Ireland' },
-				{ value: 'IT', text: 'Italy' },
-				{ value: 'LV', text: 'Latvia' },
-				{ value: 'LT', text: 'Lithuania' },
-				{ value: 'LU', text: 'Luxembourg' },
-				{ value: 'MT', text: 'Malta' },
-				{ value: 'NL', text: 'Netherlands' },
-				{ value: 'PL', text: 'Poland' },
-				{ value: 'PT', text: 'Portugal' },
-				{ value: 'RO', text: 'Romania' },
-				{ value: 'SK', text: 'Slovakia' },
-				{ value: 'SI', text: 'Slovenia' },
-				{ value: 'ES', text: 'Spain' },
-				{ value: 'SE', text: 'Sweden' },
-			],
-             currency_list:[
-              { value: 'BGN', text: 'BGN' },
-              { value: 'CZK', text: 'CZK' },
-              { value: 'DKK', text: 'DKK' },
-              { value: 'EUR', text: 'EUR' },
-              { value: 'HUF', text: 'HUF' },
-              { value: 'PLN', text: 'PLN' },
-              { value: 'RON', text: 'RON' },
-              { value: 'SKK', text: 'SKK' },
-            ],          
-            show: true
-        }
-    },
-
-    methods:{
-      addAddress: function(){
-        if(this.newdata.newaddress.length > 0){
-          //add the address to the corresponding company from the list
-          this.newdata.address.unshift(this.newdata.newaddress)
-          this.newdata.newaddress = null
-        }
-      },
-      addBankAccount: function(){
-        if(this.newdata.bank_name.length > 0 && this.newdata.iban.length > 0){
-          let tmp = { 
-            bank_name: this.newdata.bank_name,
-            iban: this.newdata.iban,
-            swift: this.newdata.swift,
-            bic: this.newdata.bic,
-            currency: this.newdata.currency
+            }
+            this.loading = false
           }
-          this.newdata.bank_accounts.unshift(tmp)
-        }
-      },
-      createClient: function(){
-	      this.loading = true
-	      let payload = {
-	      	email: this.newdata.email,
-	      	address: this.newdata.address,
-	      	name: this.newdata.name,
-	      	national_registration_number: this.newdata.national_registration_number,
-	      	country: this.newdata.country,
-	      	vat: this.newdata.vat,
-	      	bank_accounts: this.newdata.bank_accounts,
-	      	company_id: this.company._id
-	      };
-	      axios.post('/clients', payload)
-	        .then(response =>{
-	          console.log(response.data)
-	          if (response.data.status = 'ok') {
-	            this.company_list = response.data.dataset.companies.map(item => {
-	              let tmp = {}
-	              tmp.value = item
-	              tmp.text = item.name
-	              this.clients[item._id] = []
-	              return tmp
-	            })
-	            response.data.dataset.clients.map(item => {
-	              this.clients[item.company_id].push(item)
-	            })
-	            //we select by default the 1st company
-	            this.company = this.company_list[0].value
-	            this.clients_items = this.clients[this.company._id]
-	            this.newdata =  { 
-	              email: '', 
-	              name:'',
-	              national_registration_number: null, 
-		          country: null,
-	              vat: null,
-	              address: [],
-	              newaddress: '', 
-	              bank_accounts: [],
-	              bank_name:'', 
-	              iban: '', 
-	              swift: '',
-	              bic: '', 
-	              currency: 'EUR'
-	            }
-	            this.loading = false
-	          }
-	        })  	
-      }
-      
-    },
+        })
+    }
 
-    created() {
-      axios.get('/clients')
+  },
+
+  created() {
+    axios.get('/clients')
       .then(response => {
         console.log(response.data)
         if (response.data.status == 'ok') {
@@ -158,27 +127,28 @@ Vue.component("clients", {
             this.clients[item.company_id].push(item)
           })
           this.clients_items = this.clients[this.company._id]
-          this.newdata = { 
-              email: '', 
-              name:'',
-              national_registration_number: null, 
-              country: null,
-              vat: null,
-              address: [],
-              newaddress: '', 
-              bank_accounts: [],
-              bank_name:'', 
-              iban: '', 
-              swift: '',
-              bic: '', 
-              currency: 'EUR'
+          this.newdata = {
+            email: '',
+            mobile: '',
+            name: '',
+            national_registration_number: null,
+            country: null,
+            vat: null,
+            address: [],
+            newaddress: '',
+            bank_accounts: [],
+            bank_name: '',
+            iban: '',
+            swift: '',
+            bic: '',
+            currency: 'EUR'
           }
           this.loading = false
         }
       })
-    },
-    
-    template: `
+  },
+
+  template: `
     <div class="d-flex justify-content-center mb-3" v-if="loading">
           <b-spinner type="grow" label="Loading..."></b-spinner>
     </div>
@@ -192,6 +162,48 @@ Vue.component("clients", {
         <div>
           <b-table responsive :items="clients_items" :fields="clients_fields" caption-top>
           <template #table-caption>Clients</template>
+          <template #cell(show_details)="row">
+            <b-button pill variant="warning" size="sm" @click="row.toggleDetails" class="mr-2">
+              {{ row.detailsShowing ? 'Hide' : 'Show'}} Details
+            </b-button>
+          </template>
+          <template #row-details="row">
+            <b-card>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Name:</b></b-col>
+                <b-col>{{ row.item.name }}</b-col>
+              </b-row>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>National Registration Number:</b></b-col>
+                <b-col>{{ row.item.national_registration_number }}</b-col>
+              </b-row>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Country:</b></b-col>
+                <b-col>{{ row.item.country }}</b-col>
+              </b-row>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>VAT:</b></b-col>
+                <b-col>{{ row.item.vat }}</b-col>
+              </b-row>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Mobile:</b></b-col>
+                <b-col>{{ row.item.mobile }}</b-col>
+              </b-row>  
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Contact:</b></b-col>
+                <b-col>{{ row.item.email }}%</b-col>
+              </b-row>          
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Address:</b></b-col>
+                <b-col>{{ row.item.address }}</b-col>
+              </b-row>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Bank Accounts:</b></b-col>
+                <b-col>{{ row.item.bank_accounts }}</b-col>
+              </b-row>          
+              <b-button pill variant="warning" size="sm" @click="row.toggleDetails">Hide Details</b-button>
+            </b-card>
+          </template>
           </b-table>
         </div>
       </b-card-text>

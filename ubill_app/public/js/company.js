@@ -4,7 +4,14 @@ Vue.component("company", {
       loading: true,
       logofile: null,
       vatRO: false,
-      newdata: { address: '', bank_name:'', iban: '', swift: '', bic: '', currency: '', invoice_format:''},
+      newdata: { 
+        address: '', 
+        bank_name:'', 
+        iban: '', 
+        swift: '', 
+        bic: '', 
+        currency: '', 
+        invoice_format:''},
       company: null,
       company_list: [
         { value: null, text: 'Please select an option' }

@@ -199,6 +199,37 @@ const CURRENCY_LIST = [
   { value: 'SKK', text: 'SKK' },
 ]
 
+const COUNTRY_LIST = [
+  { value: null, text: 'Please select an option' },
+  { value: 'AT', text: 'Austria' },
+  { value: 'BE', text: 'Belgium' },
+  { value: 'BG', text: 'Bulgaria' },
+  { value: 'HR', text: 'Croatia' },
+  { value: 'CY', text: 'Cyprus' },
+  { value: 'CZ', text: 'Czechia' },
+  { value: 'DK', text: 'Denmark' },
+  { value: 'EE', text: 'Estonia' },
+  { value: 'FI', text: 'Finland' },
+  { value: 'FR', text: 'France' },
+  { value: 'DE', text: 'Germany' },
+  { value: 'GR', text: 'Greece' },
+  { value: 'HU', text: 'Hungary' },
+  { value: 'IE', text: 'Ireland' },
+  { value: 'IT', text: 'Italy' },
+  { value: 'LV', text: 'Latvia' },
+  { value: 'LT', text: 'Lithuania' },
+  { value: 'LU', text: 'Luxembourg' },
+  { value: 'MT', text: 'Malta' },
+  { value: 'NL', text: 'Netherlands' },
+  { value: 'PL', text: 'Poland' },
+  { value: 'PT', text: 'Portugal' },
+  { value: 'RO', text: 'Romania' },
+  { value: 'SK', text: 'Slovakia' },
+  { value: 'SI', text: 'Slovenia' },
+  { value: 'ES', text: 'Spain' },
+  { value: 'SE', text: 'Sweden' },
+]
+
 //Get the day of the year
 function getDay(date = new Date()) {
   return Math.floor((date - new Date(date.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));

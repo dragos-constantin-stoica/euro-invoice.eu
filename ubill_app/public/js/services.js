@@ -147,7 +147,7 @@ Vue.component("services", {
           </b-row>
           <b-row class="mb-2">
             <b-col sm="3" class="text-sm-right"><b>Desription:</b></b-col>
-            <b-col>{{ row.item.description }}</b-col>
+            <b-col style="white-space: pre-line;">{{ row.item.description }}</b-col>
           </b-row>
           <b-row class="mb-2">
             <b-col sm="3" class="text-sm-right"><b>Type:</b></b-col>

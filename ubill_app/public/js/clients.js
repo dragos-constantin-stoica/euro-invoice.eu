@@ -36,6 +36,9 @@ Vue.component("clients", {
   },
 
   methods: {
+    nicePrintAddress: function(address){
+      return address.join('\n____\n')
+    },
     addAddress: function () {
       if (this.newdata.newaddress.length > 0) {
         //add the address to the corresponding company from the list
@@ -191,15 +194,21 @@ Vue.component("clients", {
               </b-row>  
               <b-row class="mb-2">
                 <b-col sm="3" class="text-sm-right"><b>Contact:</b></b-col>
-                <b-col>{{ row.item.email }}%</b-col>
+                <b-col>{{ row.item.email }}</b-col>
               </b-row>          
               <b-row class="mb-2">
                 <b-col sm="3" class="text-sm-right"><b>Address:</b></b-col>
-                <b-col>{{ row.item.address }}</b-col>
+                <b-col style="white-space: pre-line;">{{ nicePrintAddress(row.item.address) }}</b-col>
               </b-row>
               <b-row class="mb-2">
                 <b-col sm="3" class="text-sm-right"><b>Bank Accounts:</b></b-col>
-                <b-col>{{ row.item.bank_accounts }}</b-col>
+                <b-col v-for="ba in row.item.bank_accounts">
+                    <b>Bank </b>{{ ba.bank_name }}<br/>
+                    <b>IBAN </b>{{ ba.iban }}<br/>
+                    <b>SWIFT </b>{{ ba.swift }}<br/>
+                    <b>BIC </b>{{ ba.bic }}<br/>
+                    <b>Currency </b> {{ba. currency}}
+                </b-col>
               </b-row>          
               <b-button pill variant="warning" size="sm" @click="row.toggleDetails">Hide Details</b-button>
             </b-card>

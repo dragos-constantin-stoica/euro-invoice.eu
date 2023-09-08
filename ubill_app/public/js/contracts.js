@@ -8,7 +8,13 @@ Vue.component("contracts", {
       company: null,
       clients: null,
       contracts: null,
-      newdata: { registration_number: '', type: 'service', start_date: '', end_date: '', details: '' },
+      newdata: { 
+        registration_number: '', 
+        type: 'service', 
+        start_date: '', 
+        end_date: '', 
+        details: '' 
+      },
       company_list: [
         { value: null, text: 'Please select an option' }
       ],
@@ -20,13 +26,24 @@ Vue.component("contracts", {
         { value: 'product', text: 'Products' },
         { value: 'mixed', text: 'Products & Services' }
       ],
-      contract_fields: [{ key: 'registration_number', label: 'Number' }, { key: 'start_date', label: 'Start' }, { key: 'type', label: 'Type' }],
+      contract_fields: [
+        { key: 'registration_number', label: 'Number' }, 
+        { key: 'start_date', label: 'Start' }, 
+        { key: 'type', label: 'Type' },
+        'show_details'
+      ],
       contract_items: [],
       show: true
     }
   },
 
   methods: {
+    rowRG(item, type){
+      if (!item || type != 'row') return
+      //Contract expired
+      if (Date.parse(item.end_date) <= Date.now()) return 'table-danger'
+    },
+
     createContract: function () {
       let payload = {
         company_id: this.company._id,
@@ -138,8 +155,39 @@ Vue.component("contracts", {
         <b-form-text id="client-help">Select one of the Clients from the list.</b-form-text>
 
         <div>
-          <b-table responsive :items="contract_items" :fields="contract_fields" caption-top>
+          <b-table responsive :items="contract_items" :fields="contract_fields" :tbody-tr-class="rowRG" caption-top>
           <template #table-caption>Contracts</template>
+          <template #cell(show_details)="row">
+            <b-button pill variant="warning" size="sm" @click="row.toggleDetails" class="mr-2">
+              {{ row.detailsShowing ? 'Hide' : 'Show'}} Details
+            </b-button>
+          </template>
+
+          <template #row-details="row">
+            <b-card>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Registration number:</b></b-col>
+                <b-col>{{ row.item.registration_number }}</b-col>
+              </b-row>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Type:</b></b-col>
+                <b-col>{{ row.item.type }}</b-col>
+              </b-row>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Start date:</b></b-col>
+                <b-col>{{ row.item.start_date }}</b-col>
+              </b-row>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>End date:</b></b-col>
+                <b-col>{{ row.item.end_date }}</b-col>
+              </b-row>
+              <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Details:</b></b-col>
+                <b-col style="white-space: pre-line;">{{ row.item.details }}</b-col>
+              </b-row>           
+            </b-card>
+          </template>          
+
           </b-table>
         </div>
       </b-card-text>

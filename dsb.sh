@@ -67,13 +67,10 @@ setup(){
     COUCH_URL=http://$COUCHDB_USER:$COUCHDB_PASSWORD@couch.localhost:5984
     sleep 10
 
-    #curl -X PUT $COUCH_URL/_node/_local/_config/couchdb/single_node -d '"true"'
-    #curl -X PUT $COUCH_URL/_node/_local/_config/cluster/n -d '"1"'
-    #curl -X POST $COUCH_URL/_node/_local/_config/_reload
-
     curl -X GET $COUCH_URL/_cluster_setup
 
-    curl -H 'Content-Type: application/json' -X POST $COUCH_URL/_cluster_setup --data-binary @- <<EOF
+    curl -H 'Content-Type: application/json' \
+         -X POST $COUCH_URL/_cluster_setup --data-binary @- <<EOF
 {
   "action":"enable_single_node",
   "singlenode":true,
@@ -107,17 +104,11 @@ EOF
     curl -X POST $COUCH_URL/_node/_local/_config/_reload
     curl -X GET $COUCH_URL/_cluster_setup
 
-
-    # Create mandatory databases
-    #curl -X PUT $COUCH_URL/_users
-    #curl -X PUT $COUCH_URL/_replicator
-    #curl -X PUT $COUCH_URL/_global_changes
-
     # Companies database
     curl -X PUT $COUCH_URL/_users/org.couchdb.user:$APP_USER \
      -H "Accept: application/json" \
      -H "Content-Type: application/json" \
-     -d "{\"name\":\"$APP_USER\", \"password\": \"$APP_PASSWORD\", \"roles\": [\"technical_usr\"], \"type\": \"user\"}"
+     -d '{"name":"$APP_USER", "password": "$APP_PASSWORD", "roles": ["technical_usr"], "type": "user"}'
 
     curl -X PUT $COUCH_URL/companies
     curl -X PUT $COUCH_URL/companies/_security \
@@ -159,7 +150,7 @@ EOF
 
 # certbot ssl management
 certbotssl(){
-    echo "Setup SSL certificates from Lets Encrypt using Certbot"
+    echocolor "Setup SSL certificates from Lets Encrypt using Certbot" "Yellow"
     local FOLDERS=( "./certbot" "./certbot/www" "./certbot/conf")
     for i in "${FOLDERS[@]}"
     do
@@ -168,15 +159,15 @@ certbotssl(){
     fi
     done
     docker compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ --force-renewal --email ${CERT_EMAIL} -d ${CERT_DOMAIN} --agree-tos --non-interactive
-    echo "DONE >>> SSL certificates"
+    echocolor "DONE >>> SSL certificates" "Yellow"
 }
 
 # redeploy function
 redeploy(){
-    echo "Redeploy stage for service $1"
+    echocolor "Redeploy stage for service $1" "Green"
     docker compose stop $1
     docker compose up --build --detach $1
-    echo "DONE >>> Redeploy stage"
+    echocolor "DONE >>> Redeploy stage" "Green"
 }
 
 # clean up all folders
@@ -207,7 +198,7 @@ cleanup(){
 
 # run function
 run(){
-    echocolor "Run stage" "Green"
+    echocolor "Run stage" "BGreen"
     docker compose up -d
 
     echo "CouchDB has successfuly started on http://couch.localhost:5984/_utils"
@@ -216,41 +207,42 @@ run(){
     echo "UnityBill has successfully started on http://localhost:8080"
     echo "Application available at https://$CERT_DOMAIN"
     echo -e "\n\n"
-    echocolor "DONE >>> Run stage" "Green"
+    echocolor "DONE >>> Run stage" "BGreen"
 }
 
 # dev function
 dev(){
-    echo "DEV stage"
+    echocolor "DEV stage" "Blue"
     docker compose up -d unitybillapp
-    
+
     echo "CouchDB has successfuly started on http://couch.localhost:5984/_utils"
     echo "        user: $COUCHDB_USER | password: $COUCHDB_PASSWORD"
     echo "Couch Admin Worker have successfully started on http://localhost:$WRK_PORT"
     echo "UnityBill has successfully started on http://localhost:8080"
-    
-    echo -e "\n\nDONE >>> DEV"
+
+    echo -e "\n\n"
+    echocolo "DONE >>> DEV" "Blue"
 }
 
 # stop function
 stop(){
-    echo "Stop stage"
+    echocolor "Stop stage" "BRed"
     docker compose down
-    echo "DONE >>> Stop stage"
+    echocolor "DONE >>> Stop stage" "BRed"
 }
 
 # prune function
 prune(){
-   echo "Prune docker system"
+   echocolor "Prune docker system" "Purple"
    docker system prune -f
-   echo "DONE >>> Prune stage"
+   echocolor "DONE >>> Prune stage" "Purple"
 }
 
 # build function
 build(){
-   echo "Build service $1"
+   echocolor "Build service $1" "Green"
    docker compose build  $1
-   echo "DONE >>> build service $1"
+   echocolor "DONE >>> build service $1" "Green"
 }
 
 
@@ -328,6 +320,11 @@ colors[On_IBlue]='\033[0;104m'    # Blue
 colors[On_IPurple]='\033[0;105m'  # Purple
 colors[On_ICyan]='\033[0;106m'    # Cyan
 colors[On_IWhite]='\033[0;107m'   # White
+
+# Emoji
+declare -A emoji
+emoji[Robot]='\U1F916'           #Robot
+
 
 echocolor(){
     # $1 - the text, $2 - color

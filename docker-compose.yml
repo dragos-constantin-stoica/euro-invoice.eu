@@ -23,9 +23,9 @@ services:
         - curl
         - '--fail'
         - 'http://localhost:5984/_up'
-      start_period: 5s
+      start_period: 10s
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 3
   
   couch_admin:

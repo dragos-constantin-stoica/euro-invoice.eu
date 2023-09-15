@@ -13,7 +13,7 @@ Vue.component("invoices", {
       serviceproduct: null,
       newdata: {
         issue_date: (new Date()).toISOString().substring(0, 10),
-        due_date: new Date((new Date()).setDate(new Date().getDate() + 7)).toISOString().substring(0,10),
+        due_date: new Date((new Date()).setDate(new Date().getDate() + 1)).toISOString().substring(0,10),
         invoice_due_term: 1,
         currency: 'EUR',
         exchange_rate: 1,
@@ -55,8 +55,7 @@ Vue.component("invoices", {
       template_list: [
         { value: 'EN', text: 'English Template' },
         { value: 'RO', text: 'Romanian Template' },
-        { value: 'DS0', text: 'DataStema EN-RO' },
-        { value: 'DS1', text: 'DataStema EN' }
+        { value: 'FR', text: 'French Template' }
       ],
       invoice_fields: [
         { key: 'service_product', label: 'Item' }, 

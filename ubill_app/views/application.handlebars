@@ -16,5 +16,23 @@
 <!-- Start running your app -->
 <script src="js/app.js"></script>
 <script>
-    window.app.showLayout({currentHeader:'privateHeader', mainComponent:'dashboard', currentFooter:'privateFooter'})
+    const getData = async () => {
+        try{
+        const response = await fetch('/checksession',
+        { method: "GET"})
+
+        if (!response.ok){
+            console.log(response.status)
+            window.app.showLayout({currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'})
+
+        }
+
+        const rsp = await response.json()
+        window.app[rsp.action](rsp.args)
+        }catch(err){
+            console.log(err)
+            window.app.showLayout({currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'})
+        }
+    }
+    getData()
 </script>

@@ -62,9 +62,9 @@ async function updateCompanyAdmin(newCompany, admin) {
     result = await thisCompany.createIndex(doctype_idx)
     //create serial_number document
     //this should not happen here?!
-    if (myCompany.invoice_format){
-      let sn_doc = {_id: 'serialnumber', doctype: 'serialnumber'}
-      sn_doc[`${myCompany.invoice_format}`]= 0
+    if (myCompany.invoice_format) {
+      let sn_doc = { _id: 'serialnumber', doctype: 'serialnumber' }
+      sn_doc[`${myCompany.invoice_format}`] = 0
       result = await thisCompany.insert(sn_doc)
     }
     //create design documents
@@ -102,7 +102,7 @@ async function updateCompanyAdmin(newCompany, admin) {
       "_id": "_design/payments",
       "language": "javascript",
       "updates": {
-        "register" : `function(doc, req){
+        "register": `function(doc, req){
           if (req.method == "PUT"){
             var payload = JSON.parse(req.body);
             if (doc){
@@ -122,7 +122,7 @@ async function updateCompanyAdmin(newCompany, admin) {
           return [null, JSON.stringify({ "action":"error", "req": req})];
         }`
       }
-    }    
+    }
     result = await thisCompany.insert(ddoc_update_payment)
 
   } catch (e) {
@@ -229,7 +229,51 @@ fastify.post('/login', async function (request, reply) {
     let session = await nano.session()
     console.log(session)
     await nano.auth(encodeURIComponent(COUCHDB_USER), encodeURIComponent(COUCHDB_PASSWORD))
-    reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
+    if (chkuser.companies.admin.length > 0) {
+      const mango_query = { selector: { doctype: { "$in": ["company", "client", "service-product", "contract"] } }, use_index: "doctype_idx" }
+      let tmp = nano.use(`c${chkuser.companies.admin[0]}`)
+      let check_onboarding = await tmp.find(mango_query)
+      //Check if onboarding has to be performed
+      //Company must have: address, bank account, invoice format
+      //Product-Service
+      //Client
+      //Contract
+      let check = {
+        company: false, service_product: false, client: false, contract: false
+      }
+
+      check_onboarding.docs.forEach(element => {
+        switch (element.doctype) {
+          case 'company':
+            if( element.address.length > 0 &&
+                element.bank_accounts.length > 0 &&
+                element.invoice_format && element.invoice_format.length > 0 ) check.company=true
+            break;
+
+          case 'client':
+            check.client=true
+            break;
+
+          case 'service-product':
+            check.service_product=true
+            break;
+
+          case 'contract':
+            check.contract=true
+            break;
+
+          default:
+            break;
+        }
+      });
+      if (check.company && check.service_product && check.client && check.contract){
+        reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
+      }else{
+        reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Please onboard your company!', action: 'showLayout', args: { currentHeader: 'onboardingHeader', mainComponent: 'onboarding', currentFooter: 'onboardingFooter' } })
+      }
+    } else {
+      reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
+    }
   } catch (e) {
     console.log(`[ ${e} ]`)
     reply.send({ status: 'error', error: 'Login error' })
@@ -294,33 +338,49 @@ async function updateServicesProducts(payload) {
 }
 
 async function getClients(company_list) {
-	let result = []
-	  const mango_query = { selector: { doctype: "client" }, fields: ["_id", "company_id",  "name", "country", "national_registration_number", "invoice_format", "vat", "bank_accounts", "address", "email", "mobile"], use_index: "doctype_idx" }
-	  await Promise.all(company_list.map(async (item) => {
-	    try {
-	      let tmp = nano.use(`c${item}`)
-	      let q = await tmp.find(mango_query)
-	      result = result.concat(...q.docs)
-	    } catch (err) {
-	      console.log(err)
-	    }
-	  }));
-	return result
+  let result = []
+  const mango_query = { selector: { doctype: "client" }, fields: ["_id", "company_id", "name", "country", "national_registration_number", "invoice_format", "vat", "bank_accounts", "address", "email", "mobile"], use_index: "doctype_idx" }
+  await Promise.all(company_list.map(async (item) => {
+    try {
+      let tmp = nano.use(`c${item}`)
+      let q = await tmp.find(mango_query)
+      result = result.concat(...q.docs)
+    } catch (err) {
+      console.log(err)
+    }
+  }));
+  return result
 }
 
-async function updateClients(payload){
-	let result = []
-	//TODO - Detect if it needs to create new company too
-	//TODO - Implement upsert
+async function updateClients(payload) {
+  let result = []
+  //TODO - Detect if it needs to create new company too
+  //TODO - Implement upsert
+  try {
+    let company = await nano.use(`c${payload.data.company_id}`)
+    let doc = payload.data
+    doc.doctype = "client"
+    let result = await company.insert(doc)
+  } catch (error) {
+    console.log(error)
+  }
+  return result
+}
+
+async function getOnboarding(company_list){
+  let result = {}
+  const mango_query = { selector: { doctype: { "$in": ["company", "client", "service-product", "contract"] } }, use_index: "doctype_idx" }
+  await Promise.all(company_list.map(async (item) => {
     try {
-      let company = await nano.use(`c${payload.data.company_id}`)
-      let doc = payload.data
-      doc.doctype = "client"
-      let result = await company.insert(doc)
-    } catch (error) {
-      console.log(error)
+      let tmp = nano.use(`c${item}`)
+      let q = await tmp.find(mango_query)
+      if (! result[item]) result[item] = []
+      result[item] = result[item].concat(...q.docs)
+    } catch (err) {
+      console.log(err)
     }
-	return result
+  }));
+  return result  
 }
 
 async function getCompanies(company_list) {
@@ -360,7 +420,7 @@ async function updateCompany(company_data) {
   return result
 }
 
-async function getContracts(company_list){
+async function getContracts(company_list) {
   let result = []
   const mango_query = { selector: { doctype: "contract" }, fields: ["_id", "company_id", "client_id", "registration_number", "type", "start_date", "end_date", "details"], use_index: "doctype_idx" }
   await Promise.all(company_list.map(async (item) => {
@@ -372,10 +432,10 @@ async function getContracts(company_list){
       console.log(err)
     }
   }));
-  return result	
+  return result
 }
 
-async function getInvoices(company_list){
+async function getInvoices(company_list) {
   let result = {}
   const mango_query = { selector: { doctype: "invoice" }, fields: ["_id", "payload"], use_index: "doctype_idx" }
   await Promise.all(company_list.map(async (item) => {
@@ -391,25 +451,25 @@ async function getInvoices(company_list){
   return result
 }
 
-async function updateContracts(payload){
-	let result = []
-	//TODO - Detect if it needs to create new company too
-	//TODO - Implement upsert
-    try {
-      let company = await nano.use(`c${payload.data.company_id}`)
-      let doc = payload.data
-      doc.doctype = "contract"
-      let result = await company.insert(doc)
-    } catch (error) {
-      console.log(error)
-    }
-	return result	
+async function updateContracts(payload) {
+  let result = []
+  //TODO - Detect if it needs to create new company too
+  //TODO - Implement upsert
+  try {
+    let company = await nano.use(`c${payload.data.company_id}`)
+    let doc = payload.data
+    doc.doctype = "contract"
+    let result = await company.insert(doc)
+  } catch (error) {
+    console.log(error)
+  }
+  return result
 }
 
 async function getSerialNumbers(company_list) {
   let result = {}
 
-  await Promise.all(company_list.map(async (item) =>{
+  await Promise.all(company_list.map(async (item) => {
     try {
       let tmpdb = nano.use(`c${item}`)
       let sn_doc = await tmpdb.get('serialnumber')
@@ -420,8 +480,26 @@ async function getSerialNumbers(company_list) {
       console.log(error);
     }
   }))
-  return result  
+  return result
 }
+
+fastify.post('/onboarding', async function(request, reply){
+  let result = []
+  try {
+    //current user may have various roles in multiple companies - for full version
+    //in the free version, on company per user
+    // the information about the companies is stored in CouchDB user profile
+    let credentials = request.body
+    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
+    let company_list = [...new Set([...theUser.companies.admin])]
+    result = await getOnboarding(company_list)
+    console.log(result)
+    reply.send({ status: 'ok', message: 'Onboarding data loaded.', dataset: result })
+  } catch (err) {
+    console.log(err)
+    reply.send({ status: 'error', error: 'Onboarding fetch error.' })
+  }  
+});
 
 fastify.post('/companies', async function (request, reply) {
   let result = []
@@ -493,109 +571,109 @@ fastify.put('/servicesproducts', async function (request, reply) {
   }
 });
 
-fastify.post('/clients', async function (request, reply){
-	let result = {}
-	try{
-		//console.log(request.body)
-		let credentials = request.body
-		let theUser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
-		let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members ])]
-		result.companies = await getCompanies(company_list)
-		result.clients = await getClients(company_list)
-		console.log(result)
-		reply.send({status: 'ok', message: 'Clients data loaded', dataset: result})
-	}catch(err){
-		console.log(err)
-		reply.send({status: 'error', message: 'Client fetch error.'})
-	}
+fastify.post('/clients', async function (request, reply) {
+  let result = {}
+  try {
+    //console.log(request.body)
+    let credentials = request.body
+    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
+    let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
+    result.companies = await getCompanies(company_list)
+    result.clients = await getClients(company_list)
+    console.log(result)
+    reply.send({ status: 'ok', message: 'Clients data loaded', dataset: result })
+  } catch (err) {
+    console.log(err)
+    reply.send({ status: 'error', message: 'Client fetch error.' })
+  }
 });
 
-fastify.put('/clients', async function(request, reply){
-	let result = {}
-	try{
-		console.log(request.body)
-		let credentials = request.body.session
-	    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
-    	let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
-    	result.companies = await getCompanies(company_list)
-    	let tmp = await updateClients(request.body)
-		result.clients = await getClients(company_list)
-		console.log(result)
-		reply.send({status:'ok', message: 'Client data saved', dataset: result})
-	}catch(err){
-		console.log(err)
-		reply.send({status: 'error', message: 'Client update error'})
-	}
-});
-
-fastify.post('/contracts', async function (request, reply){
-	let result = {}
-	try{
-		console.log(request.body)
-		let credentials = request.body
-		let theUser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
-		let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members ])]
-		result.companies = await getCompanies(company_list)
-		result.clients = await getClients(company_list)
-		result.contracts = await getContracts(company_list)		
-		console.log(result)
-		reply.send({status: 'ok', message: 'Contracts data loaded', dataset: result})
-	}catch(err){
-		console.log(err)
-		reply.send({status: 'error', message: 'Contract fetch error.'})
-	}
-});
-
-fastify.put('/contracts', async function(request, reply){
-	let result = {}
-	try{
-		//console.log(request.body)
-		let credentials = request.body.session
-		let theUser = await nano.request({method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
-		let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members ])]
-		result.companies = await getCompanies(company_list)
-		result.clients = await getClients(company_list)
-		let tmp = await updateContracts(request.body)
-		result.contracts = await getContracts(company_list)		
-		//console.log(result)
-		reply.send({status: 'ok', message: 'Contracts data loaded', dataset: result})
-	}catch(err){
-		console.log(err)
-		reply.send({status: 'error', message: 'Contract fetch error.'})
-	}
-});
-
-fastify.post('/invoices', async function(request, reply){
+fastify.put('/clients', async function (request, reply) {
   let result = {}
   try {
     console.log(request.body)
     let credentials = request.body.session
-    let theUser = await nano.request({method:'get', db:'_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
-    result = await getInvoices(company_list)
-    reply.send({status: 'ok', message:'Invoices loaded', dataset: result})
-  } catch (error) {
-    console.log(error)
-    reply.send({status: 'error', message:'Invoices load error.'})
+    result.companies = await getCompanies(company_list)
+    let tmp = await updateClients(request.body)
+    result.clients = await getClients(company_list)
+    console.log(result)
+    reply.send({ status: 'ok', message: 'Client data saved', dataset: result })
+  } catch (err) {
+    console.log(err)
+    reply.send({ status: 'error', message: 'Client update error' })
   }
 });
 
-fastify.post('/serialnumber', async function(request, reply){
-  let result={}
+fastify.post('/contracts', async function (request, reply) {
+  let result = {}
+  try {
+    console.log(request.body)
+    let credentials = request.body
+    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
+    let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
+    result.companies = await getCompanies(company_list)
+    result.clients = await getClients(company_list)
+    result.contracts = await getContracts(company_list)
+    console.log(result)
+    reply.send({ status: 'ok', message: 'Contracts data loaded', dataset: result })
+  } catch (err) {
+    console.log(err)
+    reply.send({ status: 'error', message: 'Contract fetch error.' })
+  }
+});
+
+fastify.put('/contracts', async function (request, reply) {
+  let result = {}
+  try {
+    //console.log(request.body)
+    let credentials = request.body.session
+    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
+    let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
+    result.companies = await getCompanies(company_list)
+    result.clients = await getClients(company_list)
+    let tmp = await updateContracts(request.body)
+    result.contracts = await getContracts(company_list)
+    //console.log(result)
+    reply.send({ status: 'ok', message: 'Contracts data loaded', dataset: result })
+  } catch (err) {
+    console.log(err)
+    reply.send({ status: 'error', message: 'Contract fetch error.' })
+  }
+});
+
+fastify.post('/invoices', async function (request, reply) {
+  let result = {}
+  try {
+    console.log(request.body)
+    let credentials = request.body.session
+    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
+    let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
+    result = await getInvoices(company_list)
+    reply.send({ status: 'ok', message: 'Invoices loaded', dataset: result })
+  } catch (error) {
+    console.log(error)
+    reply.send({ status: 'error', message: 'Invoices load error.' })
+  }
+});
+
+fastify.post('/serialnumber', async function (request, reply) {
+  let result = {}
   try {
     console.log(request.body);
     let credentials = request.body.session
-    let theUser = await nano.request({method:'get', db:'_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result.serialnumbers = await getSerialNumbers(company_list)
-    reply.send({status:'ok', message:'Serial number loaded', dataset: result})
+    reply.send({ status: 'ok', message: 'Serial number loaded', dataset: result })
   } catch (err) {
     console.log(err);
-    reply.send({status: 'error', message: 'Serial number fetch error'})
+    reply.send({ status: 'error', message: 'Serial number fetch error' })
   }
 });
 
-fastify.put('/newinvoice', async function(request, reply){
+fastify.put('/newinvoice', async function (request, reply) {
   let result = {}
 
   try {
@@ -605,17 +683,17 @@ fastify.put('/newinvoice', async function(request, reply){
       field: request.body.data.invoice_format
     })
     console.log(next_sn);
-    let new_sn = request.body.data.invoice_format.replace('YYYY', (new Date(request.body.data.payload.INVOICE_DATE)).getUTCFullYear()) 
-                  .replace('MM', ((new Date(request.body.data.payload.INVOICE_DATE)).getUTCMonth() + 1).toString().padStart(2, '0'))
-                  .replace('XX', next_sn.doc[request.body.data.invoice_format].toString().padStart(2,'0'));
+    let new_sn = request.body.data.invoice_format.replace('YYYY', (new Date(request.body.data.payload.INVOICE_DATE)).getUTCFullYear())
+      .replace('MM', ((new Date(request.body.data.payload.INVOICE_DATE)).getUTCMonth() + 1).toString().padStart(2, '0'))
+      .replace('XX', next_sn.doc[request.body.data.invoice_format].toString().padStart(2, '0'));
     request.body.data.payload.INVOICE_NUMBER = new_sn
-    
-    const fy = (new Date(request.body.data.payload.INVOICE_DATE)).getUTCFullYear(), 
-          ddd = Math.floor((new Date(request.body.data.payload.INVOICE_DATE) - new Date(fy, 0, 0)) / (1000 * 60 * 60 * 24)), 
-          magic_number = parseInt("".concat(ddd, fy, next_sn.doc[request.body.data.invoice_format].toString()).padStart(4,'0'), 10);
-    let cc = (magic_number%97 == 0)? 97:(magic_number%97)
- 
-    request.body.data.payload.INVOICE_DETAILS = `+++${ddd.toString().padStart(3,'0')}/${fy.toString().padStart(4,'0')}/${next_sn.doc[request.body.data.invoice_format].toString().padStart(4,'0')}${cc.toString().padStart(2,'0')}+++`
+
+    const fy = (new Date(request.body.data.payload.INVOICE_DATE)).getUTCFullYear(),
+      ddd = Math.floor((new Date(request.body.data.payload.INVOICE_DATE) - new Date(fy, 0, 0)) / (1000 * 60 * 60 * 24)),
+      magic_number = parseInt("".concat(ddd, fy, next_sn.doc[request.body.data.invoice_format].toString()).padStart(4, '0'), 10);
+    let cc = (magic_number % 97 == 0) ? 97 : (magic_number % 97)
+
+    request.body.data.payload.INVOICE_DETAILS = `+++${ddd.toString().padStart(3, '0')}/${fy.toString().padStart(4, '0')}/${next_sn.doc[request.body.data.invoice_format].toString().padStart(4, '0')}${cc.toString().padStart(2, '0')}+++`
     let new_invoice_doc = {
       _id: new_sn,
       doctype: 'invoice',
@@ -624,30 +702,30 @@ fastify.put('/newinvoice', async function(request, reply){
     }
     let tmp = await companydb.insert(new_invoice_doc)
     let credentials = request.body.session
-    let theUser = await nano.request({method:'get', db:'_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result.serialnumbers = await getSerialNumbers(company_list)
-    reply.send({status:'ok', message:`Invoice ${new_sn} created` ,dataset: result})
+    reply.send({ status: 'ok', message: `Invoice ${new_sn} created`, dataset: result })
   } catch (err) {
     console.log(err);
-    reply.send({status: 'error', message: 'New invoice fetch error'})
+    reply.send({ status: 'error', message: 'New invoice fetch error' })
   }
 })
 
-fastify.put('/registerpayment', async function(request, reply){
+fastify.put('/registerpayment', async function (request, reply) {
   let result = {}
   try {
     console.log(request.body)
     let companydb = nano.use(`c${request.body.data.company_id}`)
     let tmp = await companydb.atomic('payments', 'register', request.body.data.invoice_number, request.body.data.payment)
     let credentials = request.body.session
-    let theUser = await nano.request({method:'get', db:'_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}`})
+    let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result = await getInvoices(company_list)
-    reply.send({status: 'ok', message:`Payment of ${request.body.data.payment.amount} ${request.body.data.payment.currency} registered for invoice ${request.body.data.invoice_number}`, dataset: result})
+    reply.send({ status: 'ok', message: `Payment of ${request.body.data.payment.amount} ${request.body.data.payment.currency} registered for invoice ${request.body.data.invoice_number}`, dataset: result })
   } catch (error) {
     console.log(error)
-    reply.send({status: 'error', message: 'Payment registration error.'})
+    reply.send({ status: 'error', message: 'Payment registration error.' })
   }
 });
 
@@ -687,15 +765,15 @@ fastify.post('/register', async function (request, reply) {
   }
 });
 
-fastify.post('/contact', async function(request, reply){
+fastify.post('/contact', async function (request, reply) {
   let result = {}
-  try{
+  try {
     let contactdb = nano.use('contact')
     result = contactdb.insert(request.body.data)
-    reply.send({status:'ok', message: 'Message saved successfully.', dataset: result})
-  }catch(err){
+    reply.send({ status: 'ok', message: 'Message saved successfully.', dataset: result })
+  } catch (err) {
     console.log(err);
-    reply.send({status:'error', message: 'Contact or newsletter subscribe error'})
+    reply.send({ status: 'error', message: 'Contact or newsletter subscribe error' })
   }
 });
 

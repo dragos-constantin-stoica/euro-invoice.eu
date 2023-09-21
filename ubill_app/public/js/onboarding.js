@@ -62,9 +62,7 @@ Vue.component("onboarding", {
 					{ value: 'mth', text: 'Month' }
 				]
 			},
-			company_list: [
-				{ value: null, text: 'Please select an option' }
-			],
+			company_list: [{ value: null, text: 'Please select an option' }],
 			invoice_format: [
 				{ value: 'YYYY.MM XX', text: 'YYYY.MM ##' },
 				{ value: 'YYYY.MM/XX', text: 'YYYY.MM/##' },
@@ -84,6 +82,7 @@ Vue.component("onboarding", {
 
 			tabIndex: 0,
 			max: 100,
+			loading: true,
 			show: true
 		}
 	},
@@ -94,6 +93,10 @@ Vue.component("onboarding", {
 		},
 		selectType(event) {
 			this.service.unit = this.unit_list[event][0].value
+		},
+		finishOnboarding(){
+			//check all possible data and sent it to server
+			console.log(this.company, this.service, this.client, this.contract);
 		}
 	},
 
@@ -104,13 +107,20 @@ Vue.component("onboarding", {
 	},
 
 	created() {
-		axios.get('/servicesproducts')
+		axios.get('/onboarding')
 			.then(response => {
 				console.log(response.data)
 				if (response.data.status == 'ok') {
-					this.company_list = response.data.dataset.companies.map(item => {
-						return { value: item, text: item.name }
-					})					
+					this.company_list = []
+					for (const key in response.data.dataset) {
+						if (Object.hasOwnProperty.call(response.data.dataset, key)) {
+							response.data.dataset[key].forEach(element => {
+								if(element.doctype == 'company') 
+							this.company_list.push({ value: element, text: element.name })
+							});
+						}
+					}
+										
 					//we select by default the 1st company
 					this.company = this.company_list[0].value
 					this.vat_list = VAT_TABLE[this.company.country]
@@ -120,20 +130,20 @@ Vue.component("onboarding", {
 					this.newdata_company.invoice_format = this.company.invoice_format ?? this.invoice_format[0].value
 					this.company.invoice_format = this.company.invoice_format ?? ''
 					this.vatRO = this.company.vat.length > 0
-					if(! this.company.address) this.company.address = ['']
-					if(! this.company.bank_accounts) this.company.bank_accounts[{
-						bank_name: '',
-						iban: '',
-						swift: '',
-						bic: '',
-						currency: 'EUR'
-					}]
+					if(! this.company.address || this.company.address.length == 0) this.company.address = ['']
+					if(! this.company.bank_accounts || this.company.bank_accounts.length == 0) this.company.bank_accounts = [{ bank_name: '', iban: '', swift: '', bic: '', currency: 'EUR'}]
+
+					this.loading = false
 				}
 			})
 	},
 
 	template: `
-	<div>
+	<div class="d-flex text-center justify-content-center m-3" v-if="loading">
+        <b-spinner type="grow" label="Loading..."></b-spinner>
+    </div>
+    
+    <div v-else>
 	<!-- Tabs with card integration -->
 	<b-card no-body>
 		<b-tabs v-model="tabIndex" content-class="mt-3" fill small card>
@@ -171,19 +181,19 @@ Vue.component("onboarding", {
 
 				<b-form-group v-for="item in company.bank_accounts" :label='$t("company.bank_accounts")' label-for="bank_name" label-cols-sm="3">
 				<b-input-group prepend="Bank">
-					<b-form-input id="bank_name" v-model="item.bank_name" readonly="true"></b-form-input>
+					<b-form-input id="bank_name" v-model="item.bank_name"></b-form-input>
 				</b-input-group>
 				<b-input-group prepend="IBAN">
-					<b-form-input id="iban" v-model="item.iban" readonly="true"></b-form-input>
+					<b-form-input id="iban" v-model="item.iban"></b-form-input>
 				</b-input-group>
 				<b-input-group prepend="SWIFT">
-					<b-form-input id="swift" v-model="item.swift" readonly="true"></b-form-input>
+					<b-form-input id="swift" v-model="item.swift"></b-form-input>
 				</b-input-group>
 				<b-input-group prepend="BIC">
-					<b-form-input id="bic" v-model="item.bic" readonly="true"></b-form-input>
+					<b-form-input id="bic" v-model="item.bic"></b-form-input>
 				</b-input-group>
 				<b-input-group prepend="Currency">
-					<b-form-select id="currency" v-model="item.currency" :options="currency_list" disabled="true"></b-form-select>
+					<b-form-select id="currency" v-model="item.currency" :options="currency_list"></b-form-select>
 				</b-input-group>
 				</b-form-group>
 
@@ -315,11 +325,96 @@ Vue.component("onboarding", {
 	<!-- Control buttons-->
 	<div class="text-center m-2">
 		<b-row>
-			<b-col class="text-left"><b-button @click="tabIndex--">Previous</b-button></b-col>
-			<b-col class="text-right"><b-button @click="tabIndex++">Next</b-button></b-col>
+			<b-col class="text-left">
+				<b-button v-if="tabIndex>0" variant="primary" @click="tabIndex--">Previous</b-button>
+				<b-button v-else disabled @click="tabIndex--">Previous</b-button>
+			</b-col>
+			<b-col class="text-right">
+				<b-button v-if="tabIndex<3" variant="primary" @click="tabIndex++">Next</b-button>
+				<b-button v-else variant="success" @click="finishOnboarding">Finish</b-button>
+			</b-col>
 		</b-row>
 		<b-progress class="mt-2" :value="(tabIndex+1)/4*100" :max="max" show-progress animated></b-progress>
 	</div>
 	</div>
+	`
+});
+
+Vue.component("onboardingHeader", {
+	data: function() {
+		return {
+			locales: ['gb', 'fr', 'ro'],
+			show: true,
+		}
+	},
+	methods: {
+		doLogout() {
+			axios.post('/logout')
+				.then(function (response) {
+					console.log(response);
+					showToast(response.data.status == 'ok' ? response.data.message : response.data.error, 'Message from Server', response.data.status == 'ok' ? 'success' : 'error')
+					if (response.data.action) {
+						window.app[response.data.action](response.data.args)
+					}
+				})
+				.catch(function (error) {
+					console.log(error);
+					showToast(error.data.error, 'Message from Server', 'danger')
+				})
+				.finally(function () {
+					// always executed
+				});
+			console.log('logout')
+		},
+		getLocale() {
+			return this.$i18n.locale.toUpperCase()
+		},
+		localeFlagClass() {
+			return `fi fi-${this.$i18n.locale}`
+		},
+		buildFlagClass(lang) {
+			return `fi fi-${lang}`
+		},
+		changeLanguage(lang) {
+			//save user language
+			this.$i18n.locale = lang
+			localStorage.setItem("language", this.$i18n.locale)
+			this.localFlagClass = `fi fi-${lang}`
+			console.log(lang)
+		},
+	},
+	template: `
+	<b-navbar toggleable="lg" type="light" variant="light">
+		<b-navbar-brand href="/">UnityBill</b-navbar-brand>
+		<b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+		<b-collapse id="nav-collapse" is-nav>
+
+			<!-- Right aligned nav items -->
+			<b-navbar-nav class="ml-auto">
+				<b-dropdown right size="lg"  variant="link" toggle-class="text-decoration-none" no-caret>
+					<template #button-content>
+						<span :class="localeFlagClass()"></span>&nbsp;{{ getLocale() }}&nbsp;<b-icon icon="translate" aria-hidden="true"></b-icon>
+					</template>
+
+					<b-dropdown-item v-for="item in locales" v-bind:key="item.id" @click="changeLanguage(item)">
+					<span :class="buildFlagClass(item)"></span>&nbsp; {{item.toUpperCase()}}</b-dropdown-item>
+				</b-dropdown>
+				<b-nav-item href="#" @click="doLogout">{{$t("mainmenu.logout")}}</b-nav-item>
+			</b-navbar-nav>
+		</b-collapse>
+	</b-navbar>
+	`
+});
+
+Vue.component("onboardingFooter", {
+	data() {
+		return {
+			show: true
+		}
+	},
+	template: `
+	<div class="footercontainer">
+        <span class="text-muted">&copy; <a href="https://datastema.io/">DataStema</a> 2023</span>
+    </div>
 	`
 });

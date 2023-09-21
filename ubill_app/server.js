@@ -73,10 +73,36 @@ app.get('/app', function (req, res) {
   res.render('index', { layout: 'main' })
 })
 
-app.get('/checksession', isAuthenticated, function (req, res) {
+app.get('/checksession', isAuthenticated, async function (req, res) {
   if (req.session.user) {
-    res.json({ status: "ok", user_data: req.session.user })
+    //We have an ongoing session
+    try {
+      var login_response = await axios.post(`${COUCH_ADMIN_URL}/login`, { username: req.session.data.username, password: req.session.data.password })
+      if (login_response.data.status == 'ok') {
+        res.json({
+          status: login_response.data.status,
+          message: login_response.data.message,
+          action: login_response.data.action,
+          args: login_response.data.args
+        });
+      }else{
+        res.json({
+          status: login_response.data.status,
+          error: login_response.data.error,
+          action: 'showLayout',
+          args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
+        })
+      }
+    } catch (error) {
+      res.json({
+        status: 'error',
+        error: 'Session check error!',
+        action: 'showLayout',
+        args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
+      })
+    }
   } else {
+    //No session - get out of here
     res.redirect('/')
   }
 })
@@ -100,10 +126,30 @@ app.post('/changepassword', function(req, res){
   res.render('index', {layout: 'main'})
 })
 
+app.get('/onboarding', isAuthenticated, async function(req, res, next){
+  try {
+    var onboarding = await axios.post(`${COUCH_ADMIN_URL}/onboarding`,{username: req.session.user, data: req.session.data})
+    console.log(onboarding)
+    res.json({
+      status: onboarding.data.status,
+      message: onboarding.data.message,
+      dataset: onboarding.data.dataset
+    })
+  } catch (err) {
+    console.log(err)
+    res.json({status: 'error', error:'Onboarding fetch error.'})
+  }
+})
+
+app.get('/onboarding', function(req, res){
+  res.render('index', { layout: 'main' })
+})
+
+
 app.get('/companies', isAuthenticated, async function(req, res, next){
   try{
      var companies = await axios.post(`${COUCH_ADMIN_URL}/companies`, {username: req.session.user, data: req.session.data})
-     console.log(companies)
+     //console.log(companies)
      res.json({
        status: companies.data.status,
        message: companies.data.message,
@@ -384,7 +430,7 @@ app.post('/login', async function (req, res) {
     }
   } catch (error) {
     console.log(error);
-    req.json({status:'error', error: 'Something went West <'})
+    req.json({status:'error', error: 'Something wrong with login!'})
   }
 
 });
@@ -416,7 +462,12 @@ app.post('/logout',isAuthenticated, function (req, res, next) {
 })
 
 app.post('/logout', function(req, res){
-  res.render('index', { layout: 'main' })
+  res.json({
+    status: 'ok',
+    message: 'See you soon!',
+    action: 'showLayout',
+    args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
+  })
 })
 
 app.post('/register', async function (req, res, next) {

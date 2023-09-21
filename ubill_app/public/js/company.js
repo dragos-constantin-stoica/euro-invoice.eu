@@ -99,8 +99,8 @@ Vue.component("company", {
   },
 
   template: `
-    <div class="d-flex justify-content-center mb-3" v-if="loading">
-          <b-spinner type="grow" label="Loading..."></b-spinner>
+    <div class="d-flex text-center justify-content-center m-3" v-if="loading">
+      <b-spinner type="grow" label="Loading..."></b-spinner>
     </div>
     
     <div v-else>
@@ -141,12 +141,12 @@ Vue.component("company", {
       <b-form-group v-for="item in company.address" :label='$t("company.address")' label-cols-sm="3">
          <b-form-textarea v-model="item" rows="5" max-rows="7" plaintext="true"></b-form-textarea>
       </b-form-group>
-
+<!--
       <b-form-group :label='$t("company.address")' label-cols-sm="3">
         <b-form-textarea v-model="newdata.address" rows="5" max-rows="7"></b-form-textarea>
         <b-button variant="primary" @click="addAddress">Add</b-button>
       </b-form-group>
-
+-->
       <b-form-group v-for="item in company.bank_accounts" :label='$t("company.bank_accounts")' label-for="bank_name" label-cols-sm="3">
 		<b-input-group prepend="Bank">
         	<b-form-input id="bank_name" v-model="item.bank_name" readonly="true"></b-form-input>
@@ -164,7 +164,7 @@ Vue.component("company", {
         	<b-form-input id="currency" v-model="item.currency" readonly="true"></b-form-input>
         </b-input-group>
       </b-form-group>
-      
+<!--      
       <b-form-group :label='$t("company.bank_accounts")' label-for="bank_name" label-cols-sm="3">
         <b-input-group prepend="Bank">
         <b-form-input v-model="newdata.bank_name"></b-form-input>  
@@ -183,7 +183,7 @@ Vue.component("company", {
         </b-input-group>
         <b-button variant="primary" @click="addBankAccount">Add</b-button>
       </b-form-group>
-
+-->
       <b-form-group label="Invoice format"  label-for="invoice" label-cols-sm="3">
          <b-form-select id="invoice" v-model="newdata.invoice_format" :options="invoice_format" :disabled="company.invoice_format.length > 0" @change="selectInvoiceFormat($event)"></b-form-select>
       </b-form-group>

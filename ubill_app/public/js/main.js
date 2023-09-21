@@ -70,7 +70,6 @@ Vue.component("privateHeader", {
         <b-nav-item href="#" @click="doShow('clients')">{{$t("mainmenu.clients")}}</b-nav-item>
         <b-nav-item href="#" @click="doShow('contracts')">{{$t("mainmenu.contracts")}}</b-nav-item>
         <b-nav-item href="#" @click="doShow('profile')">{{$t("mainmenu.profile")}}</b-nav-item>
-        <b-nav-item href="#" @click="doShow('onboarding')">Onboarding</b-nav-item>
         <b-nav-item href="#" @click="doLogout">{{$t("mainmenu.logout")}}</b-nav-item>
 	</b-navbar-nav>
 			</b-collapse>

@@ -141,8 +141,8 @@ Vue.component("contracts", {
   },
 
   template: `
-    <div class="d-flex justify-content-center mb-3" v-if="loading">
-          <b-spinner type="grow" label="Loading..."></b-spinner>
+    <div class="d-flex text-center justify-content-center m-3" v-if="loading">
+      <b-spinner type="grow" label="Loading..."></b-spinner>
     </div>
     
     <div v-else>

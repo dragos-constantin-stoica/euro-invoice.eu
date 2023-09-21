@@ -290,11 +290,7 @@ Vue.component("dashboard", {
           this.company = this.company_list[0].value
 
           //Compute the data for each graph
-
-
           this.loading = false
-
-
         } else {
           showToast(companies.status == 'ok' ? companies.message : companies.error, 'Message from Server', companies.status == 'ok' ? 'success' : 'error')
           showToast(invoices.status == 'ok' ? invoices.message : invoices.error, 'Message from Server', invoices.status == 'ok' ? 'success' : 'error')
@@ -308,8 +304,8 @@ Vue.component("dashboard", {
 
   template: `
 
-    <div class="d-flex justify-content-center mb-3" v-if="loading">
-          <b-spinner type="grow" label="Loading..."></b-spinner>
+    <div class="d-flex text-center justify-content-center m-3" v-if="loading">
+        <b-spinner type="grow" label="Loading..."></b-spinner>
     </div>
     
     <div v-else>

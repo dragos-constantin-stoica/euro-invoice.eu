@@ -203,6 +203,14 @@ Vue.component("onboarding", {
 			<!-- Tabs with card integration -->
 			<b-card no-body>
 			  <b-tabs v-model="tabIndex" content-class="mt-3" fill small card>
+			    <b-tab title="Step 0">
+			    	<b-card title="Company onboarding Wizard">
+			    		<b-card-text>
+      					You need to provide minimum information to onboard your Company. The data is used to create an invoice and for your dashboard reporting.
+    					</b-card-text>
+			    	</b-card>
+			    </b-tab>
+			    
 				<b-tab title="Step 1">
 				
 				  <b-card title="Complete Company setup">
@@ -389,6 +397,7 @@ Vue.component("onboarding", {
 
 				<b-tab title="Step 4">
 				  <b-card title="Contract setup">
+				  
 				  </b-card>
 				</b-tab>
 				
@@ -401,7 +410,7 @@ Vue.component("onboarding", {
 			     <b-col class="text-left"><b-button @click="tabIndex--">Previous</b-button></b-col>
 			     <b-col class="text-right"><b-button @click="tabIndex++">Next</b-button></b-col>
 			  </b-row>
-			  <b-progress class="mt-2" :value="(tabIndex+1)/4*100" :max="max" show-progress animated></b-progress>
+			  <b-progress class="mt-2" :value="(tabIndex+1)/5*100" :max="max" show-progress animated></b-progress>
 			</div>
 		  </div>
 		</template>

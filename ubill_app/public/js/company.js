@@ -11,7 +11,8 @@ Vue.component("company", {
         swift: '', 
         bic: '', 
         currency: '', 
-        invoice_format:''},
+        invoice_format:''
+      },
       company: null,
       company_list: [
         { value: null, text: 'Please select an option' }
@@ -48,6 +49,17 @@ Vue.component("company", {
   	},
     selectInvoiceFormat(event){
       this.newdata.invoice_format = event
+    },
+    checkVIES: function(){
+      const country = this.company.vat.substring(0,2).trim().toUpperCase(), nr = this.company.vat.substring(2).trim()
+      axios.get(`https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${country}/vat/${nr} `)
+      .then(response =>{
+        if (response.data.isValid){
+          showToast(`The Company ${response.data.name} is ${response.data.userError}. Address: ${response.data.address} `, 'VIES Response', 'success')
+        }else{
+          showToast(`The Company is: ${response.data.userError}`, 'VIES Response', 'error')
+        }
+      })
     },
   	saveCompany: function(){
   	  this.loading = true
@@ -128,7 +140,12 @@ Vue.component("company", {
       </b-form-group>
 
       <b-form-group :label='$t("company.vat")' label-for="vat" label-cols-sm="3">
+        <b-input-group>
         <b-form-input id="vat" v-model="company.vat" :plaintext="vatRO"></b-form-input>
+          <b-input-group-append>
+            <b-button variant="outline-info" @click="checkVIES">VIES Check</b-button>
+          </b-input-group-append>
+        </b-input-group>
       </b-form-group>
 
       <b-form-group :label='$t("company.mobile")' label-for="mobile" label-cols-sm="3">

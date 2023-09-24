@@ -390,7 +390,7 @@ async function upsertOnboarding(payload) {
     let company_db = nano.use(`c${payload.company._id}`)
     let company_doc = await company_db.get(payload.company._id)
     //merge fields: vat, mobile, email, address, bank_accounts, invoice_format
-    if (company_doc.vat && company_doc.vat.length == 0 && payload.company.vat.length > 0) company_doc.vat = payload.company.vat
+    if (payload.company.vat.length > 0) company_doc.vat = payload.company.vat
     if (payload.company.email.length > 0) company_doc.email = payload.company.email
     if (payload.company.mobile.length > 0) company_doc.mobile = payload.company.mobile
     if (payload.company.address.length > 0) company_doc.address.push(payload.company.address[0])

@@ -4,10 +4,6 @@ Vue.component("onboarding", {
 			company: {
 				invoice_format: ''
 			},
-			newdata_company: {
-				invoice_format: ''
-			},
-			vatRO: false,
 
 			service: {
 				name: '',
@@ -18,7 +14,7 @@ Vue.component("onboarding", {
 				vat: 0.0,
 				currency: ''
 			},
-			
+
 			client: {
 				email: '',
 				mobile: '',
@@ -36,12 +32,12 @@ Vue.component("onboarding", {
 				}]
 			},
 
-			contract: { 
-				registration_number: '', 
-				type: 'service', 
-				start_date: '', 
-				end_date: '', 
-				details: '' 
+			contract: {
+				registration_number: '',
+				type: 'service',
+				start_date: '',
+				end_date: '',
+				details: ''
 			},
 
 			ps_list: [
@@ -88,15 +84,63 @@ Vue.component("onboarding", {
 	},
 
 	methods: {
-		selectInvoiceFormat(event) {
-			this.newdata_company.invoice_format = event
-		},
 		selectType(event) {
 			this.service.unit = this.unit_list[event][0].value
 		},
-		finishOnboarding(){
+		finishOnboarding() {
 			//check all possible data and sent it to server
-			console.log(this.company, this.service, this.client, this.contract);
+			console.log(this.company, this.service, this.client, this.contract)
+			//Company mandatory fields: address, bank account and invoice format
+			if (
+				(this.company.address.length == 0 || this.company.address[0].length == 0) ||
+				(this.company.bank_accounts.length == 0 || this.company.bank_accounts[0].iban.length == 0) ||
+				this.company.invoice_format.length == 0
+			) {
+				showToast('Please input Address, Bank Account and Invoice Format information for your Company.', 'Company validation', 'danger')
+				this.tabIndex = 0
+				return
+			}
+			//Service/Product mandatory fields: label, unit price
+			if (this.service.name.length == 0 || this.service.unit_price == 0) {
+				showToast('Please input Label and Unit Price w/o taxes information for your Service/Product.', 'Service/Product validation', 'danger')
+				this.tabIndex = 1
+				return
+			}
+			//Client mandatory fields: name, national registartion number, country, address, bank accounts, iban
+			if (this.client.name.length == 0 || this.client.national_registration_number.length == 0 ||
+				this.client.country == null ||
+				(this.client.address.length == 0 || this.client.address[0].length == 0) ||
+				(this.client.bank_accounts.length == 0 || this.client.bank_accounts[0].iban.length == 0)
+			) {
+				showToast('Please input Name, National Registration Number, Country, Address, and Bank Account information for your Client.', 'Client validation', 'danger')
+				this.tabIndex = 2
+				return
+			}
+			//Contract mandatory fields: registration number, start date, end date, details
+			if (this.contract.registration_number.length == 0 || this.contract.start_date.length == 0 ||
+				this.contract.end_date.length == 0 || this.contract.details.length == 0 ||
+				new Date(this.contract.start_date) >= new Date(this.contract.end_date)
+			) {
+				showToast('Please input Registration Number, Start date, End date, and Details information for your Contract.', 'Contract validation', 'danger')
+				this.tabIndex = 3
+				return
+			}
+			//Send data to server - this will be a cascade update and creation operation
+			this.service.company_id = this.company._id
+			this.client.company_id = this.company._id
+			this.contract.company_id = this.company._id
+			if (this.company._rev) delete this.company._rev
+
+			let payload = { company: this.company, service: this.service, client: this.client, contract: this.contract }
+			console.log(payload)
+			axios.post('/onboarding', { payload: payload })
+				.then(response => {
+					console.log(response.data)
+					showToast(response.data.status == 'ok' ? response.data.message : response.data.error, 'Message from Server', response.data.status == 'ok' ? 'success' : 'error')
+					if (response.data.action) {
+						window.app[response.data.action](response.data.args)
+					}
+				})
 		}
 	},
 
@@ -115,23 +159,21 @@ Vue.component("onboarding", {
 					for (const key in response.data.dataset) {
 						if (Object.hasOwnProperty.call(response.data.dataset, key)) {
 							response.data.dataset[key].forEach(element => {
-								if(element.doctype == 'company') 
-							this.company_list.push({ value: element, text: element.name })
+								if (element.doctype == 'company')
+									this.company_list.push({ value: element, text: element.name })
 							});
 						}
 					}
-										
+
 					//we select by default the 1st company
 					this.company = this.company_list[0].value
 					this.vat_list = VAT_TABLE[this.company.country]
 					this.service.type = 'service'
 					this.service.currency = 'EUR'
 					this.service.unit = this.unit_list[this.service.type][0].value
-					this.newdata_company.invoice_format = this.company.invoice_format ?? this.invoice_format[0].value
-					this.company.invoice_format = this.company.invoice_format ?? ''
-					this.vatRO = this.company.vat.length > 0
-					if(! this.company.address || this.company.address.length == 0) this.company.address = ['']
-					if(! this.company.bank_accounts || this.company.bank_accounts.length == 0) this.company.bank_accounts = [{ bank_name: '', iban: '', swift: '', bic: '', currency: 'EUR'}]
+					if (!this.company.invoice_format || this.company.invoice_format.length == 0) this.company.invoice_format = this.invoice_format[0].value
+					if (!this.company.address || this.company.address.length == 0) this.company.address = ['']
+					if (!this.company.bank_accounts || this.company.bank_accounts.length == 0) this.company.bank_accounts = [{ bank_name: '', iban: '', swift: '', bic: '', currency: 'EUR' }]
 
 					this.loading = false
 				}
@@ -165,7 +207,7 @@ Vue.component("onboarding", {
 				</b-form-group>
 
 				<b-form-group :label='$t("company.vat")' label-for="vat" label-cols-sm="3">
-				<b-form-input id="vat" v-model="company.vat" :plaintext="vatRO"></b-form-input>
+				<b-form-input id="vat" v-model="company.vat"></b-form-input>
 				</b-form-group>
 
 				<b-form-group :label='$t("company.mobile")' label-for="mobile" label-cols-sm="3">
@@ -175,8 +217,8 @@ Vue.component("onboarding", {
 				<b-form-input id="email" type="email" v-model="company.email"></b-form-input>
 				</b-form-group>
 
-				<b-form-group v-for="item in company.address" :label='$t("company.address")' label-cols-sm="3">
-					<b-form-textarea v-model="item" rows="5" max-rows="7"></b-form-textarea>
+				<b-form-group :label='$t("company.address")' label-cols-sm="3">
+					<b-form-textarea v-model="company.address[0]" rows="5" max-rows="7"></b-form-textarea>
 				</b-form-group>
 
 				<b-form-group v-for="item in company.bank_accounts" :label='$t("company.bank_accounts")' label-for="bank_name" label-cols-sm="3">
@@ -198,7 +240,7 @@ Vue.component("onboarding", {
 				</b-form-group>
 
 				<b-form-group label="Invoice format"  label-for="invoice" label-cols-sm="3">
-					<b-form-select id="invoice" v-model="newdata_company.invoice_format" :options="invoice_format" :disabled="company.invoice_format.length > 0" @change="selectInvoiceFormat($event)"></b-form-select>
+					<b-form-select id="invoice" v-model="company.invoice_format" :options="invoice_format"></b-form-select>
 				</b-form-group>
 
 			</b-card>
@@ -297,23 +339,23 @@ Vue.component("onboarding", {
 			<b-card title="Contract setup">
 
 			<b-form-group :label='$t("contracts.registration_number")' label-for="contracts_registration_number" label-cols-sm="3">
-				<b-form-input id="contacts_registration_number" v-model="contract.registration_number"></b-form-input>
+				<b-form-input id="contracts_registration_number" v-model="contract.registration_number"></b-form-input>
 			</b-form-group>
 
 			<b-form-group :label='$t("contracts.type")' label-for="contracts_type" label-cols-sm="3">
-				<b-form-select id="contacts_type" v-model="contract.type" :options="contract_type_list"></b-form-select>
+				<b-form-select id="contracts_type" v-model="contract.type" :options="contract_type_list"></b-form-select>
 			</b-form-group>
 
 			<b-form-group :label='$t("contracts.start_date")' label-for="contracts_start_date" label-cols-sm="3">
-				<b-form-input id="contacts_start_date" type="date" v-model="contract.start_date"></b-form-input>
+				<b-form-input id="contracts_start_date" type="date" v-model="contract.start_date"></b-form-input>
 			</b-form-group>
 
 			<b-form-group :label='$t("contracts.end_date")' label-for="contracts_end_date" label-cols-sm="3">
-				<b-form-input id="contacts_end_date" type="date" v-model="contract.end_date"></b-form-input>
+				<b-form-input id="contracts_end_date" type="date" v-model="contract.end_date"></b-form-input>
 			</b-form-group>
 
 			<b-form-group :label='$t("contracts.details")' label-for="contracts_details" label-cols-sm="3">
-				<b-form-textarea id="contacts_details" v-model="contract.details" rows="3"></b-form-textarea>
+				<b-form-textarea id="contracts_details" v-model="contract.details" rows="3"></b-form-textarea>
 			</b-form-group>
 
 			</b-card>
@@ -341,7 +383,7 @@ Vue.component("onboarding", {
 });
 
 Vue.component("onboardingHeader", {
-	data: function() {
+	data: function () {
 		return {
 			locales: ['gb', 'fr', 'ro'],
 			show: true,

@@ -55,7 +55,7 @@ async function updateCompanyAdmin(newCompany, admin) {
     //address is a string with newlines and will be displayed in a textarea
     myCompany.vat = myCompany.vat || ''
     myCompany.email = ''
-    myCompany.contact = ''
+    myCompany.mobile = ''
     result = await thisCompany.insert(myCompany)
     //create indexes
     const doctype_idx = { index: { fields: ["doctype"] }, name: "doctype_idx", type: "json", ddoc: "doctype_idx" }
@@ -245,30 +245,30 @@ fastify.post('/login', async function (request, reply) {
       check_onboarding.docs.forEach(element => {
         switch (element.doctype) {
           case 'company':
-            if( element.address.length > 0 &&
-                element.bank_accounts.length > 0 &&
-                element.invoice_format && element.invoice_format.length > 0 ) check.company=true
+            if (element.address.length > 0 &&
+              element.bank_accounts.length > 0 &&
+              element.invoice_format && element.invoice_format.length > 0) check.company = true
             break;
 
           case 'client':
-            check.client=true
+            check.client = true
             break;
 
           case 'service-product':
-            check.service_product=true
+            check.service_product = true
             break;
 
           case 'contract':
-            check.contract=true
+            check.contract = true
             break;
 
           default:
             break;
         }
       });
-      if (check.company && check.service_product && check.client && check.contract){
+      if (check.company && check.service_product && check.client && check.contract) {
         reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
-      }else{
+      } else {
         reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Please onboard your company!', action: 'showLayout', args: { currentHeader: 'onboardingHeader', mainComponent: 'onboarding', currentFooter: 'onboardingFooter' } })
       }
     } else {
@@ -367,20 +367,68 @@ async function updateClients(payload) {
   return result
 }
 
-async function getOnboarding(company_list){
+async function getOnboarding(company_list) {
   let result = {}
   const mango_query = { selector: { doctype: { "$in": ["company", "client", "service-product", "contract"] } }, use_index: "doctype_idx" }
   await Promise.all(company_list.map(async (item) => {
     try {
       let tmp = nano.use(`c${item}`)
       let q = await tmp.find(mango_query)
-      if (! result[item]) result[item] = []
+      if (!result[item]) result[item] = []
       result[item] = result[item].concat(...q.docs)
     } catch (err) {
       console.log(err)
     }
   }));
-  return result  
+  return result
+}
+
+async function upsertOnboarding(payload) {
+  let result = {}
+  try {
+    //update company
+    let company_db = nano.use(`c${payload.company._id}`)
+    let company_doc = await company_db.get(payload.company._id)
+    //merge fields: vat, mobile, email, address, bank_accounts, invoice_format
+    if (company_doc.vat && company_doc.vat.length == 0 && payload.company.vat.length > 0) company_doc.vat = payload.company.vat
+    if (payload.company.email.length > 0) company_doc.email = payload.company.email
+    if (payload.company.mobile.length > 0) company_doc.mobile = payload.company.mobile
+    if (payload.company.address.length > 0) company_doc.address.push(payload.company.address[0])
+    if (payload.company.bank_accounts.length > 0) company_doc.bank_accounts.push(payload.company.bank_accounts[0])
+    //do something about serial number
+    if (!company_doc.invoice_format && payload.company.invoice_format.length > 0) {
+      company_doc.invoice_format = payload.company.invoice_format
+      let sn_doc = {
+        field: company_doc.invoice_format,
+        serial: 0
+      }
+      let sn = await company_db.atomic('serialnumber', 'upsert', 'serialnumber', sn_doc)
+      result.serialnumber = sn.doc._id
+    }
+    let tmp = await company_db.insert(company_doc)
+    console.log(tmp);
+    result.company = tmp.id
+    
+    //create service-product
+    payload.service.doctype = "service-product"
+    tmp = await company_db.insert(payload.service)
+    console.log(tmp);
+    result.service = tmp.id
+    //create client
+    payload.client.doctype = "client"
+    tmp = await company_db.insert(payload.client)
+    console.log(tmp);
+    result.client = tmp.id
+    //create contract
+    payload.contract.doctype = "contract"
+    payload.contract.client_id = tmp.id
+    tmp = await company_db.insert(payload.contract)
+    console.log(tmp);
+    result.contract = tmp.id
+  } catch (err) {
+    console.log(err)
+  }
+  return result
 }
 
 async function getCompanies(company_list) {
@@ -483,7 +531,7 @@ async function getSerialNumbers(company_list) {
   return result
 }
 
-fastify.post('/onboarding', async function(request, reply){
+fastify.post('/onboarding', async function (request, reply) {
   let result = []
   try {
     //current user may have various roles in multiple companies - for full version
@@ -498,7 +546,22 @@ fastify.post('/onboarding', async function(request, reply){
   } catch (err) {
     console.log(err)
     reply.send({ status: 'error', error: 'Onboarding fetch error.' })
-  }  
+  }
+});
+
+fastify.put('/onboarding', async function (request, reply) {
+  let result = []
+  try {
+    console.log(request.body)
+    let credentials = request.body.username.username
+    result = await upsertOnboarding(request.body.data)
+    console.log(result)
+    //reply.send({ status: 'ok', message: 'Onboarding data saved.', dataset: result })
+    reply.send({ status: 'ok', message: 'Welcome to Unity Bill! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
+  } catch (err) {
+    console.log(err)
+    reply.send({ status: 'error', error: 'Onboarding setup error.' })
+  }
 });
 
 fastify.post('/companies', async function (request, reply) {

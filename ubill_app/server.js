@@ -145,6 +145,27 @@ app.get('/onboarding', function(req, res){
   res.render('index', { layout: 'main' })
 })
 
+app.post('/onboarding', isAuthenticated, async function(req, res, next){
+  try {
+    console.log(req.body.payload)
+    var onboarding = await axios.put(`${COUCH_ADMIN_URL}/onboarding`,{username: req.session.data, data: req.body.payload})
+    console.log(onboarding)
+    res.json({
+      status: onboarding.data.status,
+      message: onboarding.data.message,
+      action: onboarding.data.action,
+      args: onboarding.data.args
+    })
+  } catch (err) {
+    console.log(err)
+    res.json({status: 'error', error:'Onboarding save error.'})
+  }
+})
+
+app.post('/onboarding', function(req, res){
+  res.render('index', { layout: 'main' })
+})
+
 
 app.get('/companies', isAuthenticated, async function(req, res, next){
   try{

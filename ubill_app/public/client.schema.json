@@ -1,0 +1,61 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://unitybill.eu/company.schema.json",
+    "title": "Client",
+    "description": "Client data model for UnityBill",
+    "type": "object",
+    "properties": {
+        "name" :{
+            "description":"Full official name of the company",
+            "type": "string"
+        },
+        "country":{
+            "description":"The country where the company is registered in",
+            "type": "string"
+        },
+        "national_registration_number":{
+            "description":"National Registration Number - unique number per country",
+            "type": "string"
+        },
+        "vat":{
+            "description":"VAT number - unique number at EU level",
+            "type": "string"
+        },
+        "bank_accounts":{
+            "description":"A list of bank account of the company. Madatory for the invoice",
+            "type": "array",
+            "items": { "$ref": "#/$def/account"}
+        },
+        "address":{
+            "description":"Official address. It may have multiple addresses",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "uniqueItems": true
+        },
+        "email":{
+            "description":"Contact email where the invoice will be sent",
+            "type": "string"
+        },
+        "mobile":{
+            "description":"GSM number for contact",
+            "type": "string"
+        }
+    },
+    "$defs":{
+        "account": {
+            "type": "object",
+            "properties": {
+                "bank_name" : { "type": "string"},
+                "iban" : { "type": "string" },
+                "swift" : { "type": "string" },
+                "bic" : { "type": "string" },
+                "currency" : { "type": "string"}
+            },
+            "required" : [ "bank_name", "iban", "swift", "bic", "currency" ],
+            "additionalProperties": false
+        }
+    },
+    "required": [ "name", "country", "national_registration_number", "vat", "bank_accounts", "address", "email", "mobile" ]
+}

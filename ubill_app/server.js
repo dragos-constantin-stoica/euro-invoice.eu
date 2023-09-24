@@ -385,6 +385,24 @@ app.post('/app/subscribe', async function(req, res){
   }
 })
 
+app.post('/vies', isAuthenticated, function(req, res){
+    var requestOptions = {
+      method: 'GET',
+      redirect: 'follow'
+    };
+    
+    fetch(`https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${req.body.country}/vat/${req.body.number}`, requestOptions)
+      .then(response => response.json())
+      .then(result => {
+        console.log(result)
+        res.json(result)
+      })
+      .catch(error => {
+        console.log('error', error)
+        res.json({isValid:false, userError:'Fetch error'})
+      });
+})
+
 app.get('/version', function (req, res) {
   res.json({ application: APPLICATION, version: VERSION })
 })

@@ -87,6 +87,17 @@ Vue.component("onboarding", {
 		selectType(event) {
 			this.service.unit = this.unit_list[event][0].value
 		},
+		checkVIES: function(val = this.company.vat){
+			const country = val.substring(0,2).trim().toUpperCase(), nr = val.substring(2).trim()
+			axios.post('/vies', {country: country, number:nr})
+			.then(response =>{
+			  if (response.data.isValid){
+				showToast(`The Company ${response.data.name} is ${response.data.userError}. Address: ${response.data.address} `, 'VIES Response', 'success')
+			  }else{
+				showToast(`The Company VAT is: ${response.data.userError}`, 'VIES Response', 'error')
+			  }
+			}) 
+		  },		
 		finishOnboarding() {
 			//check all possible data and sent it to server
 			console.log(this.company, this.service, this.client, this.contract)
@@ -207,7 +218,12 @@ Vue.component("onboarding", {
 				</b-form-group>
 
 				<b-form-group :label='$t("company.vat")' label-for="vat" label-cols-sm="3">
+				<b-input-group>
 				<b-form-input id="vat" v-model="company.vat"></b-form-input>
+				<b-input-group-append>
+				<b-button variant="outline-info" @click="checkVIES(company.vat)">VIES Check</b-button>
+			  </b-input-group-append>
+			</b-input-group>
 				</b-form-group>
 
 				<b-form-group :label='$t("company.mobile")' label-for="mobile" label-cols-sm="3">
@@ -300,7 +316,12 @@ Vue.component("onboarding", {
 			</b-form-group>
 
 			<b-form-group :label='$t("company.vat")' label-for="client_vat" label-cols-sm="3">
+			<b-input-group>
 				<b-form-input id="client_vat" v-model="client.vat"></b-form-input>
+				<b-input-group-append>
+				<b-button variant="outline-info" @click="checkVIES(client.vat)">VIES Check</b-button>
+			  </b-input-group-append>
+			</b-input-group>
 			</b-form-group>
 
 			<b-form-group :label='$t("clients.mobile")' label-for="client_mobile" label-cols-sm="3">

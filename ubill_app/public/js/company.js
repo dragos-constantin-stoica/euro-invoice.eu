@@ -50,16 +50,16 @@ Vue.component("company", {
     selectInvoiceFormat(event){
       this.newdata.invoice_format = event
     },
-    checkVIES: function(){
-      const country = this.company.vat.substring(0,2).trim().toUpperCase(), nr = this.company.vat.substring(2).trim()
-      axios.get(`https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${country}/vat/${nr} `)
+    checkVIES: function(val = this.company.vat){
+      const country = val.substring(0,2).trim().toUpperCase(), nr = val.substring(2).trim()
+      axios.post('/vies', {country: country, number:nr})
       .then(response =>{
         if (response.data.isValid){
           showToast(`The Company ${response.data.name} is ${response.data.userError}. Address: ${response.data.address} `, 'VIES Response', 'success')
         }else{
-          showToast(`The Company is: ${response.data.userError}`, 'VIES Response', 'error')
+          showToast(`The Company VAT is: ${response.data.userError}`, 'VIES Response', 'error')
         }
-      })
+      }) 
     },
   	saveCompany: function(){
   	  this.loading = true

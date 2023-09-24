@@ -58,6 +58,17 @@ Vue.component("clients", {
         this.newdata.bank_accounts.unshift(tmp)
       }
     },
+    checkVIES: function(val = this.newdata.vat){
+      const country = val.substring(0,2).trim().toUpperCase(), nr = val.substring(2).trim()
+      axios.post('/vies', {country: country, number:nr})
+      .then(response =>{
+        if (response.data.isValid){
+          showToast(`The Company ${response.data.name} is ${response.data.userError}. Address: ${response.data.address} `, 'VIES Response', 'success')
+        }else{
+          showToast(`The Company VAT is: ${response.data.userError}`, 'VIES Response', 'error')
+        }
+      }) 
+    },
     createClient: function () {
       this.loading = true
       let payload = {
@@ -186,7 +197,9 @@ Vue.component("clients", {
               </b-row>
               <b-row class="mb-2">
                 <b-col sm="3" class="text-sm-right"><b>VAT:</b></b-col>
-                <b-col>{{ row.item.vat }}</b-col>
+                <b-col>{{ row.item.vat }}
+                <b-button size="sm" variant="outline-info" @click="checkVIES(row.item.vat)">VIES Check</b-button>
+                </b-col>
               </b-row>
               <b-row class="mb-2">
                 <b-col sm="3" class="text-sm-right"><b>Mobile:</b></b-col>
@@ -243,7 +256,12 @@ Vue.component("clients", {
       </b-form-group>
 
       <b-form-group :label='$t("company.vat")' label-for="vat" label-cols-sm="3">
+        <b-input-group>
         <b-form-input id="vat" v-model="newdata.vat"></b-form-input>
+          <b-input-group-append>
+            <b-button variant="outline-info" @click="checkVIES">VIES Check</b-button>
+          </b-input-group-append>
+        </b-input-group>
       </b-form-group>
 
       <b-form-group :label='$t("clients.mobile")' label-for="mobile" label-cols-sm="3">

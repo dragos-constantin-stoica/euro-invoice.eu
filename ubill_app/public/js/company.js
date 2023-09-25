@@ -143,7 +143,7 @@ Vue.component("company", {
         <b-input-group>
         <b-form-input id="vat" v-model="company.vat" :plaintext="vatRO"></b-form-input>
           <b-input-group-append>
-            <b-button variant="outline-info" @click="checkVIES">VIES Check</b-button>
+            <b-button variant="outline-info" @click="checkVIES(company.vat)">VIES Check</b-button>
           </b-input-group-append>
         </b-input-group>
       </b-form-group>

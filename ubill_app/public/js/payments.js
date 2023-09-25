@@ -74,9 +74,10 @@ Vue.component("payments", {
         return item.PAYMENTS.reduce((acc, crtitem) => acc + crtitem.amount, 0.0).toFixed(2)
       },
       displayPDF(item){
-		let draft = templates[item.template]
+        let fulldata = this.invoice_data[this.company._id].find((elm) => elm.payload.INVOICE_NUMBER == item.INVOICE_NUMBER)
+        let draft = fulldata.template
       	let tmp = Handlebars.compile(draft)
-      	let PDF_DOC = JSON.parse(tmp(item.payload))
+      	let PDF_DOC = JSON.parse(tmp(fulldata.payload))
       	pdfMake.createPdf(PDF_DOC).open();
       }
     },

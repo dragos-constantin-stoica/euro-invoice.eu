@@ -78,7 +78,7 @@ Vue.component("clients", {
         name: this.newdata.name,
         national_registration_number: this.newdata.national_registration_number,
         country: this.newdata.country,
-        vat: this.newdata.vat,
+        vat: this.newdata.vat.toUpperCase().trim(),
         bank_accounts: this.newdata.bank_accounts,
         company_id: this.company._id
       };

@@ -137,6 +137,7 @@ Vue.component("onboarding", {
 				return
 			}
 			//Send data to server - this will be a cascade update and creation operation
+			this.company.vat = this.company.vat.toUpperCase().trim()
 			this.service.company_id = this.company._id
 			this.client.company_id = this.company._id
 			this.contract.company_id = this.company._id

@@ -17,6 +17,9 @@ const nano = require('nano')({
   url: `http://${encodeURIComponent(COUCHDB_USER)}:${encodeURIComponent(COUCHDB_PASSWORD)}@couch:5984`,
   log: console.log,
 });
+//NanoID
+const { nanoid } = require('nanoid')
+//nanoid(13) - add prefix to CouchDB docID
 
 /* 
    -----------------------------
@@ -758,7 +761,7 @@ fastify.put('/newinvoice', async function (request, reply) {
 
     request.body.data.payload.INVOICE_DETAILS = `+++${ddd.toString().padStart(3, '0')}/${fy.toString().padStart(4, '0')}/${next_sn.doc[request.body.data.invoice_format].toString().padStart(4, '0')}${cc.toString().padStart(2, '0')}+++`
     let new_invoice_doc = {
-      _id: new_sn,
+      _id: `inv_${nanoid(13)}`,
       doctype: 'invoice',
       payload: request.body.data.payload,
       template: request.body.data.template

@@ -488,7 +488,7 @@ async function getContracts(company_list) {
 
 async function getInvoices(company_list) {
   let result = {}
-  const mango_query = { selector: { doctype: "invoice" }, fields: ["_id", "payload"], use_index: "doctype_idx" }
+  const mango_query = { selector: { doctype: "invoice" }, fields: ["_id", "payload", "template"], use_index: "doctype_idx" }
   await Promise.all(company_list.map(async (item) => {
     try {
       let tmp = nano.use(`c${item}`)

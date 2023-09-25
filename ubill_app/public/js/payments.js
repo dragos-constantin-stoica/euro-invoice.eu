@@ -72,6 +72,12 @@ Vue.component("payments", {
       },
       displayPayments(item){
         return item.PAYMENTS.reduce((acc, crtitem) => acc + crtitem.amount, 0.0).toFixed(2)
+      },
+      displayPDF(item){
+		let draft = templates[item.template]
+      	let tmp = Handlebars.compile(draft)
+      	let PDF_DOC = JSON.parse(tmp(item.payload))
+      	pdfMake.createPdf(PDF_DOC).open();
       }
     },
 
@@ -166,8 +172,15 @@ Vue.component("payments", {
           <b-row class="mb-2">
             <b-col sm="3" class="text-sm-right"><b>Payed:</b></b-col>
             <b-col>{{ displayPayments(row.item) }}</b-col>
-          </b-row>         
-          <b-button pill variant="warning" size="sm" @click="row.toggleDetails">Hide Details</b-button>
+          </b-row>
+          <b-row>
+          	<b-col>         
+          		<b-button pill variant="warning" size="sm" @click="row.toggleDetails">Hide Details</b-button>
+          	</b-col>
+          	<b-col>
+          		<b-button pill variant="info" size="sm" @click="displayPDF(row.item)">Show Invoice</b-button>
+          	</b-col>
+          </b-row>
         </b-card>
         <b-card v-if="row.item.STATUS!= 'payed'">
           <b-form-group :label='$t("payment.type")' label-for="payment_type" label-cols-sm="3">

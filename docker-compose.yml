@@ -40,8 +40,6 @@ services:
     hostname: couch_admin
     restart: unless-stopped
     env_file: .env
-    ports:
-      - '8090:8090'
     depends_on:
       couch:
         condition: service_healthy

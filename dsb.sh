@@ -226,7 +226,7 @@ dev(){
     echo "UnityBill has successfully started on http://localhost:8080"
 
     echo -e "\n\n"
-    echocolo "DONE >>> DEV" "Blue" "Alien"
+    echocolor "DONE >>> DEV" "Blue" "Alien"
 }
 
 # stop function

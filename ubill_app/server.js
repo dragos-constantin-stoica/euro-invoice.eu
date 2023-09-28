@@ -2,12 +2,13 @@
 
 // Global variables
 const PORT = 3000,
-      HOST = '0.0.0.0',
-      NODE_ENV = process.env.NODE_ENV || 'DEV',
-      COUCH_ADMIN_URL = 'http://couch_admin:8090',
-      EXPRESS_SESSION = 'The quick brown fox jumps over the lazy dog.',
-      APPLICATION = 'UnityBill',
-      VERSION = '1.0.0';
+  HOST = '0.0.0.0',
+  NODE_ENV = process.env.NODE_ENV || 'DEV',
+  SG_API_KEY = process.env.SENDGRID_API_KEY || 'SendGrid API KEY',
+  COUCH_ADMIN_URL = 'http://couch_admin:8090',
+  EXPRESS_SESSION = 'The quick brown fox jumps over the lazy dog.',
+  APPLICATION = 'UnityBill',
+  VERSION = '1.0.0';
 
 const http = require('http')
 const express = require('express')
@@ -30,6 +31,9 @@ var compression = require('compression')
 const { createTerminus } = require('@godaddy/terminus')
 
 var axios = require('axios')
+
+const sgMail = require('@sendgrid/mail')
+sgMail.setApiKey(SG_API_KEY)
 
 const app = express()
 
@@ -56,6 +60,34 @@ app.set("view engine", "handlebars");
 app.set("views", path.resolve(__dirname, "./views")) //all handlebar template files go in views folder
 
 var hbs = hdbs.create({ defaultLayout: 'error' });
+
+//Email setup for Micrsoft Office 365 SMTP
+async function sendgridEmail(to, subject, html, text) {
+  const from = 'contact@unitybill.eu'
+  const msg = {
+    to: to,
+    from: from, // Use the email address or domain you verified above
+    subject: subject,
+    text: text,
+    html: html,
+  }
+
+  try {
+    let result = await sgMail.send(msg)
+    return result
+  } catch (error) {
+    console.log(error);
+
+    if (error.response) {
+      console.log(error.response.body)
+      return {status: error, error: error.response.body}
+    }
+
+    return {status:'error', error: error}
+  }
+
+}
+
 
 // middleware to test if authenticated
 function isAuthenticated(req, res, next) {
@@ -85,12 +117,12 @@ app.get('/checksession', isAuthenticated, async function (req, res) {
           action: login_response.data.action,
           args: login_response.data.args
         });
-      }else{
+      } else {
         res.json({
           status: login_response.data.status,
           error: login_response.data.error,
           action: 'showLayout',
-          args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
+          args: { currentHeader: 'publicHeader', mainComponent: 'login', currentFooter: 'publicFooter' }
         })
       }
     } catch (error) {
@@ -98,7 +130,7 @@ app.get('/checksession', isAuthenticated, async function (req, res) {
         status: 'error',
         error: 'Session check error!',
         action: 'showLayout',
-        args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
+        args: { currentHeader: 'publicHeader', mainComponent: 'login', currentFooter: 'publicFooter' }
       })
     }
   } else {
@@ -107,28 +139,28 @@ app.get('/checksession', isAuthenticated, async function (req, res) {
   }
 })
 
-app.post('/changepassword', isAuthenticated, async function(req, res, next){
-   //TODO - check the preconditions before changing password
-   try{
+app.post('/changepassword', isAuthenticated, async function (req, res, next) {
+  //TODO - check the preconditions before changing password
+  try {
     var chpwd_response = await axios.post(`${COUCH_ADMIN_URL}/changepassword`, { username: req.session.user, password: req.body.oldpassword, newpassword: req.body.newpassword })
     console.log(chpwd_response.data)
     res.json({
       status: chpwd_response.data.status,
       message: chpwd_response.data.message
     });
-   }catch(err){
+  } catch (err) {
     console.log(err)
-    res.json({status:'error', error: 'Password update error.'})
-   }
+    res.json({ status: 'error', error: 'Password update error.' })
+  }
 })
 
-app.post('/changepassword', function(req, res){
-  res.render('index', {layout: 'main'})
+app.post('/changepassword', function (req, res) {
+  res.render('index', { layout: 'main' })
 })
 
-app.get('/onboarding', isAuthenticated, async function(req, res, next){
+app.get('/onboarding', isAuthenticated, async function (req, res, next) {
   try {
-    var onboarding = await axios.post(`${COUCH_ADMIN_URL}/onboarding`,{username: req.session.user, data: req.session.data})
+    var onboarding = await axios.post(`${COUCH_ADMIN_URL}/onboarding`, { username: req.session.user, data: req.session.data })
     console.log(onboarding)
     res.json({
       status: onboarding.data.status,
@@ -137,18 +169,18 @@ app.get('/onboarding', isAuthenticated, async function(req, res, next){
     })
   } catch (err) {
     console.log(err)
-    res.json({status: 'error', error:'Onboarding fetch error.'})
+    res.json({ status: 'error', error: 'Onboarding fetch error.' })
   }
 })
 
-app.get('/onboarding', function(req, res){
+app.get('/onboarding', function (req, res) {
   res.render('index', { layout: 'main' })
 })
 
-app.post('/onboarding', isAuthenticated, async function(req, res, next){
+app.post('/onboarding', isAuthenticated, async function (req, res, next) {
   try {
     console.log(req.body.payload)
-    var onboarding = await axios.put(`${COUCH_ADMIN_URL}/onboarding`,{username: req.session.data, data: req.body.payload})
+    var onboarding = await axios.put(`${COUCH_ADMIN_URL}/onboarding`, { username: req.session.data, data: req.body.payload })
     console.log(onboarding)
     res.json({
       status: onboarding.data.status,
@@ -158,164 +190,150 @@ app.post('/onboarding', isAuthenticated, async function(req, res, next){
     })
   } catch (err) {
     console.log(err)
-    res.json({status: 'error', error:'Onboarding save error.'})
+    res.json({ status: 'error', error: 'Onboarding save error.' })
   }
 })
 
-app.post('/onboarding', function(req, res){
+app.post('/onboarding', function (req, res) {
   res.render('index', { layout: 'main' })
 })
 
 
-app.get('/companies', isAuthenticated, async function(req, res, next){
-  try{
-     var companies = await axios.post(`${COUCH_ADMIN_URL}/companies`, {username: req.session.user, data: req.session.data})
-     //console.log(companies)
-     res.json({
-       status: companies.data.status,
-       message: companies.data.message,
-       dataset: companies.data.dataset
-     })
-  }catch(err){
+app.get('/companies', isAuthenticated, async function (req, res, next) {
+  try {
+    var companies = await axios.post(`${COUCH_ADMIN_URL}/companies`, { username: req.session.user, data: req.session.data })
+    //console.log(companies)
+    res.json({
+      status: companies.data.status,
+      message: companies.data.message,
+      dataset: companies.data.dataset
+    })
+  } catch (err) {
     console.log(err)
-    res.json({status: 'error', error: 'Companies fetch error.'})
+    res.json({ status: 'error', error: 'Companies fetch error.' })
   }
 })
 
-app.get('/companies', function(req, res){
+app.get('/companies', function (req, res) {
   res.render('index', { layout: 'main' })
 })
 
-app.put('/companies', isAuthenticated, async function(req, res, next){
-	try{
-		console.log(req.body)
-		//send company to be updated in the corresponding database and in the global database
-		//we should receive one single company at a time
-		var result = await axios.put(`${COUCH_ADMIN_URL}/companies`, {username: req.session.user, data: req.body})
-		res.json({
-			status: result.data.status,
-			message: result.data.message,
-			dataset: result.data.dataset
-		})
-	}catch(err){
-		console.log(err)
-		res.json({status: 'error', error: 'Company update error.'})
-	}
+app.put('/companies', isAuthenticated, async function (req, res, next) {
+  try {
+    console.log(req.body)
+    //send company to be updated in the corresponding database and in the global database
+    //we should receive one single company at a time
+    var result = await axios.put(`${COUCH_ADMIN_URL}/companies`, { username: req.session.user, data: req.body })
+    res.json({
+      status: result.data.status,
+      message: result.data.message,
+      dataset: result.data.dataset
+    })
+  } catch (err) {
+    console.log(err)
+    res.json({ status: 'error', error: 'Company update error.' })
+  }
 })
 
-app.get('/servicesproducts', isAuthenticated, async function(req, res, next){
-	try{
-		var result = await axios.post(`${COUCH_ADMIN_URL}/servicesproducts`, {username: req.session.user, data: req.session.data})
-		//console.log(result.data.dataset)
-		res.json({
-			status: result.data.status,
-			message: result.data.message,
-			dataset: result.data.dataset
-		})
-	}catch(err){
-		console.log(err)
-		res.json({status:'error', error:'Services and Products fetch error.'})
-	}
+app.get('/servicesproducts', isAuthenticated, async function (req, res, next) {
+  try {
+    var result = await axios.post(`${COUCH_ADMIN_URL}/servicesproducts`, { username: req.session.user, data: req.session.data })
+    //console.log(result.data.dataset)
+    res.json({
+      status: result.data.status,
+      message: result.data.message,
+      dataset: result.data.dataset
+    })
+  } catch (err) {
+    console.log(err)
+    res.json({ status: 'error', error: 'Services and Products fetch error.' })
+  }
 })
 
-app.post('/servicesproducts', isAuthenticated, async function(req, res, next){
+app.post('/servicesproducts', isAuthenticated, async function (req, res, next) {
   try {
     //Check if the company is on the user's list
     console.log(req.body);
-    if (req.session.data.companies.admin.indexOf(req.body.company_id) != -1){
-      var result = await axios.put(`${COUCH_ADMIN_URL}/servicesproducts`, {session: req.session.data , data: req.body})
+    if (req.session.data.companies.admin.indexOf(req.body.company_id) != -1) {
+      var result = await axios.put(`${COUCH_ADMIN_URL}/servicesproducts`, { session: req.session.data, data: req.body })
       res.json({
         status: result.data.status,
         message: result.data.message,
         dataset: result.data.dataset
       })
-    }else{
-      res.json({status: 'error', error: 'You do not have the right to adminster this company.'})
+    } else {
+      res.json({ status: 'error', error: 'You do not have the right to adminster this company.' })
     }
   } catch (err) {
     console.log(err);
-    res.json({status: 'error', error: 'Services and Products update error.'})
+    res.json({ status: 'error', error: 'Services and Products update error.' })
   }
 })
 
-app.get('/clients', isAuthenticated, async function(req, res, next){
-	try{
-		var result = await axios.post(`${COUCH_ADMIN_URL}/clients`, {username: req.session.user, data: req.session.data})
-		res.json({
-			status: result.data.status,
-			message: result.data.message,
-			dataset: result.data.dataset
-		})
-	}catch(err){
-		console.log(err)
-		res.json({status: 'error', error: 'Clients fetch error.'})
-	}
-})
-
-app.post('/clients', isAuthenticated, async function(req, res, next){
-	try{
-	 if(req.session.data.companies.admin.indexOf(req.body.company_id) != -1){
-		var result = await axios.put(`${COUCH_ADMIN_URL}/clients`, {session: req.session.data, data: req.body})
-		res.json({
-			status: result.data.status,
-			message: result.data.message,
-			dataset: result.data.dataset
-		})
-	 }else{
-	 	res.json({status: 'error', error: 'You do not have the right to administer this company.'})
-	 }
-	}catch(err){
-		console.log(err)
-		res.json({status: 'error', error: 'Clients update error.'})
-	}
-})
-
-
-app.get('/contracts', isAuthenticated, async function(req, res, next){
-	try{
-		var result = await axios.post(`${COUCH_ADMIN_URL}/contracts`, {username: req.session.user, data: req.session.data})
-		res.json({
-			status: result.data.status,
-			message: result.data.message,
-			dataset: result.data.dataset
-		})
-	}catch(err){
-		console.log(err)
-		res.json({status: 'error', error: 'Contracts fetch error.'})
-	}
-})
-
-app.post('/contracts', isAuthenticated, async function(req, res, next){
-	try{
-		var result = await axios.put(`${COUCH_ADMIN_URL}/contracts`, {session: req.session.data, data: req.body})
-		res.json({
-			status: result.data.status,
-			message: result.data.message,
-			dataset: result.data.dataset
-		})
-	}catch(err){
-		console.log(err)
-		res.json({status: 'error', message: 'Contract updated error.'})
-	}
-})
-
-app.post('/newinvoice', isAuthenticated, async function(req, res, next) {
+app.get('/clients', isAuthenticated, async function (req, res, next) {
   try {
-		var result = await axios.put(`${COUCH_ADMIN_URL}/newinvoice`, {session: req.session.data, data: req.body})
-		res.json({
-			status: result.data.status,
-			message: result.data.message,
-			dataset: result.data.dataset
-		})    
-  } catch (error) {
-    console.log(error);
-    res.json({status: 'error', message: 'New invoice creation error.'})
+    var result = await axios.post(`${COUCH_ADMIN_URL}/clients`, { username: req.session.user, data: req.session.data })
+    res.json({
+      status: result.data.status,
+      message: result.data.message,
+      dataset: result.data.dataset
+    })
+  } catch (err) {
+    console.log(err)
+    res.json({ status: 'error', error: 'Clients fetch error.' })
   }
 })
 
-app.get('/serialnumber', isAuthenticated, async function(req, res, next) {
+app.post('/clients', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.post(`${COUCH_ADMIN_URL}/serialnumber`, { session: req.session.data, data: req.body})
+    if (req.session.data.companies.admin.indexOf(req.body.company_id) != -1) {
+      var result = await axios.put(`${COUCH_ADMIN_URL}/clients`, { session: req.session.data, data: req.body })
+      res.json({
+        status: result.data.status,
+        message: result.data.message,
+        dataset: result.data.dataset
+      })
+    } else {
+      res.json({ status: 'error', error: 'You do not have the right to administer this company.' })
+    }
+  } catch (err) {
+    console.log(err)
+    res.json({ status: 'error', error: 'Clients update error.' })
+  }
+})
+
+
+app.get('/contracts', isAuthenticated, async function (req, res, next) {
+  try {
+    var result = await axios.post(`${COUCH_ADMIN_URL}/contracts`, { username: req.session.user, data: req.session.data })
+    res.json({
+      status: result.data.status,
+      message: result.data.message,
+      dataset: result.data.dataset
+    })
+  } catch (err) {
+    console.log(err)
+    res.json({ status: 'error', error: 'Contracts fetch error.' })
+  }
+})
+
+app.post('/contracts', isAuthenticated, async function (req, res, next) {
+  try {
+    var result = await axios.put(`${COUCH_ADMIN_URL}/contracts`, { session: req.session.data, data: req.body })
+    res.json({
+      status: result.data.status,
+      message: result.data.message,
+      dataset: result.data.dataset
+    })
+  } catch (err) {
+    console.log(err)
+    res.json({ status: 'error', message: 'Contract updated error.' })
+  }
+})
+
+app.post('/newinvoice', isAuthenticated, async function (req, res, next) {
+  try {
+    var result = await axios.put(`${COUCH_ADMIN_URL}/newinvoice`, { session: req.session.data, data: req.body })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -323,13 +341,13 @@ app.get('/serialnumber', isAuthenticated, async function(req, res, next) {
     })
   } catch (error) {
     console.log(error);
-    res.json({ status: 'error', message: 'Serial number fethc error'})
+    res.json({ status: 'error', message: 'New invoice creation error.' })
   }
 })
 
-app.get('/invoices', isAuthenticated, async function(req, res, next){
+app.get('/serialnumber', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.post(`${COUCH_ADMIN_URL}/invoices`, { session: req.session.data, data: req.body})
+    var result = await axios.post(`${COUCH_ADMIN_URL}/serialnumber`, { session: req.session.data, data: req.body })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -337,13 +355,27 @@ app.get('/invoices', isAuthenticated, async function(req, res, next){
     })
   } catch (error) {
     console.log(error);
-    res.json({ status: 'error', message: 'Invioces fethc error'})
+    res.json({ status: 'error', message: 'Serial number fethc error' })
   }
 })
 
-app.post('/registerpayment', isAuthenticated, async function(req, res, next){
+app.get('/invoices', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.put(`${COUCH_ADMIN_URL}/registerpayment`, {session: req.session.data, data: req.body})
+    var result = await axios.post(`${COUCH_ADMIN_URL}/invoices`, { session: req.session.data, data: req.body })
+    res.json({
+      status: result.data.status,
+      message: result.data.message,
+      dataset: result.data.dataset
+    })
+  } catch (error) {
+    console.log(error);
+    res.json({ status: 'error', message: 'Invioces fethc error' })
+  }
+})
+
+app.post('/registerpayment', isAuthenticated, async function (req, res, next) {
+  try {
+    var result = await axios.put(`${COUCH_ADMIN_URL}/registerpayment`, { session: req.session.data, data: req.body })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -355,56 +387,66 @@ app.post('/registerpayment', isAuthenticated, async function(req, res, next){
   }
 });
 
-app.post('/app/contact', async function(req, res){
+app.post('/app/contact', async function (req, res) {
   //Not logged - the information has to come form the homepage of the site
   console.log(req.body);
   try {
     var payload = req.body
     payload.doctype = "contact"
     payload.timestamp = Date.now()
-    var result = await axios.post(`${COUCH_ADMIN_URL}/contact`,{session:null, data: payload})
-    res.send((result.data.status == 'ok')?'OK':result.data.message)
+    var result = await axios.post(`${COUCH_ADMIN_URL}/contact`, { session: null, data: payload })
+    res.send((result.data.status == 'ok') ? 'OK' : result.data.message)
   } catch (error) {
     console.log(error);
     res.send('NOK')
   }
 })
 
-app.post('/app/subscribe', async function(req, res){
+app.post('/app/subscribe', async function (req, res) {
   //Not logged - the information has to come form the homepage of the site
   console.log(req.body);
   try {
     var payload = req.body
     payload.doctype = "newsletter"
     payload.timestamp = Date.now()
-    var result = await axios.post(`${COUCH_ADMIN_URL}/contact`,{session:null, data: payload})
-    res.send((result.data.status == 'ok')?'OK':result.data.message)
+    var result = await axios.post(`${COUCH_ADMIN_URL}/contact`, { session: null, data: payload })
+    res.send((result.data.status == 'ok') ? 'OK' : result.data.message)
   } catch (error) {
     console.log(error);
     res.send('NOK')
   }
 })
 
-app.post('/vies', isAuthenticated, function(req, res){
-    var requestOptions = {
-      method: 'GET',
-      redirect: 'follow'
-    };
-    
-    fetch(`https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${req.body.country}/vat/${req.body.number}`, requestOptions)
-      .then(response => response.json())
-      .then(result => {
-        console.log(result)
-        res.json(result)
-      })
-      .catch(error => {
-        console.log('error', error)
-        res.json({isValid:false, userError:'Fetch error'})
-      });
+app.post('/vies', isAuthenticated, function (req, res) {
+  var requestOptions = {
+    method: 'GET',
+    redirect: 'follow'
+  };
+
+  fetch(`https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${req.body.country}/vat/${req.body.number}`, requestOptions)
+    .then(response => response.json())
+    .then(result => {
+      console.log(result)
+      res.json(result)
+    })
+    .catch(error => {
+      console.log('error', error)
+      res.json({ isValid: false, userError: 'Fetch error' })
+    });
 })
 
 app.get('/version', function (req, res) {
   res.json({ application: APPLICATION, version: VERSION })
+})
+
+app.get('/sendemail', async function(req, res){
+  try {
+    let result = await sendgridEmail('dragos.stoica@datastema.io', 'Test from UnityBill', 'HTML part', 'Text part')
+    res.json({status:'ok', message:result})
+  } catch (err) {
+    console.log(err);
+    res.json({status: 'error', error:err})
+  }
 })
 
 app.post('/login', async function (req, res) {
@@ -424,7 +466,7 @@ app.post('/login', async function (req, res) {
       req.session.regenerate(function (err) {
         if (err) {
           console.log(err)
-          res.json({status:'error', error:'Session regenerate error!'})
+          res.json({ status: 'error', error: 'Session regenerate error!' })
           return
         }
 
@@ -443,7 +485,7 @@ app.post('/login', async function (req, res) {
         req.session.save(function (err) {
           if (err) {
             console.log(err)
-            res.json({status:'error', error:'Session save error!'})
+            res.json({ status: 'error', error: 'Session save error!' })
             return
           }
           console.log(req.session);
@@ -464,17 +506,17 @@ app.post('/login', async function (req, res) {
         status: login_response.data.status,
         error: login_response.data.error,
         action: 'showLayout',
-        args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
+        args: { currentHeader: 'publicHeader', mainComponent: 'login', currentFooter: 'publicFooter' }
       })
     }
   } catch (error) {
     console.log(error);
-    req.json({status:'error', error: 'Something wrong with login!'})
+    req.json({ status: 'error', error: 'Something wrong with login!' })
   }
 
 });
 
-app.post('/logout',isAuthenticated, function (req, res, next) {
+app.post('/logout', isAuthenticated, function (req, res, next) {
   // logout logic
 
   // clear the user from the session object and save.
@@ -493,19 +535,19 @@ app.post('/logout',isAuthenticated, function (req, res, next) {
         status: 'ok',
         message: 'See you soon!',
         action: 'showLayout',
-        args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
+        args: { currentHeader: 'publicHeader', mainComponent: 'login', currentFooter: 'publicFooter' }
       })
     })
 
   })
 })
 
-app.post('/logout', function(req, res){
+app.post('/logout', function (req, res) {
   res.json({
     status: 'ok',
     message: 'See you soon!',
     action: 'showLayout',
-    args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
+    args: { currentHeader: 'publicHeader', mainComponent: 'login', currentFooter: 'publicFooter' }
   })
 })
 
@@ -515,18 +557,18 @@ app.post('/register', async function (req, res, next) {
   //check if the user exists in the company and create/add admin role to the company
   console.log(req.body)
 
-  try{
-     var company = await axios.post(`${COUCH_ADMIN_URL}/register`, {data: req.body})
-     console.log(company)
-     res.json({
-       status: company.data.status,
-       message: company.data.message,
-       action: 'showLayout',
-       args: {currentHeader:'publicHeader', mainComponent:'login', currentFooter:'publicFooter'}
+  try {
+    var company = await axios.post(`${COUCH_ADMIN_URL}/register`, { data: req.body })
+    console.log(company)
+    res.json({
+      status: company.data.status,
+      message: company.data.message,
+      action: 'showLayout',
+      args: { currentHeader: 'publicHeader', mainComponent: 'login', currentFooter: 'publicFooter' }
     })
-  }catch(err){
+  } catch (err) {
     console.log(err)
-    res.json({status: 'error', error: 'Something went double North ^^'})
+    res.json({ status: 'error', error: 'Something went double North ^^' })
   }
 
 })

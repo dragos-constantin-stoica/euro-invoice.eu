@@ -137,9 +137,12 @@ Vue.component("onboarding", {
 				return
 			}
 			//Send data to server - this will be a cascade update and creation operation
-			this.company.vat = this.company.vat.toUpperCase().trim()
+			if(this.company.vat) this.company.vat = this.company.vat.replace(/[^a-z0-9]/gi, '').toUpperCase()
+			this.company.national_registration_number = this.company.national_registration_number.replace(/[^a-z0-9]/gi, '').toUpperCase()
 			this.service.company_id = this.company._id
 			this.client.company_id = this.company._id
+			this.client.national_registration_number = this.client.national_registration_number.replace(/[^a-z0-9]/gi, '').toUpperCase()
+			if (this.client.vat) this.client.vat = this.client.vat.replace(/[^a-z0-9]/gi, '').toUpperCase()
 			this.contract.company_id = this.company._id
 			if (this.company._rev) delete this.company._rev
 

@@ -64,7 +64,7 @@ Vue.component("company", {
   	saveCompany: function(){
   	  this.loading = true
       this.company.invoice_format = this.newdata.invoice_format 
-      this.company.vat = this.company.vat.toUpperCase().trim()
+      if (this.company.vat) this.company.vat = this.company.vat.replace(/[^a-z0-9]/gi, '').toUpperCase()
   		axios.put('/companies', this.company)
   		.then(response =>{
   			//console.log(response.data)

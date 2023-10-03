@@ -71,6 +71,8 @@ Vue.component("clients", {
     },
     createClient: function () {
       this.loading = true
+      if (this.newdata.vat) this.newdata.vat= this.newaddress.vat.replace(/[^a-z0-9]/gi, '').toUpperCase()
+      this.newdata.national_registration_number = this.newdata.national_registration_number.replace(/[^a-z0-9]/gi, '').toUpperCase()
       let payload = {
         email: this.newdata.email,
         mobile: this.newdata.mobile,
@@ -78,7 +80,7 @@ Vue.component("clients", {
         name: this.newdata.name,
         national_registration_number: this.newdata.national_registration_number,
         country: this.newdata.country,
-        vat: this.newdata.vat.toUpperCase().trim(),
+        vat: this.newdata.vat,
         bank_accounts: this.newdata.bank_accounts,
         company_id: this.company._id
       };

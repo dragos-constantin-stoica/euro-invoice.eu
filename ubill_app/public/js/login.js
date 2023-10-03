@@ -151,6 +151,7 @@ Vue.component("register", {
 			}
 			
 			//It seems that we got some valid data
+			this.form.national_registration_number = this.form.national_registration_number.replace(/[^a-z0-9]/gi, '').toUpperCase()
 			axios.post('/register', this.form)
 				.then(function (response) {
 					//console.log(response);

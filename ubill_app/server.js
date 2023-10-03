@@ -4,7 +4,6 @@
 const PORT = 3000,
   HOST = '0.0.0.0',
   NODE_ENV = process.env.NODE_ENV || 'DEV',
-  SG_API_KEY = process.env.SENDGRID_API_KEY || 'SendGrid API KEY',
   COUCH_ADMIN_URL = 'http://couch_admin:8090',
   EXPRESS_SESSION = 'The quick brown fox jumps over the lazy dog.',
   APPLICATION = 'UnityBill',
@@ -31,9 +30,6 @@ var compression = require('compression')
 const { createTerminus } = require('@godaddy/terminus')
 
 var axios = require('axios')
-
-const sgMail = require('@sendgrid/mail')
-sgMail.setApiKey(SG_API_KEY)
 
 const app = express()
 
@@ -437,16 +433,6 @@ app.post('/vies', isAuthenticated, function (req, res) {
 
 app.get('/version', function (req, res) {
   res.json({ application: APPLICATION, version: VERSION })
-})
-
-app.get('/sendemail', async function(req, res){
-  try {
-    let result = await sendgridEmail('dragos.stoica@datastema.io', 'Test from UnityBill', 'HTML part', 'Text part')
-    res.json({status:'ok', message:result})
-  } catch (err) {
-    console.log(err);
-    res.json({status: 'error', error:err})
-  }
 })
 
 app.post('/login', async function (req, res) {

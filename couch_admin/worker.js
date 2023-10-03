@@ -5,6 +5,7 @@ const WRK_PORT = process.env.WRK_PORT || 8090,
   COUCHDB_PASSWORD = process.env.COUCHDB_PASSWORD,
   APP_USER = process.env.APP_USER,
   APP_PASSWORD = process.env.APP_PASSWORD,
+  SG_API_KEY = process.env.SENDGRID_API_KEY || 'SendGrid API KEY',
   COUCHDB_USER_NAMESPACE = 'org.couchdb.user';
 
 // CommonJS
@@ -20,6 +21,9 @@ const nano = require('nano')({
 //NanoID
 const { nanoid } = require('nanoid')
 //nanoid(13) - add prefix to CouchDB docID
+//SendGrid
+const sgMail = require('@sendgrid/mail')
+sgMail.setApiKey(SG_API_KEY)
 
 /* 
    -----------------------------
@@ -193,6 +197,36 @@ async function createCompanyWithAdmin(newCompany, admin) {
 }
 
 
+async function sendemail(message) {
+  //Force the sender email
+  message.from = 'contact@unitybill.eu'
+  /*
+  {
+    to: to,
+    from: from, // Use the email address or domain you verified above
+    subject: subject,
+    text: text,
+    html: html,
+  }
+  */
+
+  try {
+    let result = await sgMail.send(msg)
+    return result
+  } catch (error) {
+    console.log(error);
+
+    if (error.response) {
+      console.log(error.response.body)
+      return {status: 'error', error: error.response.body}
+    }
+
+    return {status:'error', error: error}
+  }
+
+  
+}
+
 //--------------
 //webserver part
 async function closeGracefully(signal) {
@@ -363,6 +397,9 @@ async function updateClients(payload) {
     let company = await nano.use(`c${payload.data.company_id}`)
     let doc = payload.data
     doc.doctype = "client"
+    if (doc.vat) doc.vat = doc.vat.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+    doc.national_registration_number = doc.national_registration_number.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+    doc._id = RMD160.hex(doc.name.toUpperCase() + doc.country.toUpperCase() + doc.national_registration_number.toUpperCase())
     let result = await company.insert(doc)
   } catch (error) {
     console.log(error)
@@ -393,7 +430,7 @@ async function upsertOnboarding(payload) {
     let company_db = nano.use(`c${payload.company._id}`)
     let company_doc = await company_db.get(payload.company._id)
     //merge fields: vat, mobile, email, address, bank_accounts, invoice_format
-    if (payload.company.vat.length > 0) company_doc.vat = payload.company.vat
+    if (payload.company.vat.length > 0) company_doc.vat = payload.company.vat.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
     if (payload.company.email.length > 0) company_doc.email = payload.company.email
     if (payload.company.mobile.length > 0) company_doc.mobile = payload.company.mobile
     if (payload.company.address.length > 0) company_doc.address.push(payload.company.address[0])
@@ -419,6 +456,9 @@ async function upsertOnboarding(payload) {
     result.service = tmp.id
     //create client
     payload.client.doctype = "client"
+    if (payload.client.vat) payload.client.vat = payload.client.vat.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+    payload.client.national_registration_number = payload.client.national_registration_number.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+    payload.client._id = RMD160.hex(payload.client.name.toUpperCase() + payload.client.country.toUpperCase() + payload.client.national_registration_number.toUpperCase())
     tmp = await company_db.insert(payload.client)
     console.log(tmp);
     result.client = tmp.id
@@ -801,6 +841,7 @@ fastify.post('/register', async function (request, reply) {
     //no authentication yet ... this should be handled with care for DDOS
     let payload = request.body.data
     //Compute new - database ID
+    payload.national_registration_number = payload.national_registration_number.replace(/[^a-zA-Z0-9]/g, "")
     var new_company = {
       _id: RMD160.hex(payload.name.toUpperCase() + payload.country.toUpperCase() + payload.national_registration_number.toUpperCase()),
       name: payload.name.toUpperCase(),

@@ -116,6 +116,9 @@ EOF
      -d '{"name":"$APP_USER", "password": "$APP_PASSWORD", "roles": ["technical_usr"], "type": "user"}'
 
     curl -X PUT $COUCH_URL/companies
+    curl -H 'Content-Type: application/json' \
+         -X POST $COUCH_URL/companies/_index \
+         -d '{"index":{"fields": ["national_registration_number"]}, "name": "nrn_idx", "type":"json", "ddoc": "nrn_idx"}'
     curl -X PUT $COUCH_URL/companies/_security \
        -H 'content-type: application/json' \
        -H 'accept: application/json' \

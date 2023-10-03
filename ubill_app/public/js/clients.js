@@ -71,7 +71,7 @@ Vue.component("clients", {
     },
     createClient: function () {
       this.loading = true
-      if (this.newdata.vat) this.newdata.vat= this.newaddress.vat.replace(/[^a-z0-9]/gi, '').toUpperCase()
+      if (this.newdata.vat) this.newdata.vat= this.newdata.vat.replace(/[^a-z0-9]/gi, '').toUpperCase()
       this.newdata.national_registration_number = this.newdata.national_registration_number.replace(/[^a-z0-9]/gi, '').toUpperCase()
       let payload = {
         email: this.newdata.email,

@@ -65,7 +65,11 @@ async function updateCompanyAdmin(newCompany, admin) {
     myCompany.mobile = ''
     result = await thisCompany.insert(myCompany)
     //create indexes
-    const doctype_idx = { index: { fields: ["doctype"] }, name: "doctype_idx", type: "json", ddoc: "doctype_idx" }
+    let doctype_idx = { index: { fields: ["doctype"] }, name: "doctype_idx", type: "json", ddoc: "doctype_idx" }
+    result = await thisCompany.createIndex(doctype_idx)
+    doctype_idx = {index:{ fields: ["national_registration_number"]}, name: "nrn_idx", type:"json", ddoc: "nrn_idx"}
+    result = await thisCompany.createIndex(doctype_idx)
+    doctype_idx = {index:{ fields: ["vat"]}, name: "vat_idx", type:"json", ddoc: "vat_idx"}
     result = await thisCompany.createIndex(doctype_idx)
     //create serial_number document
     //this should not happen here?!
@@ -148,6 +152,9 @@ async function createCompanyWithAdmin(newCompany, admin) {
         //Company does not exist - create it
         let companies_db = nano.use('companies')
         try {
+          const mango_query = { selector: {national_registration_number: {"$eq": newCompany.national_registration_number }}, use_index:"nrn_idx"}
+          let find_by_nrn = await companies_db.find(mango_query)
+          if (find_by_nrn.docs.length > 0) return { status: 'error', error: 'Company with the same National Registration Number already registered!'}
           let new_doc = await companies_db.insert(newCompany)
           //console.log(new_doc)
           let new_db = await nano.db.create(`c${newCompany._id}`)
@@ -400,6 +407,14 @@ async function updateClients(payload) {
     if (doc.vat) doc.vat = doc.vat.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
     doc.national_registration_number = doc.national_registration_number.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
     doc._id = RMD160.hex(doc.name.toUpperCase() + doc.country.toUpperCase() + doc.national_registration_number.toUpperCase())
+    let mango_query = {selector: {national_registration_number: { "$eq": doc.national_registration_number}}, use_index: "nrn_idx"}
+    let find_result = await company.find(mango_query)
+    if (find_result.docs.length > 0) return {status: 'error', message:'Client with the same National Registration Number already exists!'}
+    if (doc.vat){
+      mango_query = {selector: {vat: { "$eq": doc.vat}}, use_index: "vat_idx"}
+      find_result = await company.find(mango_query)
+      if (find_result.docs.length > 0) return {status: 'error', message:'Client with the same VAT Number already exists!'}
+    }
     let result = await company.insert(doc)
   } catch (error) {
     console.log(error)
@@ -705,7 +720,11 @@ fastify.put('/clients', async function (request, reply) {
     let tmp = await updateClients(request.body)
     result.clients = await getClients(company_list)
     console.log(result)
-    reply.send({ status: 'ok', message: 'Client data saved', dataset: result })
+    if (result.status && result.status == 'error'){
+      reply.send(result)
+    }else{
+      reply.send({ status: 'ok', message: 'Client data saved', dataset: result })
+    }
   } catch (err) {
     console.log(err)
     reply.send({ status: 'error', message: 'Client update error' })

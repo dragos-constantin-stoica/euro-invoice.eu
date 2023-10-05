@@ -31,6 +31,20 @@ sgMail.setApiKey(SG_API_KEY)
    -----------------------------
 */
 
+
+//Audit log for all operational databases
+async function record_audit(database, user, action){
+  try {
+    let tmp_db = nano.use(database)
+    await tmp_db.atomic('audit_log', 'log_record', `newlog_${nanoid}`, {user: user, action:action})
+    return {status: 'ok'}
+  } catch (err) {
+    console.log(err)
+    return {status: 'error', error: err}
+  }
+}
+
+
 //Cleanup in case of failure. The Company may be created an the user not
 async function cleanupCompany(newCompany) {
   try {
@@ -53,6 +67,8 @@ async function updateCompanyAdmin(newCompany, admin) {
     //console.log(company)
     let result = await companies.insert(company)
     //console.log(result)
+    result = await record_audit('companies', admin.name,`Company c${newCompany._id} database created.`)
+
     let thisCompany = nano.use(`c${newCompany._id}`)
     let myCompany = newCompany
     myCompany.doctype = 'company'
@@ -88,7 +104,7 @@ async function updateCompanyAdmin(newCompany, admin) {
             var payload = JSON.parse(req.body);
             if (doc === null) {
               //Create new document
-              newdoc = {};            
+              var newdoc = {};            
               newdoc._id = 'serialnumber';
               newdoc.doctype = "serialnumber";
               newdoc[payload.field] = (typeof payload.serial === 'string')?parseInt(payload.serial,10):payload.serial;            
@@ -135,6 +151,35 @@ async function updateCompanyAdmin(newCompany, admin) {
       }
     }
     result = await thisCompany.insert(ddoc_update_payment)
+    const ddoc_audit_log = {
+      "_id": "_design/audit_log",
+      "language": "javascript",
+      "updates": {
+        "log_record": `function(doc, req){
+          if (req.method == "PUT"){
+              var payload = JSON.parse(req.body);
+              if (doc === null){
+                var newdoc = {};
+                newdoc._id = req.uuid;
+                newdoc.doctype = "auditlog";
+                newdoc.who = req["userCtx"]["name"];
+                newdoc.timestamp = Date.now();
+                newdoc.user = payload.user;
+                newdoc.action = payload.action;
+                return [newdoc, JSON.stringify({"action":"created", "doc": newdoc})];
+              }else{
+                //This is an update on existing record
+                return [null, JSON.stringify({ "action": "error", "error":"Tempering existing audit log record."})]
+              }
+              //unknown request - send error with request payload
+              return [null, JSON.stringify({"action": "error","req": req})];
+          }
+        }`
+      }
+    }
+    result = await thisCompany.insert(ddoc_audit_log)
+
+    result = await record_audit(`c${newCompany._id}`,admin.name,"Company database and design documents created.")
 
   } catch (e) {
     console.log(e)
@@ -505,21 +550,22 @@ async function getCompanies(company_list) {
 }
 
 async function updateCompany(company_data) {
+  //TODO - upsert design document
   let result = []
   try {
     let company = nano.use(`c${company_data._id}`)
     let head = await company.head(company_data._id)
-    console.log(head)
+    //console.log(head)
     company_data._rev = head.etag.replaceAll('"', '')
     company_data.doctype = "company"
-    console.log(company_data)
-    let result = await company.insert(company_data)
+    //console.log(company_data)
+    result = await company.insert(company_data)
     //Should create serial number document via upsert
     let sn_doc = {
       field: company_data.invoice_format,
       serial: 0
     }
-    let sn = await company.atomic('serialnumber', 'upsert', 'serialnumber', sn_doc)
+    await company.atomic('serialnumber', 'upsert', 'serialnumber', sn_doc)
   } catch (err) {
     console.log(err)
   }
@@ -594,12 +640,12 @@ fastify.post('/onboarding', async function (request, reply) {
   try {
     //current user may have various roles in multiple companies - for full version
     //in the free version, on company per user
-    // the information about the companies is stored in CouchDB user profile
+    //the information about the companies is stored in CouchDB user profile
     let credentials = request.body
     let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
     let company_list = [...new Set([...theUser.companies.admin])]
     result = await getOnboarding(company_list)
-    console.log(result)
+    //console.log(result)
     reply.send({ status: 'ok', message: 'Onboarding data loaded.', dataset: result })
   } catch (err) {
     console.log(err)
@@ -613,8 +659,8 @@ fastify.put('/onboarding', async function (request, reply) {
     console.log(request.body)
     let credentials = request.body.username.username
     result = await upsertOnboarding(request.body.data)
-    console.log(result)
-    //reply.send({ status: 'ok', message: 'Onboarding data saved.', dataset: result })
+    //console.log(result)
+    await record_audit(`c${request.body.data.company._id}`, credentials, "Company update, Product / Service created, Client created, Contract created. Onboard operation.")
     reply.send({ status: 'ok', message: 'Welcome to Unity Bill! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
   } catch (err) {
     console.log(err)
@@ -648,7 +694,8 @@ fastify.put('/companies', async function (request, reply) {
     let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${request.body.username}` })
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result = await getCompanies(company_list)
-    console.log(result)
+    //console.log(result)
+    await record_audit(`c${request.body.data._id}`, request.body.username, "Company update.")
     reply.send({ status: 'ok', message: 'Company data saved.', dataset: result })
   } catch (err) {
     console.log(err)
@@ -685,6 +732,7 @@ fastify.put('/servicesproducts', async function (request, reply) {
     let tmp = await updateServicesProducts(request.body)
     result.servicesproducts = await getServicesProducts(company_list)
     //console.log(result)
+    await record_audit(`c${request.body.data.company_id}`, credentials.username, "Service-Product created")
     reply.send({ status: 'ok', message: 'Service-Product data saved.', dataset: result })
   } catch (err) {
     console.log(err);
@@ -719,10 +767,11 @@ fastify.put('/clients', async function (request, reply) {
     result.companies = await getCompanies(company_list)
     let tmp = await updateClients(request.body)
     result.clients = await getClients(company_list)
-    console.log(result)
+    //console.log(result)
     if (result.status && result.status == 'error'){
       reply.send(result)
     }else{
+      await record_audit(`c${request.body.data.company_id}`, credentials.username, "Client created.")
       reply.send({ status: 'ok', message: 'Client data saved', dataset: result })
     }
   } catch (err) {
@@ -758,9 +807,10 @@ fastify.put('/contracts', async function (request, reply) {
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result.companies = await getCompanies(company_list)
     result.clients = await getClients(company_list)
-    let tmp = await updateContracts(request.body)
+    await updateContracts(request.body)
     result.contracts = await getContracts(company_list)
     //console.log(result)
+    await record_audit(`c${request.body.data.company_id}`, credentials.username, "Contract update.")
     reply.send({ status: 'ok', message: 'Contracts data loaded', dataset: result })
   } catch (err) {
     console.log(err)
@@ -825,11 +875,12 @@ fastify.put('/newinvoice', async function (request, reply) {
       payload: request.body.data.payload,
       template: request.body.data.template
     }
-    let tmp = await companydb.insert(new_invoice_doc)
+    await companydb.insert(new_invoice_doc)
     let credentials = request.body.session
     let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result.serialnumbers = await getSerialNumbers(company_list)
+    await record_audit(`c${request.body.data.company_id}`, credentials.username, "Invoice created.")
     reply.send({ status: 'ok', message: `Invoice ${new_sn} created`, dataset: result })
   } catch (err) {
     console.log(err);
@@ -847,6 +898,7 @@ fastify.put('/registerpayment', async function (request, reply) {
     let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result = await getInvoices(company_list)
+    await record_audit(`c${request.body.data.company_id}`, credentials.username, "Payment registered.")
     reply.send({ status: 'ok', message: `Payment of ${request.body.data.payment.amount} ${request.body.data.payment.currency} registered for invoice ${request.body.data.invoice_number}`, dataset: result })
   } catch (error) {
     console.log(error)
@@ -895,7 +947,9 @@ fastify.post('/contact', async function (request, reply) {
   let result = {}
   try {
     let contactdb = nano.use('contact')
-    result = contactdb.insert(request.body.data)
+    result = await contactdb.insert(request.body.data)
+    //TODO send email too, two messages - one to contact@unitybill.eu and to the client
+
     reply.send({ status: 'ok', message: 'Message saved successfully.', dataset: result })
   } catch (err) {
     console.log(err);

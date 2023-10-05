@@ -57,7 +57,7 @@ where [service_name] is:
 
 # setup function
 setup(){
-    echocolor "Setup stage" "Yellow" "Construction"
+    echocolor "Setup stage" "BYellow" "Construction"
     #create docker folders
     local FOLDERS=( "./dbcouch" "./dbcouch/data" "./dbcouch/etc" "./dbcouch/log")
     for i in "${FOLDERS[@]}"
@@ -109,12 +109,13 @@ EOF
     curl -X POST $COUCH_URL/_node/_local/_config/_reload
     curl -X GET $COUCH_URL/_cluster_setup
 
-    # Companies database
+    # Add application user with the role of technical user
     curl -X PUT $COUCH_URL/_users/org.couchdb.user:$APP_USER \
      -H "Accept: application/json" \
      -H "Content-Type: application/json" \
-     -d '{"name":"$APP_USER", "password": "$APP_PASSWORD", "roles": ["technical_usr"], "type": "user"}'
+     -d '{"name":"'$APP_USER'", "password": "'$APP_PASSWORD'", "roles": ["technical_usr"], "type": "user"}'
 
+    # Companies database
     curl -X PUT $COUCH_URL/companies
     curl -H 'Content-Type: application/json' \
          -X POST $COUCH_URL/companies/_index \
@@ -123,7 +124,15 @@ EOF
        -H 'content-type: application/json' \
        -H 'accept: application/json' \
        -d '{"admins":{"names":[],"roles":["_admin"]},"members":{"names": [],"roles": ["technical_usr"]}}'
+    curl -X PUT $COUCH_URL/companies/_design/audit_log \
+        -H 'content-type: application/json' \
+        -H 'accept: application/json' \
+        -d '{"_id":"_design/audit_log","language":"javascript","updates":{"log_record":"function(doc, req){\n          if (req.method == \"PUT\"){\n              var payload = JSON.parse(req.body);\n              if (doc === null){\n                var newdoc = {};\n                newdoc._id = req.uuid;\n                newdoc.doctype = \"auditlog\";\n                newdoc.who = req[\"userCtx\"][\"name\"];\n                newdoc.timestamp = Date.now();\n                newdoc.user = payload.user;\n                newdoc.action = payload.action;\n                return [newdoc, JSON.stringify({\"action\":\"created\", \"doc\": newdoc})];\n              }else{\n                //This is an update on existing record\n                return [null, JSON.stringify({ \"action\": \"error\", \"error\":\"Tempering existing audit log record.\"})]\n              }\n              //unknown request - send error with request payload\n              return [null, JSON.stringify({\"action\": \"error\",\"req\": req})];\n          }\n        }"}}'
 
+    curl -X PUT $COUCH_URL/companies/_design/audit_log/_update/log_record \
+        -H 'content-type: application/json' \
+        -H 'accept: application/json' \
+        -d '{ "user":"'$COUCHDB_USER'", "action":"Setup companies and contact databases."}'
     # Contact and newsletter subscription database
     curl -X PUT $COUCH_URL/contact
     curl -X PUT $COUCH_URL/contact/_security \
@@ -138,7 +147,7 @@ EOF
     if [[ ! -z "$1" ]]; then
     	case $1 in
     		"ssl") 
-    		    echocolor "Setup SSL" "Yellow" "Danger"
+    		    echocolor "Setup SSL" "On_IYellow" "Danger"
     			cp nginx/conf/nginx_setup nginx/conf/nginx.conf
 			    docker compose up -d
 			    sleep 60
@@ -146,19 +155,19 @@ EOF
 			    sleep 60
 			    docker compose down
 			    cp nginx/conf/nginx_ssl nginx/conf/nginx.conf
-			    echocolor "SSL setup done!" "Yellow" "Robot";;
+			    echocolor "SSL setup done!" "On_IYellow" "Robot";;
 
     		*) echo "Unknown paramenter $1"
     		   usage;;
     	esac
     fi
 
-    echocolor "DONE >>> Setup stage" "Yellow" "Robot"
+    echocolor "DONE >>> Setup stage" "BYellow" "Robot"
 }
 
 # certbot ssl management
 certbotssl(){
-    echocolor "Setup SSL certificates from Lets Encrypt using Certbot" "Yellow" "Locked"
+    echocolor "Setup SSL certificates from Lets Encrypt using Certbot" "BYellow" "Locked"
     local FOLDERS=( "./certbot" "./certbot/www" "./certbot/conf")
     for i in "${FOLDERS[@]}"
     do
@@ -167,7 +176,7 @@ certbotssl(){
     fi
     done
     docker compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ --force-renewal --email ${CERT_EMAIL} -d ${CERT_DOMAIN} --agree-tos --non-interactive
-    echocolor "DONE >>> SSL certificates" "Yellow" "Locked"
+    echocolor "DONE >>> SSL certificates" "BYellow" "Locked"
 }
 
 # redeploy function
@@ -180,7 +189,7 @@ redeploy(){
 
 # clean up all folders
 cleanup(){
-    echocolor "Cleanup stage" "Red" "NoEntry"
+    echocolor "Cleanup stage" "BIRed" "NoEntry"
     echo "Do you want to delete ALL data?"
     select yn in "Yes" "No"
     do
@@ -201,12 +210,12 @@ cleanup(){
         esac
     done
 
-    echocolor "DONE >>> Cleanup stage" "Red" "Robot"
+    echocolor "DONE >>> Cleanup stage" "BIRed" "Robot"
 }
 
 # run function
 run(){
-    echocolor "Run stage" "BGreen" "Whale"
+    echocolor "Run stage" "BIGreen" "Whale"
     docker compose up -d
 
     echo "CouchDB has successfuly started on http://couch.localhost:5984/_utils"
@@ -215,7 +224,7 @@ run(){
     echo "UnityBill has successfully started on http://localhost:8080"
     echo "Application available at https://$CERT_DOMAIN"
     echo -e "\n\n"
-    echocolor "DONE >>> Run stage" "BGreen" "Whale"
+    echocolor "DONE >>> Run stage" "BIGreen" "Whale"
 }
 
 # dev function
@@ -234,25 +243,25 @@ dev(){
 
 # stop function
 stop(){
-    echocolor "Stop stage" "BRed" "Bomb"
+    echocolor "Stop stage" "On_Red" "Bomb"
     docker compose down
-    echocolor "DONE >>> Stop stage" "BRed" "Bomb"
+    echocolor "DONE >>> Stop stage" "On_Red" "Bomb"
 }
 
 # prune function
 prune(){
-   echocolor "Prune docker system" "Purple" "Broom"
+   echocolor "Prune docker system" "BPurple" "Broom"
    docker system prune -f
-   echocolor "DONE >>> Prune stage" "Purple" "Toilet"
+   echocolor "DONE >>> Prune stage" "BPurple" "Toilet"
 }
 
 # build function
 build(){
-   echocolor "Build service $1" "Green" "Radioactive"
+   echocolor "Build service $1" "On_Green" "Radioactive"
    if [[ ! -z "$1" ]]; then
    	docker compose build  $1
    fi
-   echocolor "DONE >>> build service $1" "Green" "Biohazard"
+   echocolor "DONE >>> build service $1" "On_Green" "Biohazard"
 }
 
 

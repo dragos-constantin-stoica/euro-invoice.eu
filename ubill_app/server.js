@@ -560,6 +560,33 @@ app.post('/register', async function (req, res, next) {
 })
 
 /*
+ * API endpoints
+ * simple versioning
+ * parameters in path
+ * 
+Read the doc
+https://www.codemzy.com/blog/nodejs-api-versioning
+https://github.com/Prasanna-sr/express-routes-versioning
+https://github.com/juninhocruzg3/express-routes-versioning
+https://github.com/Amri91/route-v/tree/master
+ */
+
+//Display a webpage of the summary and status of this invoice
+//the URL is encoded on the QR code on the PDF invoice
+app.get('/api/v1/status/:db/:invoice', async function(req, res){
+    console.log(req.params)
+ 	res.send('OK')	
+})
+
+//Display the PDF version of the invoice
+//the URL is encoded on the email that is sent to the Client and Company admin
+app.get('/api/v1/pdf/:db/:invoice', async function(req, res){
+    console.log(req.params)
+	res.send('OK')
+})
+ 
+
+/*
  * Error pages
  * 404, 50x
  */

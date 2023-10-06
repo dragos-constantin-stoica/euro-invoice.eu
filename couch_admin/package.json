@@ -2,7 +2,7 @@
   "name": "node_couchcdb",
   "version": "0.1.0",
   "private": false,
-  "description": "The gearman worker to manage users in CouchDB",
+  "description": "Back end for Unity Bill",
   "main": "worker.js",
   "scripts": {
     "start": "nodemon worker.js"
@@ -22,7 +22,8 @@
     "nano": "^10.x",
     "jshashes": "^1.0.x",
     "nanoid":"^3.3.4",
-    "@sendgrid/mail":"^7.7.0"
+    "@sendgrid/mail":"^7.7.0",
+    "handlebars":"^4.7.8"
   },
   "devDependencies": {
     "eslint": "^6.7.2",

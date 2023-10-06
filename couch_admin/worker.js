@@ -24,12 +24,26 @@ const { nanoid } = require('nanoid')
 //SendGrid
 const sgMail = require('@sendgrid/mail')
 sgMail.setApiKey(SG_API_KEY)
+//Handlebars - used for HTML email dynamic templates
+const hdbs = require("handlebars")
+const fs = require("fs")
+const path = require("path")
 
 /* 
    -----------------------------
    End of initialization section
    -----------------------------
 */
+
+//Auxiliary function to retrive HTML email template for handlebars
+const getTemplate = (template) => {
+  try {
+    return fs.readFileSync(path.join(__dirname, `./templates/email/${template}.handlebars`), 'utf8');
+  } catch (e) {
+    console.log(e);
+    throw Error('Template not found');
+  }
+};
 
 
 //Audit log for all operational databases
@@ -263,20 +277,17 @@ async function sendemail(message) {
   */
 
   try {
-    let result = await sgMail.send(msg)
+    let result = await sgMail.send(message)
+    console.log(result)
     return result
   } catch (error) {
     console.log(error);
-
     if (error.response) {
       console.log(error.response.body)
       return {status: 'error', error: error.response.body}
     }
-
     return {status:'error', error: error}
   }
-
-  
 }
 
 //--------------
@@ -949,7 +960,33 @@ fastify.post('/contact', async function (request, reply) {
     let contactdb = nano.use('contact')
     result = await contactdb.insert(request.body.data)
     //TODO send email too, two messages - one to contact@unitybill.eu and to the client
-
+    let payload = request.body.data
+    if (payload.doctype == 'contact'){
+	let template = hdbs.compile(getTemplate("contact"))()
+	await sendemail(
+		  {
+    		to: payload.email,
+    		from: 'contact@unitybill.eu', 
+    		subject: 'Contact confirmation',
+    		text: 'We received your message and will be back to you soon! Thank you!',
+    		html: template
+  		}
+  	)
+  	}
+  	if (payload.doctype == 'newsletter'){
+  		let template = hdbs.compile(getTemplate("newsletter"))()
+  		await sendemail(
+  			{
+  				to: payload.email,
+  				from: 'contact@unitybill.eu',
+  				subject: 'Newsletter subscription',
+  				text: 'You subscribed to our newsletter! Enjoy!',
+  				html: template
+  			}
+  		)
+  	}
+  	let template = hdbs.compile(getTemplate("contact"))()
+  	await sendemail({to:'contact@unitybill.eu', from:'contact@unitybill.eu', subject: 'Message from homepage', text: JSON.stringify(payload), html: template})
     reply.send({ status: 'ok', message: 'Message saved successfully.', dataset: result })
   } catch (err) {
     console.log(err);

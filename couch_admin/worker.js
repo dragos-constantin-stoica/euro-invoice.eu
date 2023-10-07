@@ -954,6 +954,63 @@ fastify.post('/register', async function (request, reply) {
   }
 });
 
+fastify.get('/testemail', async function(request, reply){
+  let result = []
+  try {
+    let template = hdbs.compile(getTemplate("contact"))()
+    let tmp = await sendemail({
+      to: 'contact@unitybill.eu',
+      from: 'contact@unitybill.eu',
+      subject: 'test contact',
+      text: 'contact',
+      html: template
+    })
+    result.push(tmp)
+    template = hdbs.compile(getTemplate("newsletter"))()
+    tmp = await sendemail({
+      to: 'contact@unitybill.eu',
+      from: 'contact@unitybill.eu',
+      subject: 'test newsletter',
+      text: 'neswsletter',
+      html: template
+    })
+    result.push(tmp)
+    template = hdbs.compile(getTemplate("newinvoice"))()
+    tmp = await sendemail({
+      to: 'contact@unitybill.eu',
+      from: 'contact@unitybill.eu',
+      subject: 'test new invoice',
+      text: 'new invoice',
+      html: template
+    })
+    result.push(tmp)
+    template = hdbs.compile(getTemplate("registercompany"))()
+    tmp = await sendemail({
+      to: 'contact@unitybill.eu',
+      from: 'contact@unitybill.eu',
+      subject: 'test register company',
+      text: 'register company',
+      html: template
+    })
+    result.push(tmp)
+    template = hdbs.compile(getTemplate("passwordchange"))()
+    tmp = await sendemail({
+      to: 'contact@unitybill.eu',
+      from: 'contact@unitybill.eu',
+      subject: 'test password change',
+      text: 'password change',
+      html: template
+    })
+    result.push(tmp)
+
+    reply.send(result)
+  } catch (error) {
+    console.log(error)
+    reply.send({status:'error', error: error})
+  }
+
+})
+
 fastify.post('/contact', async function (request, reply) {
   let result = {}
   try {

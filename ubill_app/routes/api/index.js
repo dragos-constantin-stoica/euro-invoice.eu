@@ -2,6 +2,9 @@ const axios = require('axios')
 const express = require('express')
 const router = express.Router()
 
+// Global variables
+const COUCH_ADMIN_URL = 'http://couch_admin:8090';
+
 let crypto;
 try {
   crypto = require('node:crypto')
@@ -11,7 +14,7 @@ try {
 
 // middleware that is specific to this router
 router.use((req, res, next) => {
-  console.log('Time: ', Date.now())
+  console.log('API call at: ', Date.now())
   next()
 })
 
@@ -43,15 +46,15 @@ router.get('/v1/pdf/:db/:invoice/:hash', async function(req, res){
     let hmac = crypto.createHmac('rmd160', key)
     hmac.update(db + invoice)
     let h = hmac.digest('hex')
+    console.log(h)
     //check hash
     if (h == hash){
     	//ok - call the backend
-    	let result = await axios.post(`${COUCH_ADMIN_URL}/invoice`, {db:db, invoice:invoice})
-    	res.json({status:'ok', message:'The invoice', dataset: result})
+    	let result = await axios.post(`${COUCH_ADMIN_URL}/invoice`, {db: db, invoice: invoice})
+    	res.json({status:'ok', message:'The invoice', dataset: 'fake data'})
     }else{
-    	res.json({status:'error', error:'URL error.'})
+    	res.json({status:'error', error:'URL error.' + h})
     }
-    console.log(h)
 })
  
 module.exports = router

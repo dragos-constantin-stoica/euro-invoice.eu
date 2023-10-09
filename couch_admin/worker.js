@@ -844,6 +844,20 @@ fastify.post('/invoices', async function (request, reply) {
   }
 });
 
+fastify.post('/invoice', async function(request, reply){
+	let result = {}
+	try{
+		let payload = request.body
+		let db = nano.use(payload.db)
+		result = await db.get(`inv_${invoice}`)
+		//send the data to browser and render the PDF on Client
+		reply.send({status: 'ok', message: 'Invoice loaded', dataset: result})
+	}catch(err){
+		console.log(err)
+		reply.send({status: 'error', error: 'Invoice fetch error'})
+	}
+});
+
 fastify.post('/serialnumber', async function (request, reply) {
   let result = {}
   try {

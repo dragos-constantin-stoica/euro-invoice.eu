@@ -9,6 +9,7 @@ const PORT = 3000,
   APPLICATION = 'UnityBill',
   VERSION = '1.0.0';
 
+
 const http = require('http')
 const express = require('express')
 var session = require('express-session')
@@ -16,28 +17,31 @@ var filestore = require('session-file-store')(session);
 
 var pino = require('pino-http')()
 
-let crypto;
-try {
-  crypto = require('crypto');
-} catch (err) {
-  pino.logger.error('crypto support is disabled!');
-}
 var path = require('path');
 const hdbs = require("express-handlebars");
 var fs = require('fs');
 const { type } = require('express/lib/response');
 var compression = require('compression')
 const { createTerminus } = require('@godaddy/terminus')
-
+const helmet = require('helmet')
 var axios = require('axios')
 
 const app = express()
 
 const { log } = require('console')
 
+//My modules
+const api = require('./routes/api')
+
+
 //middleware configuration for ExpressJS
 app.use(express.json()) // for parsing application/json
 app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
+
+app.disable("x-powered-by")
+app.use(helmet({
+	xPoweredBy: false,
+}))
 
 app.use(session({
   store: new filestore,
@@ -56,34 +60,6 @@ app.set("view engine", "handlebars");
 app.set("views", path.resolve(__dirname, "./views")) //all handlebar template files go in views folder
 
 var hbs = hdbs.create({ defaultLayout: 'error' });
-
-//Email setup for Micrsoft Office 365 SMTP
-async function sendgridEmail(to, subject, html, text) {
-  const from = 'contact@unitybill.eu'
-  const msg = {
-    to: to,
-    from: from, // Use the email address or domain you verified above
-    subject: subject,
-    text: text,
-    html: html,
-  }
-
-  try {
-    let result = await sgMail.send(msg)
-    return result
-  } catch (error) {
-    console.log(error);
-
-    if (error.response) {
-      console.log(error.response.body)
-      return {status: error, error: error.response.body}
-    }
-
-    return {status:'error', error: error}
-  }
-
-}
-
 
 // middleware to test if authenticated
 function isAuthenticated(req, res, next) {
@@ -559,32 +535,9 @@ app.post('/register', async function (req, res, next) {
 
 })
 
-/*
- * API endpoints
- * simple versioning
- * parameters in path
- * 
-Read the doc
-https://www.codemzy.com/blog/nodejs-api-versioning
-https://github.com/Prasanna-sr/express-routes-versioning
-https://github.com/juninhocruzg3/express-routes-versioning
-https://github.com/Amri91/route-v/tree/master
- */
 
-//Display a webpage of the summary and status of this invoice
-//the URL is encoded on the QR code on the PDF invoice
-app.get('/api/v1/status/:db/:invoice', async function(req, res){
-    console.log(req.params)
- 	res.send('OK')	
-})
-
-//Display the PDF version of the invoice
-//the URL is encoded on the email that is sent to the Client and Company admin
-app.get('/api/v1/pdf/:db/:invoice', async function(req, res){
-    console.log(req.params)
-	res.send('OK')
-})
- 
+//API from external file
+app.use('/api', api)
 
 /*
  * Error pages

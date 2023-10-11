@@ -1,14 +1,7 @@
 'use strict'
 
 // Global variables
-const PORT = 3000,
-  HOST = '0.0.0.0',
-  NODE_ENV = process.env.NODE_ENV || 'DEV',
-  COUCH_ADMIN_URL = 'http://couch_admin:8090',
-  EXPRESS_SESSION = 'The quick brown fox jumps over the lazy dog.',
-  APPLICATION = 'UnityBill',
-  VERSION = '1.0.0';
-
+const config = require('./config/config');
 
 const http = require('http')
 const express = require('express')
@@ -30,9 +23,9 @@ const app = express()
 
 const { log } = require('console')
 
-//My modules
+//My Routes
 const api = require('./routes/api')
-
+const app_route = require('./routes/app')
 
 //middleware configuration for ExpressJS
 app.use(express.json()) // for parsing application/json
@@ -45,7 +38,7 @@ app.use(helmet({
 
 app.use(session({
   store: new filestore,
-  secret: EXPRESS_SESSION, //use a secret from secrets
+  secret: config.EXPRESS_SESSION, //use a secret from secrets
   resave: false,
   saveUninitialized: true
 }))
@@ -68,6 +61,7 @@ function isAuthenticated(req, res, next) {
   else next('route')
 }
 
+/*
 app.get('/app', isAuthenticated, function (req, res) {
   // this is only called when there is an authentication user due to isAuthenticated
   res.render('application', { layout: 'main' })
@@ -76,12 +70,13 @@ app.get('/app', isAuthenticated, function (req, res) {
 app.get('/app', function (req, res) {
   res.render('index', { layout: 'main' })
 })
+*/
 
 app.get('/checksession', isAuthenticated, async function (req, res) {
   if (req.session.user) {
     //We have an ongoing session
     try {
-      var login_response = await axios.post(`${COUCH_ADMIN_URL}/login`, { username: req.session.data.username, password: req.session.data.password })
+      var login_response = await axios.post(`${config.COUCH_ADMIN_URL}/login`, { username: req.session.data.username, password: req.session.data.password })
       if (login_response.data.status == 'ok') {
         res.json({
           status: login_response.data.status,
@@ -114,7 +109,7 @@ app.get('/checksession', isAuthenticated, async function (req, res) {
 app.post('/changepassword', isAuthenticated, async function (req, res, next) {
   //TODO - check the preconditions before changing password
   try {
-    var chpwd_response = await axios.post(`${COUCH_ADMIN_URL}/changepassword`, { username: req.session.user, password: req.body.oldpassword, newpassword: req.body.newpassword })
+    var chpwd_response = await axios.post(`${config.COUCH_ADMIN_URL}/changepassword`, { username: req.session.user, password: req.body.oldpassword, newpassword: req.body.newpassword })
     console.log(chpwd_response.data)
     res.json({
       status: chpwd_response.data.status,
@@ -132,7 +127,7 @@ app.post('/changepassword', function (req, res) {
 
 app.get('/onboarding', isAuthenticated, async function (req, res, next) {
   try {
-    var onboarding = await axios.post(`${COUCH_ADMIN_URL}/onboarding`, { username: req.session.user, data: req.session.data })
+    var onboarding = await axios.post(`${config.COUCH_ADMIN_URL}/onboarding`, { username: req.session.user, data: req.session.data })
     console.log(onboarding)
     res.json({
       status: onboarding.data.status,
@@ -152,7 +147,7 @@ app.get('/onboarding', function (req, res) {
 app.post('/onboarding', isAuthenticated, async function (req, res, next) {
   try {
     console.log(req.body.payload)
-    var onboarding = await axios.put(`${COUCH_ADMIN_URL}/onboarding`, { username: req.session.data, data: req.body.payload })
+    var onboarding = await axios.put(`${config.COUCH_ADMIN_URL}/onboarding`, { username: req.session.data, data: req.body.payload })
     console.log(onboarding)
     res.json({
       status: onboarding.data.status,
@@ -173,7 +168,7 @@ app.post('/onboarding', function (req, res) {
 
 app.get('/companies', isAuthenticated, async function (req, res, next) {
   try {
-    var companies = await axios.post(`${COUCH_ADMIN_URL}/companies`, { username: req.session.user, data: req.session.data })
+    var companies = await axios.post(`${config.COUCH_ADMIN_URL}/companies`, { username: req.session.user, data: req.session.data })
     //console.log(companies)
     res.json({
       status: companies.data.status,
@@ -195,7 +190,7 @@ app.put('/companies', isAuthenticated, async function (req, res, next) {
     console.log(req.body)
     //send company to be updated in the corresponding database and in the global database
     //we should receive one single company at a time
-    var result = await axios.put(`${COUCH_ADMIN_URL}/companies`, { username: req.session.user, data: req.body })
+    var result = await axios.put(`${config.COUCH_ADMIN_URL}/companies`, { username: req.session.user, data: req.body })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -209,7 +204,7 @@ app.put('/companies', isAuthenticated, async function (req, res, next) {
 
 app.get('/servicesproducts', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.post(`${COUCH_ADMIN_URL}/servicesproducts`, { username: req.session.user, data: req.session.data })
+    var result = await axios.post(`${config.COUCH_ADMIN_URL}/servicesproducts`, { username: req.session.user, data: req.session.data })
     //console.log(result.data.dataset)
     res.json({
       status: result.data.status,
@@ -227,7 +222,7 @@ app.post('/servicesproducts', isAuthenticated, async function (req, res, next) {
     //Check if the company is on the user's list
     console.log(req.body);
     if (req.session.data.companies.admin.indexOf(req.body.company_id) != -1) {
-      var result = await axios.put(`${COUCH_ADMIN_URL}/servicesproducts`, { session: req.session.data, data: req.body })
+      var result = await axios.put(`${config.COUCH_ADMIN_URL}/servicesproducts`, { session: req.session.data, data: req.body })
       res.json({
         status: result.data.status,
         message: result.data.message,
@@ -244,7 +239,7 @@ app.post('/servicesproducts', isAuthenticated, async function (req, res, next) {
 
 app.get('/clients', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.post(`${COUCH_ADMIN_URL}/clients`, { username: req.session.user, data: req.session.data })
+    var result = await axios.post(`${config.COUCH_ADMIN_URL}/clients`, { username: req.session.user, data: req.session.data })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -259,7 +254,7 @@ app.get('/clients', isAuthenticated, async function (req, res, next) {
 app.post('/clients', isAuthenticated, async function (req, res, next) {
   try {
     if (req.session.data.companies.admin.indexOf(req.body.company_id) != -1) {
-      var result = await axios.put(`${COUCH_ADMIN_URL}/clients`, { session: req.session.data, data: req.body })
+      var result = await axios.put(`${config.COUCH_ADMIN_URL}/clients`, { session: req.session.data, data: req.body })
       res.json({
         status: result.data.status,
         message: result.data.message,
@@ -277,7 +272,7 @@ app.post('/clients', isAuthenticated, async function (req, res, next) {
 
 app.get('/contracts', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.post(`${COUCH_ADMIN_URL}/contracts`, { username: req.session.user, data: req.session.data })
+    var result = await axios.post(`${config.COUCH_ADMIN_URL}/contracts`, { username: req.session.user, data: req.session.data })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -291,7 +286,7 @@ app.get('/contracts', isAuthenticated, async function (req, res, next) {
 
 app.post('/contracts', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.put(`${COUCH_ADMIN_URL}/contracts`, { session: req.session.data, data: req.body })
+    var result = await axios.put(`${config.COUCH_ADMIN_URL}/contracts`, { session: req.session.data, data: req.body })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -305,7 +300,7 @@ app.post('/contracts', isAuthenticated, async function (req, res, next) {
 
 app.post('/newinvoice', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.put(`${COUCH_ADMIN_URL}/newinvoice`, { session: req.session.data, data: req.body })
+    var result = await axios.put(`${config.COUCH_ADMIN_URL}/newinvoice`, { session: req.session.data, data: req.body })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -319,7 +314,7 @@ app.post('/newinvoice', isAuthenticated, async function (req, res, next) {
 
 app.get('/serialnumber', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.post(`${COUCH_ADMIN_URL}/serialnumber`, { session: req.session.data, data: req.body })
+    var result = await axios.post(`${config.COUCH_ADMIN_URL}/serialnumber`, { session: req.session.data, data: req.body })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -333,7 +328,7 @@ app.get('/serialnumber', isAuthenticated, async function (req, res, next) {
 
 app.get('/invoices', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.post(`${COUCH_ADMIN_URL}/invoices`, { session: req.session.data, data: req.body })
+    var result = await axios.post(`${config.COUCH_ADMIN_URL}/invoices`, { session: req.session.data, data: req.body })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -347,7 +342,7 @@ app.get('/invoices', isAuthenticated, async function (req, res, next) {
 
 app.post('/registerpayment', isAuthenticated, async function (req, res, next) {
   try {
-    var result = await axios.put(`${COUCH_ADMIN_URL}/registerpayment`, { session: req.session.data, data: req.body })
+    var result = await axios.put(`${config.COUCH_ADMIN_URL}/registerpayment`, { session: req.session.data, data: req.body })
     res.json({
       status: result.data.status,
       message: result.data.message,
@@ -358,36 +353,6 @@ app.post('/registerpayment', isAuthenticated, async function (req, res, next) {
     res.json({ status: 'error', message: 'Payment registartion error.' })
   }
 });
-
-app.post('/app/contact', async function (req, res) {
-  //Not logged - the information has to come form the homepage of the site
-  console.log(req.body);
-  try {
-    var payload = req.body
-    payload.doctype = "contact"
-    payload.timestamp = Date.now()
-    var result = await axios.post(`${COUCH_ADMIN_URL}/contact`, { session: null, data: payload })
-    res.send((result.data.status == 'ok') ? 'OK' : result.data.message)
-  } catch (error) {
-    console.log(error);
-    res.send('NOK')
-  }
-})
-
-app.post('/app/subscribe', async function (req, res) {
-  //Not logged - the information has to come form the homepage of the site
-  console.log(req.body);
-  try {
-    var payload = req.body
-    payload.doctype = "newsletter"
-    payload.timestamp = Date.now()
-    var result = await axios.post(`${COUCH_ADMIN_URL}/contact`, { session: null, data: payload })
-    res.send((result.data.status == 'ok') ? 'OK' : result.data.message)
-  } catch (error) {
-    console.log(error);
-    res.send('NOK')
-  }
-})
 
 app.post('/vies', isAuthenticated, function (req, res) {
   var requestOptions = {
@@ -408,7 +373,11 @@ app.post('/vies', isAuthenticated, function (req, res) {
 })
 
 app.get('/version', function (req, res) {
-  res.json({ application: APPLICATION, version: VERSION })
+  res.json({ application: config.APPLICATION, version: config.VERSION })
+})
+
+app.get('/pdf', function(req, res){
+	res.render('pdf', { layout: 'list'})
 })
 
 app.post('/login', async function (req, res) {
@@ -419,7 +388,7 @@ app.post('/login', async function (req, res) {
   // would be implemented here. for this example any combo works
   try {
 
-    var login_response = await axios.post(`${COUCH_ADMIN_URL}/login`, { username: req.body.username, password: req.body.password })
+    var login_response = await axios.post(`${config.COUCH_ADMIN_URL}/login`, { username: req.body.username, password: req.body.password })
     //console.log(login_response.data)
 
     if (login_response.data.status == 'ok') {
@@ -520,7 +489,7 @@ app.post('/register', async function (req, res, next) {
   console.log(req.body)
 
   try {
-    var company = await axios.post(`${COUCH_ADMIN_URL}/register`, { data: req.body })
+    var company = await axios.post(`${config.COUCH_ADMIN_URL}/register`, { data: req.body })
     console.log(company)
     res.json({
       status: company.data.status,
@@ -538,6 +507,8 @@ app.post('/register', async function (req, res, next) {
 
 //API from external file
 app.use('/api', api)
+app.use('/app', app_route)
+
 
 /*
  * Error pages
@@ -594,5 +565,5 @@ createTerminus(server, {
   onSignal
 })
 
-server.listen(PORT)
-pino.logger.info(`Express started on port ${PORT} in ENV::${NODE_ENV}`)
+server.listen(config.PORT)
+pino.logger.info(`Express started on port ${config.PORT} in ENV::${config.NODE_ENV}`)

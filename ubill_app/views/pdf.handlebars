@@ -6,27 +6,54 @@
 <script>
 
 window.app = new Vue({
-	el: '#pdf',
-	data: {
-		db: {{url.db}},
-		invoice: {{url.invoice}},
-		key: {{key}}
+		el: '#pdf',
+		data: {
+			db: '{{ data.db }}',
+			invoice: '{{ data.invoice }}',
+			key: '{{ data.key }}'
 	},
 
 	created(){
-	    //fetch the data from API and display the PDF document in a new window
-	    /*
-        let fulldata = this.invoice_data[this.company._id].find((elm) => elm.payload.INVOICE_NUMBER == item.INVOICE_NUMBER)
-        let draft = fulldata.template
-      	let tmp = Handlebars.compile(draft)
-      	let PDF_DOC = JSON.parse(tmp(fulldata.payload))
-      	pdfMake.createPdf(PDF_DOC).open();
-      	*/
-      	console.log(this.db, this.invoice, this.key)
+		//fetch the data from API and display the PDF document in a new window
+		var requestOptions = {
+			method: 'GET',
+			redirect: 'follow'
+		};
+
+		fetch(`/api/v1/pdf/${this.db}/${this.invoice}/${this.key}`, requestOptions)
+		.then(response => response.json())
+		.then(result => {
+			console.log(result)
+			let fulldata = result.dataset
+			let draft = fulldata.template
+			let tmp = Handlebars.compile(draft)
+			let PDF_DOC = JSON.parse(tmp(fulldata.payload))
+			pdfMake.createPdf(PDF_DOC).open({}, window)
+		})
+		.catch(error => {
+			console.log('error', error)
+		})
+		//console.log(this.db, this.invoice, this.key)
 
 	}
 
 })
 
+Handlebars.registerHelper("normalized_address", function(address) {
+    return new Handlebars.SafeString(address.replace(/(?:\r\n|\r|\n)/g, "\\n"));
+});
+
+Handlebars.registerHelper("toDecimals", function(...terms) {
+    let acc = 1.0
+    terms.pop()
+    for (const arg of terms){
+        acc *= Number.parseFloat(arg)
+    }
+    return acc.toFixed(2);
+});
+
+Handlebars.registerHelper("addOne", function(integer) {
+    return integer + 1;
+});
 
 </script>

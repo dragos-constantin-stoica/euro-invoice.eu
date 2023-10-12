@@ -31,10 +31,13 @@ const app_route = require('./routes/app')
 app.use(express.json()) // for parsing application/json
 app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 
+/*
 app.disable("x-powered-by")
 app.use(helmet({
 	xPoweredBy: false,
+  contentSecurityPolicy: false,
 }))
+*/
 
 app.use(session({
   store: new filestore,
@@ -60,17 +63,6 @@ function isAuthenticated(req, res, next) {
   if (req.session.user) next()
   else next('route')
 }
-
-/*
-app.get('/app', isAuthenticated, function (req, res) {
-  // this is only called when there is an authentication user due to isAuthenticated
-  res.render('application', { layout: 'main' })
-})
-
-app.get('/app', function (req, res) {
-  res.render('index', { layout: 'main' })
-})
-*/
 
 app.get('/checksession', isAuthenticated, async function (req, res) {
   if (req.session.user) {
@@ -376,9 +368,7 @@ app.get('/version', function (req, res) {
   res.json({ application: config.APPLICATION, version: config.VERSION })
 })
 
-app.get('/pdf', function(req, res){
-	res.render('pdf', { layout: 'list'})
-})
+
 
 app.post('/login', async function (req, res) {
   //We expect a JSON in body
@@ -509,6 +499,14 @@ app.post('/register', async function (req, res, next) {
 app.use('/api', api)
 app.use('/app', app_route)
 
+app.get('/app', isAuthenticated, function (req, res) {
+  // this is only called when there is an authentication user due to isAuthenticated
+  res.render('application', { layout: 'main' })
+})
+
+app.get('/app', function (req, res) {
+  res.render('index', { layout: 'main' })
+})
 
 /*
  * Error pages

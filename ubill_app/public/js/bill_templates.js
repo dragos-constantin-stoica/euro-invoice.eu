@@ -517,7 +517,7 @@ const templates = {
                             "text": [
                                 "Date limite de payement: ",
                                 { "text": "{{INVOICE_DUE_DATE}}\\n", "bold": true },
-                                "Note: commounication structuee a utiliser lors de payement:\\n\\n",
+                                "Note: communication structuee a utiliser lors de payement:\\n\\n",
                                 { "text": "{{normalized_address INVOICE_DETAILS}}", "bold":true, "alignment":"center"}
                             ],
                             "margin": [5, 5, 33, 5],

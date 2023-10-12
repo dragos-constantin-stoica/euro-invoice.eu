@@ -49,7 +49,12 @@ router.get('/v1/pdf/:db/:invoice/:hash', async function(req, res){
     if (h == hash){
     	//ok - call the backend
     	let result = await axios.post(`${config.COUCH_ADMIN_URL}/invoice`, {db: db, invoice: invoice})
-    	res.json({status:'ok', message:'The invoice', dataset: 'fake data'})
+      console.log(result)
+      if(result.data.status == 'ok') {
+        res.json({status:result.data.status, message:'The invoice', dataset: result.data.dataset})
+      }else{
+        res.json({status:'error', message: 'Invoice not found', dataset:{}})
+      }
     }else{
     	res.json({status:'error', error:'URL error.' + h})
     }

@@ -134,6 +134,9 @@ Vue.component("services", {
 
       <b-table responsive :items="services_items" :fields="services_fields" caption-top>
       <template #table-caption>Services and Products</template>
+      <template #cell(unit_price)="row">
+        {{ Number.parseFloat(row.item.unit_price).toFixed(2) }} {{row.item.currency}}
+      </template>
       <template #cell(show_details)="row">
         <b-button pill variant="warning" size="sm" @click="row.toggleDetails" class="mr-2">
           {{ row.detailsShowing ? 'Hide' : 'Show'}} Details

@@ -44,11 +44,15 @@ router.post('/subscribe', async function (req, res) {
   }
 })
 
-//Page that renders PDF file
+//Page that renders invoice in PDF format
 router.get('/pdf/:db-:invoice-:key', function(req, res){
 	res.render('pdf', { layout: 'list', data:req.params})
 })
 
+//Page that renders the invoice status in HTML format
+router.get('/status/:db-:invoice-:key', function(req, res){
+  res.render('status', { layout: 'list', data: req.params})
+})
 
  
 module.exports = router

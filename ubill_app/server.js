@@ -333,6 +333,7 @@ app.get('/invoices', isAuthenticated, async function (req, res, next) {
 })
 
 app.post('/registerpayment', isAuthenticated, async function (req, res, next) {
+  //console.log(req.body)
   try {
     var result = await axios.put(`${config.COUCH_ADMIN_URL}/registerpayment`, { session: req.session.data, data: req.body })
     res.json({

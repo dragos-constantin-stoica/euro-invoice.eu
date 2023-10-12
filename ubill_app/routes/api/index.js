@@ -28,16 +28,9 @@ https://github.com/juninhocruzg3/express-routes-versioning
 https://github.com/Amri91/route-v/tree/master
  */
 
-//Display a webpage of the summary and status of this invoice
-//the URL is encoded on the QR code on the PDF invoice
-router.get('/v1/status/:db/:invoice', async function(req, res){
-    console.log(req.params)
- 	res.send('OK')	
-})
-
-//Display the PDF version of the invoice
+//Display the PDF version of the invoice or HTML status
 //the URL is encoded on the email that is sent to the Client and Company admin
-router.get('/v1/pdf/:db/:invoice/:hash', async function(req, res){
+router.get('/v1/invoice/:db/:invoice/:hash', async function(req, res){
     console.log(req.params)
     let {db, invoice, hash} = req.params
     let key = db +  invoice

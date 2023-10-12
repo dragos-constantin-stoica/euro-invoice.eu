@@ -1,0 +1,113 @@
+<!-- Public template -->
+<div id="app">
+    <header>
+        <b-navbar variant="light" type="light">
+            <b-navbar-brand href="/">UnityBill</b-navbar-brand>
+        </b-navbar>
+    </header>
+    <main>
+        <!-- We want main content here -->
+        <div>
+        <b-card title="Payments" header-tag="header" footer-tag="footer">
+            <template #header>
+                <h6 class="mb-0">Manage invoices</h6>
+            </template>
+            <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Invoice number:</b></b-col>
+                <b-col>\{{ invoice.INVOICE_NUMBER }}</b-col>
+            </b-row>
+            <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Status:</b></b-col>
+                <b-col>\{{ invoice.STATUS.toUpperCase() }}</b-col>
+            </b-row>
+            <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Issue date:</b></b-col>
+                <b-col>\{{ invoice.INVOICE_DATE }}</b-col>
+            </b-row>
+            <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Due date:</b></b-col>
+                <b-col>\{{ invoice.INVOICE_DUE_DATE }}</b-col>
+            </b-row>
+            <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Customer:</b></b-col>
+                <b-col>\{{ invoice.CUSTOMER.name }}</b-col>
+            </b-row> 
+            <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>IBAN:</b></b-col>
+                <b-col>\{{ invoice.CUSTOMER.bank_iban }}</b-col>
+            </b-row>          
+            <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Total:</b></b-col>
+                <b-col>\{{ invoice.INVOICE_TOTAL.toFixed(2) }} \{{ invoice.EXCHANGE_RATE.from.toUpperCase()}} </b-col>
+            </b-row>  
+            <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Payment reference:</b></b-col>
+                <b-col>\{{ invoice.INVOICE_DETAILS }}</b-col>
+            </b-row> 
+            <b-row class="mb-2">
+                <b-col sm="3" class="text-sm-right"><b>Payed:</b></b-col>
+                <b-col>\{{ displayPayments() }} \{{ invoice.EXCHANGE_RATE.from.toUpperCase()}}</b-col>
+            </b-row>
+            <template #footer>
+                Have a long and prosperous life!  
+            </template>
+        </b-card>
+        </div>
+    </main>
+    <footer class="footer">
+        <!-- We want footer content here -->
+        <div class="footercontainer">
+            <span class="text-muted">&copy; <a href="https://datastema.io/">DataStema</a> 2023</span>
+        </div>
+    </footer>
+</div>
+
+<!-- Start running your app -->
+<script>
+window.app = new Vue({
+		el: '#app',
+		data: {
+			db: '{{ data.db }}',
+			inv: '{{ data.invoice }}',
+			key: '{{ data.key }}',
+            invoice: {
+                INVOICE_NUMBER:'',
+                STATUS: '',
+                INVOICE_DATE: '',
+                INVOICE_DUE_DATE: '',
+                CUSTOMER: {name:'', bank_iban:''},
+                EXCHANGE_RATE: {from:''},
+                INVOICE_DETAILS: '',
+                INVOICE_TOTAL:0.0,
+                PAYMENTS: []
+            }
+	},
+
+    methods: {
+        displayPayments(){
+            return this.invoice.PAYMENTS.reduce((acc, crtitem) => acc + crtitem.amount, 0.0).toFixed(2)
+        }
+    },
+
+	created(){
+		//fetch the data from API and display the PDF document in a new window
+		var requestOptions = {
+			method: 'GET',
+			redirect: 'follow'
+		};
+
+		fetch(`/api/v1/invoice/${this.db}/${this.inv}/${this.key}`, requestOptions)
+		.then(response => response.json())
+		.then(result => {
+			console.log(result)
+			this.invoice = result.dataset.payload
+		})
+		.catch(error => {
+			console.log('error', error)
+		})
+		//console.log(this.db, this.invoice, this.key)
+	}
+
+})
+
+</script>

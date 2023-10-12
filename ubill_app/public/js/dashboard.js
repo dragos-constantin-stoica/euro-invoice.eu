@@ -69,27 +69,31 @@ Vue.component("dashboard", {
           switch (elm.payload.STATUS) {
             case 'new':
               //Check for overdue
-              if(Date.parse(elm.payload.INVOICE_DUE_DATE) <= Date.now()){
+              if (Date.parse(elm.payload.INVOICE_DUE_DATE) <= Date.now()) {
                 var idx = data.findIndex(e => e.name == 'Overdue')
-                data[idx] = { value: data[idx].value + elm.payload.INVOICE_TOTAL, name: 'Overdue'}
-              }else{
+                data[idx] = { value: data[idx].value + elm.payload.INVOICE_TOTAL, name: 'Overdue' }
+              } else {
                 var idx = data.findIndex(e => e.name == 'New')
-                data[idx] = { value: data[idx].value + elm.payload.INVOICE_TOTAL, name: 'New'}
+                data[idx] = { value: data[idx].value + elm.payload.INVOICE_TOTAL, name: 'New' }
               }
               break;
             case 'partially_payed':
               let payed = elm.payload.PAYMENTS.reduce((acc, crtitm) => acc + crtitm.amount, 0)
               //Check for ovedue and compute the rest to be payed
-              if(Date.parse(elm.payload.INVOICE_DUE_DATE) <= Date.now()){
+              if (Date.parse(elm.payload.INVOICE_DUE_DATE) <= Date.now()) {
                 var idx = data.findIndex(e => e.name == 'Overdue')
-                data[idx] = { value: data[idx].value + elm.payload.INVOICE_TOTAL - payed, name: 'Overdue'}
+                data[idx] = { value: data[idx].value + elm.payload.INVOICE_TOTAL - payed, name: 'Overdue' }
+              } else {
+                //the rest should be added to New
+                var idx = data.findIndex(e => e.name == 'New')
+                data[idx] = { value: data[idx].value + elm.payload.INVOICE_TOTAL - payed, name: 'New' }
               }
               var idx = data.findIndex(e => e.name == 'Partially Payed')
-              data[idx] = { value: data[idx].value + payed, name: 'Partially Payed'}
+              data[idx] = { value: data[idx].value + payed, name: 'Partially Payed' }
               break;
             case 'payed':
               var idx = data.findIndex(e => e.name == 'Payed')
-              data[idx] = { value: data[idx].value + elm.payload.INVOICE_TOTAL, name: 'Payed'}
+              data[idx] = { value: data[idx].value + elm.payload.INVOICE_TOTAL, name: 'Payed' }
               break;
 
             default:
@@ -152,29 +156,29 @@ Vue.component("dashboard", {
         }
       ]
       if (this.invoice_data[this.company._id].length > 0) {
-          const crtYear = (new Date()).getFullYear()
-          this.invoice_data[this.company._id].forEach(elm => {
-            if ((new Date(Date.parse(elm.payload.INVOICE_DATE))).getFullYear() == crtYear){
-              var mth = 0
-              if(elm.payload.STATUS == 'payed'){
-                //fully payed
+        const crtYear = (new Date()).getFullYear()
+        this.invoice_data[this.company._id].forEach(elm => {
+          if ((new Date(Date.parse(elm.payload.INVOICE_DATE))).getFullYear() == crtYear) {
+            var mth = 0
+            if (elm.payload.STATUS == 'payed') {
+              //fully payed
 
-                var idx = series.findIndex(e => e.name == 'Payed'),
+              var idx = series.findIndex(e => e.name == 'Payed'),
                 payed = elm.payload.PAYMENTS.reduce((acc, crtitm) => acc + crtitm.amount, 0)
-                elm.payload.PAYMENTS.forEach(elm =>{
-                  if((new Date(Date.parse(elm.date))).getFullYear() == crtYear){
-                    mth = Math.max(mth, (new Date(Date.parse(elm.date))).getMonth())
-                  }
-                })
-                series[idx].data[mth] += payed
-              }
-              //new or partially payed or payed - it was invoiced once
-              mth = (new Date(Date.parse(elm.payload.INVOICE_DATE))).getMonth()
-              var idx = series.findIndex(e => e.name == 'Invoiced')
-              series[idx].data[mth] += elm.payload.INVOICE_TOTAL 
-              
+              elm.payload.PAYMENTS.forEach(elm => {
+                if ((new Date(Date.parse(elm.date))).getFullYear() == crtYear) {
+                  mth = Math.max(mth, (new Date(Date.parse(elm.date))).getMonth())
+                }
+              })
+              series[idx].data[mth] += payed
             }
-          })
+            //new or partially payed or payed - it was invoiced once
+            mth = (new Date(Date.parse(elm.payload.INVOICE_DATE))).getMonth()
+            var idx = series.findIndex(e => e.name == 'Invoiced')
+            series[idx].data[mth] += elm.payload.INVOICE_TOTAL
+
+          }
+        })
       }
       option_line_y2d.series = series
 
@@ -228,26 +232,27 @@ Vue.component("dashboard", {
           }
         ]
       }
-      let series = [], legend = {data: []}, title = {text: 'Payments'}
+      let series = [], legend = { data: [] }, title = { text: 'Payments' }
 
-      if (this.invoice_data[this.company._id].length > 0){
+      if (this.invoice_data[this.company._id].length > 0) {
         this.invoice_data[this.company._id].forEach(elm => {
-            if(elm.payload.STATUS == 'payed'){
-              //only fully payed invoices
-              let payed = 0, lastDate = 0
-              elm.payload.PAYMENTS.forEach(elm =>{
-                payed += elm.amount
-                lastDate = Math.max(lastDate, (new Date(Date.parse(elm.date))).getTime())
-              })
+          if (elm.payload.PAYMENTS.length > 0) {
+            //only fully payed invoices
+            let payed = 0, lastDate = 0
+            elm.payload.PAYMENTS.forEach(elm => {
+              payed += elm.amount
+              lastDate = (new Date(Date.parse(elm.date))).getTime()
               //set the value for corresponding year and month
-              const year = (new Date(lastDate)).getFullYear().toString(), month = (new Date(lastDate)).getMonth() 
+              const year = (new Date(lastDate)).getFullYear().toString(), month = (new Date(lastDate)).getMonth()
               if (legend.data.indexOf(year) == -1) {
                 legend.data.push(year)
                 series.push({ name: year, type: 'line', data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] })
               }
               const idx = series.findIndex(e => e.name == year)
               series[idx].data[month] += payed
-            }
+            })
+
+          }
         })
         //sort legend
         legend.data.sort()
@@ -259,7 +264,7 @@ Vue.component("dashboard", {
         })
 
         //create title
-        title.text = (legend.data.length > 1)? `Payments ${legend.data[0]} - ${legend.data[legend.data.length-1]}`:`Payments ${legend.data[0]}`
+        title.text = (legend.data.length > 1) ? `Payments ${legend.data[0]} - ${legend.data[legend.data.length - 1]}` : `Payments ${legend.data[0]}`
       }
 
       option_line_all.title = title

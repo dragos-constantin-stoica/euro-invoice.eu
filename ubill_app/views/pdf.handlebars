@@ -20,7 +20,7 @@ window.app = new Vue({
 			redirect: 'follow'
 		};
 
-		fetch(`/api/v1/pdf/${this.db}/${this.invoice}/${this.key}`, requestOptions)
+		fetch(`/api/v1/invoice/${this.db}/${this.invoice}/${this.key}`, requestOptions)
 		.then(response => response.json())
 		.then(result => {
 			console.log(result)

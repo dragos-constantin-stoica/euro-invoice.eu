@@ -917,9 +917,9 @@ fastify.put('/newinvoice', async function (request, reply) {
 fastify.put('/registerpayment', async function (request, reply) {
   let result = {}
   try {
-    console.log(request.body)
+    //console.log(request.body)
     let companydb = nano.use(`c${request.body.data.company_id}`)
-    let tmp = await companydb.atomic('payments', 'register', request.body.data.invoice_number, request.body.data.payment)
+    let tmp = await companydb.atomic('payments', 'register', request.body.data._id, request.body.data.payment)
     let credentials = request.body.session
     let theUser = await nano.request({ method: 'get', db: '_users', doc: `${COUCHDB_USER_NAMESPACE}:${credentials.username}` })
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]

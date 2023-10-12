@@ -50,6 +50,7 @@ Vue.component("payments", {
         this.newdata.currency=item.EXCHANGE_RATE.from
         this.newdata.amount = Number.parseFloat(this.newdata.amount)
         axios.post('/registerpayment',{
+          _id: this.invoice_data[this.company._id].find((elm) => elm.payload.INVOICE_NUMBER = item.INVOICE_NUMBER)._id,
           company_id: this.company._id,
           invoice_number: item.INVOICE_NUMBER,
           payment: this.newdata
@@ -168,11 +169,11 @@ Vue.component("payments", {
           </b-row>           
           <b-row class="mb-2">
             <b-col sm="3" class="text-sm-right"><b>Total:</b></b-col>
-            <b-col>{{ row.item.INVOICE_TOTAL.toFixed(2) }}</b-col>
+            <b-col>{{ row.item.INVOICE_TOTAL.toFixed(2) }} {{row.item.EXCHANGE_RATE.from}}</b-col>
           </b-row>  
           <b-row class="mb-2">
             <b-col sm="3" class="text-sm-right"><b>Payed:</b></b-col>
-            <b-col>{{ displayPayments(row.item) }}</b-col>
+            <b-col>{{ displayPayments(row.item) }} {{row.item.EXCHANGE_RATE.from}}</b-col>
           </b-row>
           <b-row>
           	<b-col>         

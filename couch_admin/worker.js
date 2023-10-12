@@ -11,6 +11,12 @@ const WRK_PORT = process.env.WRK_PORT || 8090,
 // CommonJS
 const fastify = require('fastify')({ logger: true })
 // require the module
+let crypto;
+try {
+  crypto = require('node:crypto')
+} catch (err) {
+  console.error('crypto support is disabled!')
+}
 var hashes = require('jshashes')
 var RMD160 = new hashes.RMD160;
 //CouchDB management part
@@ -401,6 +407,14 @@ fastify.post('/changepassword', async function (request, reply) {
       companies: chkuser.companies
     }
     let newpass = await nano.request({ method: 'put', path: `_users/${COUCHDB_USER_NAMESPACE}:${credentials.username}`, body: newuser, headers: { 'If-Match': chkuser._rev } })
+    let template = hdbs.compile(getTemplate("passwordchange"))()
+    let tmp = await sendemail({
+      to: credentials.username,
+      from: 'contact@unitybill.eu',
+      subject: 'Password changed - Unity Bill',
+      text: 'Password successfully changed',
+      html: template
+    })
     reply.send({ status: 'ok', message: 'Password successfuly changed.' })
   } catch (err) {
     console.log(`[ ${err} ]`)
@@ -844,6 +858,7 @@ fastify.post('/invoices', async function (request, reply) {
   }
 });
 
+//Get single invoice from a Company database
 fastify.post('/invoice', async function(request, reply){
 	let result = {}
 	try{
@@ -874,6 +889,7 @@ fastify.post('/serialnumber', async function (request, reply) {
   }
 });
 
+//Create new invoice
 fastify.put('/newinvoice', async function (request, reply) {
   let result = {}
 
@@ -895,8 +911,9 @@ fastify.put('/newinvoice', async function (request, reply) {
     let cc = (magic_number % 97 == 0) ? 97 : (magic_number % 97)
 
     request.body.data.payload.INVOICE_DETAILS = `+++${ddd.toString().padStart(3, '0')}/${fy.toString().padStart(4, '0')}/${next_sn.doc[request.body.data.invoice_format].toString().padStart(4, '0')}${cc.toString().padStart(2, '0')}+++`
+    let inv_uuid = nanoid(13)
     let new_invoice_doc = {
-      _id: `inv_${nanoid(13)}`,
+      _id: `inv_${inv_uuid}`,
       doctype: 'invoice',
       payload: request.body.data.payload,
       template: request.body.data.template
@@ -907,6 +924,20 @@ fastify.put('/newinvoice', async function (request, reply) {
     let company_list = [...new Set([...theUser.companies.admin, ...theUser.companies.members])]
     result.serialnumbers = await getSerialNumbers(company_list)
     await record_audit(`c${request.body.data.company_id}`, credentials.username, "Invoice created.")
+    let hmac = crypto.createHmac('rmd160',request.body.data.company_id + inv_uuid)
+    hmac.update(request.body.data.company_id + inv_uuid)
+    let hash = hmac.digest('hex')
+    let template = hdbs.compile(getTemplate("newinvoice"))({
+      url_pdf:`https://unitybill.eu/app/pdf/${request.body.data.company_id}-${inv_uuid}-${hash}`,
+      url_status: `https://unitybill.eu/app/status/${request.body.data.company_id}-${inv_uuid}-${hash}`
+    })
+    let tmp = await sendemail({
+      to: [request.body.data.payload.CUSTOMER.contact, request.body.data.payload.SUPPLIER.contact ],
+      from: 'contact@unitybill.eu',
+      subject: 'New eInvoice - Unity Bill',
+      text: 'New eInvoice',
+      html: template
+    })
     reply.send({ status: 'ok', message: `Invoice ${new_sn} created`, dataset: result })
   } catch (err) {
     console.log(err);
@@ -962,6 +993,15 @@ fastify.post('/register', async function (request, reply) {
       reply.send({ status: 'error', error: e })
     }
     //Check if the user exists and if it belongs to admin group for the corresponding database
+    let template = hdbs.compile(getTemplate("registercompany"))()
+    let tmp = await sendemail({
+      to: company_admin.name,
+      from: 'contact@unitybill.eu',
+      subject: 'Company successfully registered - Unity Bill',
+      text: 'Company successfully registered',
+      html: template
+    })
+
     reply.send({ status: 'ok', message: 'All good!', dataset: null })
   } catch (err) {
     console.log(err)
@@ -1039,7 +1079,7 @@ fastify.post('/contact', async function (request, reply) {
 		  {
     		to: payload.email,
     		from: 'contact@unitybill.eu', 
-    		subject: 'Contact confirmation',
+    		subject: 'Contact confirmation - Unity Bill',
     		text: 'We received your message and will be back to you soon! Thank you!',
     		html: template
   		}
@@ -1051,14 +1091,14 @@ fastify.post('/contact', async function (request, reply) {
   			{
   				to: payload.email,
   				from: 'contact@unitybill.eu',
-  				subject: 'Newsletter subscription',
+  				subject: 'Newsletter subscription - Unity Bill',
   				text: 'You subscribed to our newsletter! Enjoy!',
   				html: template
   			}
   		)
   	}
-  	let template = hdbs.compile(getTemplate("contact"))()
-  	await sendemail({to:'contact@unitybill.eu', from:'contact@unitybill.eu', subject: 'Message from homepage', text: JSON.stringify(payload), html: template})
+  	let template = hdbs.compile(getTemplate("homepage"))({payload: payload})
+  	await sendemail({to:'contact@unitybill.eu', from:'contact@unitybill.eu', subject: 'Message from homepage - Unity Bill', text: JSON.stringify(payload), html: template})
     reply.send({ status: 'ok', message: 'Message saved successfully.', dataset: result })
   } catch (err) {
     console.log(err);

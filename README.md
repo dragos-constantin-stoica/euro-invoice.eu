@@ -1,6 +1,6 @@
-# DSB 000 002 - unitybill.eu
+# euro-invoice.eu
 Invoicing platform for EU companies.  
-DSB 000 002 - CouchDB based data solution blueprint.
+This platform is a web application designer for freelancers and small businesses across Europe in order to facilitate the invoicing process.
 
 
 # Install
@@ -8,15 +8,15 @@ DSB 000 002 - CouchDB based data solution blueprint.
 ## Initial Setup
 0. Clone the repository to your local computer
     ```
-    git clone git@github.com:DataStema/unitybill.eu.git
+    git clone git@github.com:dragos-constantin-stoica/euro-invoice.eu.git
     ```
 1. Open a terminal and go to the folder that you cloned your application from the above step.
 2. Create a `.env` file in the root of the folder. Here is an example of `.env` file:
     ```
     #Project global variables
-    COMPOSE_PROJECT_NAME=dsb000002
-    CERT_EMAIL=contact@unitybill.eu
-    CERT_DOMAIN=unitybill.eu
+    COMPOSE_PROJECT_NAME=euro-invoice
+    CERT_EMAIL=contact@euro-invoice.eu
+    CERT_DOMAIN=euro-invoice.eu
 
     #Couchdb setup
     COUCHDB_USER=superuser
@@ -35,24 +35,18 @@ DSB 000 002 - CouchDB based data solution blueprint.
     ./dsb.sh setup
     ```  
 4. Initial setup for SSL certificates. See full details here: [Initial one time setup](#initial-one-time-setup). This is one time setup and needs the machine that you are using to have ports **80** and **443** open for Internet. Once this procedure is done, you do not have to performit again.  
-Rename file `nginx/conf/nginx_setup` to `nginx/conf/nginx.conf`. Launch the application, setup SSL, stop the appication, and undo the file renaming and the final touch - rename  `nginx/conf/nginx_ssl` to `nginx/conf/nginx.conf` and your application with SSL setup is ready to go.
+Run the command and your application with SSL setup is ready to go.
     ```
-    cp nginx/conf/nginx_setup nginx/conf/nginx.conf
-
-    ./dsb.sh run
-    ./dsb.sh ssl
-    ./dsb.sh stop
-
-    cp nginx/conf/nginx_ssl nginx/conf/nginx.conf
+    ./dsb.sh setup ssl
     ```
-5. Launch **DSB 000 002**. This should start: **CouchDB**, **Couch Admin**, **UnityBill App** containers. **Couch Admin** and **UnityBill App** are not public images and are not available on *Docker HUB*, they are build and available only on the local machine. The application is avaliable at `http://localhost:8080/app`.
+5. Launch **Euro Invoice**. This should start: **CouchDB**, **Couch Admin**, **UnityBill App** containers. **Couch Admin** and **UnityBill App** are not public images and are not available on *Docker HUB*, they are build and available only on the local machine. The application is avaliable at `http://localhost:8080/app`.
     ```
     ./dsb.sh run
     ```
 
 ## Runing Operations
 
-- Stopping the **DSB 000 002**:
+- Stopping the **Euro Invoice**:
     ```
     ./dsb.sh stop
     ```

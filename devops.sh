@@ -2,18 +2,16 @@
 
 #----------------------------------------------------------------------------
 # This is setup, deploy and run script for
-# Data Solution Blueprint (c) serial number 000002
+# Euro Invoice Platform
 # Compnents:
 # - CouchDB
-# - Nginx
-# - CertBot
 # - APP - CouchDB management
-# - APP - Unitiy Bill
+# - APP - Euro Invoice
 #
 # @company: DataStema Sarl
 # @date: 01.02.2023
 # @version: 3.1.4
-# @author: dragos.stoica@datastema.io
+# @author: dragos.constantin.stoica@outlook.com
 #----------------------------------------------------------------------------
 
 # Local variables shared with docker compose and each container
@@ -26,10 +24,8 @@ source emoji_color.sh
 usage(){
     local __usage="Usage:
     -~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
-    $0 setup [ssl | null]
-        setup each container with ssl or without ssl (for dev environment)
-    $0 ssl
-        setup SSL certificates from Lets Encrypt via Cerbot
+    $0 setup
+        setup each container
     $0 redeploy [service_name]
         stop and restart with rebuild the service
     $0 run
@@ -144,39 +140,7 @@ EOF
     sleep 10
     docker compose down
 
-    if [[ ! -z "$1" ]]; then
-    	case $1 in
-    		"ssl") 
-    		    echocolor "Setup SSL" "On_IYellow" "Danger"
-    			cp nginx/conf/nginx_setup nginx/conf/nginx.conf
-			    docker compose up -d
-			    sleep 60
-			    certbotssl
-			    sleep 60
-			    docker compose down
-			    cp nginx/conf/nginx_ssl nginx/conf/nginx.conf
-			    echocolor "SSL setup done!" "On_IYellow" "Robot";;
-
-    		*) echo "Unknown paramenter $1"
-    		   usage;;
-    	esac
-    fi
-
     echocolor "DONE >>> Setup stage" "BYellow" "Robot"
-}
-
-# certbot ssl management
-certbotssl(){
-    echocolor "Setup SSL certificates from Lets Encrypt using Certbot" "BYellow" "Locked"
-    local FOLDERS=( "./certbot" "./certbot/www" "./certbot/conf")
-    for i in "${FOLDERS[@]}"
-    do
-	if [ ! -d "$i" ]; then
-        mkdir -m 0777 -p $i
-    fi
-    done
-    docker compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ --force-renewal --email ${CERT_EMAIL} -d ${CERT_DOMAIN} --agree-tos --non-interactive
-    echocolor "DONE >>> SSL certificates" "BYellow" "Locked"
 }
 
 # redeploy function
@@ -196,7 +160,7 @@ cleanup(){
         case $yn in
             Yes )
                 #delete CouchDB and Lets Encrypt folders
-                local FOLDERS=("./dbcouch" "./certbot")
+                local FOLDERS=("./dbcouch")
                 for i in "${FOLDERS[@]}"
                 do
                     if [ -d "$i" ]; then
@@ -277,7 +241,6 @@ fi
 
 case $1 in
     "setup")    setup $2;;
-    "ssl")      certbotssl ;;
     "cleanup")  cleanup ;;
     "redeploy") redeploy $2;;
     "run")      run ;;

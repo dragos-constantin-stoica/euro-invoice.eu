@@ -29,7 +29,7 @@ var http = require("http");
 var options = {
   host: "localhost",
   path: "/healthcheck",
-  port: "3000",
+  port: process.env.APP_PORT || 9091,
   timeout: 2000,
 };
 

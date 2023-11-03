@@ -8,7 +8,7 @@
 # - APP - CouchDB management
 # - APP - Euro Invoice
 #
-# @company: DataStema Sarl
+# @company: Free Time Software
 # @date: 01.02.2023
 # @version: 3.1.4
 # @author: dragos.constantin.stoica@outlook.com
@@ -29,7 +29,7 @@ usage(){
     $0 redeploy [service_name]
         stop and restart with rebuild the service
     $0 run
-        main execution loops, launch Data Solution Blueprint
+        main execution loop
     $0 dev
         local development execution, no Internet access, no SSL
     $0 stop
@@ -48,7 +48,6 @@ where [service_name] is:
 `docker compose config --services`
 "
     echo -e "$__usage"
-	return
 }
 
 # setup function
@@ -94,7 +93,7 @@ EOF
     setting cors  credentials "true"
     setting cors  headers     "accept, authorization, content-type, origin, referer"
     setting cors  methods     "GET, PUT, POST, HEAD, DELETE"
-    setting cors  origins     "http://localhost:3000,http://localhost:8080,http://localhost:$WRK_PORT"
+    setting cors  origins     "http://localhost:3000,http://localhost:8080,http://localhost:$WRK_PORT,http://localhost:$APP_PORT"
     setting chttpd enable_cors "true"
     setting chttpd require_valid_user "true"
     setting chttpd require_valid_user_except_for_up "true"
@@ -185,8 +184,8 @@ run(){
     echo "CouchDB has successfuly started on http://couch.localhost:5984/_utils"
     echo "        user: $COUCHDB_USER | password: $COUCHDB_PASSWORD"
     echo "Couch Admin Worker have successfully started on http://localhost:$WRK_PORT"
-    echo "UnityBill has successfully started on http://localhost:8080"
-    echo "Application available at https://$CERT_DOMAIN"
+    echo "Euro Invoice has successfully started on http://localhost:8080"
+    echo "Application available at https://localhost:$APP_PORT"
     echo -e "\n\n"
     echocolor "DONE >>> Run stage" "BIGreen" "Whale"
 }
@@ -194,12 +193,12 @@ run(){
 # dev function
 dev(){
     echocolor "DEV stage" "Blue" "Gear"
-    docker compose up -d unitybillapp
+    docker compose up -d euinvoiceapp
 
     echo "CouchDB has successfuly started on http://couch.localhost:5984/_utils"
     echo "        user: $COUCHDB_USER | password: $COUCHDB_PASSWORD"
     echo "Couch Admin Worker have successfully started on http://localhost:$WRK_PORT"
-    echo "UnityBill has successfully started on http://localhost:8080"
+    echo "Euro Invoice has successfully started on http://localhost:8080"
 
     echo -e "\n\n"
     echocolor "DONE >>> DEV" "Blue" "Alien"

@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  nodeapp:
+  couch_admin:
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,10 +8,8 @@ services:
       secrets:
         - npmrc
       tags:
-        - 'datastemalux/couch_admin:1.0.0'
-    image: 'datastemalux/couch_admin:1.0.0'
-    ports:
-      - 8090:8090
+        - 'drgosstoica/couch_admin:1.0.0'
+    image: 'dragosstoica/couch_admin:1.0.0'
     healthcheck:
       test: ["CMD", "node", "hck.js"]
       interval: 1m30s
@@ -22,4 +20,4 @@ services:
 
 secrets:
   npmrc:
-    file: ./.npmrc
+    file: ./secrets.app

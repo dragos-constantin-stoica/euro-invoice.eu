@@ -1,8 +1,8 @@
 {
-  "name": "node_couchcdb",
-  "version": "0.1.0",
+  "name": "couch_admin",
+  "version": "0.9.0",
   "private": false,
-  "description": "Back end for Unity Bill",
+  "description": "Backend for Euro Invoice",
   "main": "worker.js",
   "scripts": {
     "start": "nodemon worker.js"

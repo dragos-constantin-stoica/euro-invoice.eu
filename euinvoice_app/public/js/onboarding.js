@@ -452,7 +452,7 @@ Vue.component("onboardingHeader", {
 	},
 	template: `
 	<b-navbar toggleable="lg" type="light" variant="light">
-		<b-navbar-brand href="/">UnityBill</b-navbar-brand>
+		<b-navbar-brand href="/">Euro Invoice</b-navbar-brand>
 		<b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 		<b-collapse id="nav-collapse" is-nav>
 
@@ -481,7 +481,7 @@ Vue.component("onboardingFooter", {
 	},
 	template: `
 	<div class="footercontainer">
-        <span class="text-muted">&copy; <a href="https://datastema.io/">DataStema</a> 2023</span>
+        <span class="text-muted">&copy; <a href="https://euro-invoice.eu/">Euro Invoice</a> 2023</span>
     </div>
 	`
 });

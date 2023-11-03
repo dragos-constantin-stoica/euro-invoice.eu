@@ -15,15 +15,13 @@ This platform is a web application designer for freelancers and small businesses
     ```
     #Project global variables
     COMPOSE_PROJECT_NAME=euro-invoice
-    CERT_EMAIL=contact@euro-invoice.eu
-    CERT_DOMAIN=euro-invoice.eu
 
     #Couchdb setup
     COUCHDB_USER=superuser
     COUCHDB_PASSWORD=SuperUserPassword
 
     #Application setup
-    APP_USER=unitybill_apptu
+    APP_USER=euinvoice_apptu
     APP_PASSWORD=VeryStrongPassword
 
     #Couch Admin
@@ -34,12 +32,7 @@ This platform is a web application designer for freelancers and small businesses
     ```
     ./dsb.sh setup
     ```  
-4. Initial setup for SSL certificates. See full details here: [Initial one time setup](#initial-one-time-setup). This is one time setup and needs the machine that you are using to have ports **80** and **443** open for Internet. Once this procedure is done, you do not have to performit again.  
-Run the command and your application with SSL setup is ready to go.
-    ```
-    ./dsb.sh setup ssl
-    ```
-5. Launch **Euro Invoice**. This should start: **CouchDB**, **Couch Admin**, **UnityBill App** containers. **Couch Admin** and **UnityBill App** are not public images and are not available on *Docker HUB*, they are build and available only on the local machine. The application is avaliable at `http://localhost:8080/app`.
+4. Launch **Euro Invoice**. This should start: **CouchDB**, **Couch Admin**, **Euro Invoice App** containers. **Couch Admin** and **Euro Invoice App** are not public images and are not available on *Docker HUB*, they are build and available only on the local machine. The application is avaliable at `http://localhost:8080/app`.
     ```
     ./dsb.sh run
     ```
@@ -56,19 +49,15 @@ Run the command and your application with SSL setup is ready to go.
     ```
 - Building the image for a specifi service:
     ```
-    ./dsb.sh build [couch_admin | unitybillapp]
+    ./dsb.sh build [couch_admin | euinvoiceapp]
     ```
 - For development you can build and redeploy on local machine:
     ```
-    ./dsb.sh redeploy [couch_admin | unitybillapp]
+    ./dsb.sh redeploy [couch_admin | euinvoiceapp]
     ```
-- Development on local machine. no need to setup SSL and start Nginx
+- Development on local machine:
     ```
     ./dsb.sh dev
-    ```
-- Renew SSL certificates
-    ```
-    ./dsb.sh ssl
     ```
 - If you want to delete the data and cleanup local folders.  
  **ATTENTION: this operation will delete all your data and is irreversible. Do this on your own risk. You are fully responsible for the safety of your local data.**
@@ -81,30 +70,8 @@ Run the command and your application with SSL setup is ready to go.
 ## Initial one time setup
 Configure in the DNS registry the correct hostname to IP address association. This should be available on line on Goddady or NoIP platform. You get the IP from the public IP exposed by the Cloud provider. It is better to have a fixed public IP for PROD. Open ports **80** and **443** to the Internet. This is done in the firewall of the Cloud provider. We will use Let's Encrypt with Certbot in order to generate the SSL certificates.
 
-1. **Configure Nginx for inital setup**  
+1. **Use Nginx helper for inital setup**  
     First time when we have to obtain the SSL certificates we need a minimal configuration for our Nginx server. This configuration is in `nginx/conf/nginx_setup`. The Nginx server loads the file `nginx.conf` at start, so we need to do the following file name swaping:
-    ```
-    cp nginx/conf/nginx_setup nginx/conf/nginx.conf
-    ```
-    This will load the simplest webserver setup that is need to obtain the SSL certificate.
-
-2. **Obtain the SSL certificate**  
-    Run the setup commands that will allow the initial SSL certificate setup. We need to start the Nginx server, run the Certbot container, once, and then stop the Nginx server.
-    ```
-    ./dsb.sh run
-    ./dsb.sh ssl
-    ./dsb.sh stop
-    ```
-    Aftre successfull SSL certifcate configuration we can proceed to setup Nginx server with final configuration.
-
-3. **Configure Nginx for SSL use**  
-    This is the Business as Usual mode and should stay as such until the end of operations. The SSL certificates are in place and now we can revert the Nginx configuration to the usual configuration.
-    ```
-    cp nginx/conf/nginx_ssl nginx/conf/nginx.conf
-
-    ./dsb.sh run
-    ```
-    The application shoud be available via Internet at the address `https://unitybill.eu`
 
 ## SSL certificate renewal
 This procedure is identical with step 2 from Inital setup. While the application is running - we need Nginx server to be running, launch SSL setup.

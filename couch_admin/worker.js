@@ -271,7 +271,7 @@ async function createCompanyWithAdmin(newCompany, admin) {
 
 async function sendemail(message) {
   //Force the sender email
-  message.from = 'contact@unitybill.eu'
+  message.from = 'contact@euro-invoice.eu'
   /*
   {
     to: to,
@@ -373,12 +373,12 @@ fastify.post('/login', async function (request, reply) {
         }
       });
       if (check.company && check.service_product && check.client && check.contract) {
-        reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
+        reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Euro Invoice! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
       } else {
-        reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Please onboard your company!', action: 'showLayout', args: { currentHeader: 'onboardingHeader', mainComponent: 'onboarding', currentFooter: 'onboardingFooter' } })
+        reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Euro Invoice! Please onboard your company!', action: 'showLayout', args: { currentHeader: 'onboardingHeader', mainComponent: 'onboarding', currentFooter: 'onboardingFooter' } })
       }
     } else {
-      reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Unity Bill! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
+      reply.send({ status: 'ok', roles: chkuser, message: 'Welcome to Euro Invoice! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
     }
   } catch (e) {
     console.log(`[ ${e} ]`)
@@ -410,8 +410,8 @@ fastify.post('/changepassword', async function (request, reply) {
     let template = hdbs.compile(getTemplate("passwordchange"))()
     let tmp = await sendemail({
       to: credentials.username,
-      from: 'contact@unitybill.eu',
-      subject: 'Password changed - Unity Bill',
+      from: 'contact@euro-invoice.eu',
+      subject: 'Password changed - Euro Invoice',
       text: 'Password successfully changed',
       html: template
     })
@@ -686,7 +686,7 @@ fastify.put('/onboarding', async function (request, reply) {
     result = await upsertOnboarding(request.body.data)
     //console.log(result)
     await record_audit(`c${request.body.data.company._id}`, credentials, "Company update, Product / Service created, Client created, Contract created. Onboard operation.")
-    reply.send({ status: 'ok', message: 'Welcome to Unity Bill! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
+    reply.send({ status: 'ok', message: 'Welcome to Euro Invoice! Sky is the limit!', action: 'showLayout', args: { currentHeader: 'privateHeader', mainComponent: 'dashboard', currentFooter: 'privateFooter' } })
   } catch (err) {
     console.log(err)
     reply.send({ status: 'error', error: 'Onboarding setup error.' })
@@ -928,13 +928,13 @@ fastify.put('/newinvoice', async function (request, reply) {
     hmac.update(request.body.data.company_id + inv_uuid)
     let hash = hmac.digest('hex')
     let template = hdbs.compile(getTemplate("newinvoice"))({
-      url_pdf:`https://unitybill.eu/app/pdf/${request.body.data.company_id}-${inv_uuid}-${hash}`,
-      url_status: `https://unitybill.eu/app/status/${request.body.data.company_id}-${inv_uuid}-${hash}`
+      url_pdf:`https://euro-invoice.eu/app/pdf/${request.body.data.company_id}-${inv_uuid}-${hash}`,
+      url_status: `https://euro-invoice.eu/app/status/${request.body.data.company_id}-${inv_uuid}-${hash}`
     })
     let tmp = await sendemail({
       to: [request.body.data.payload.CUSTOMER.contact, request.body.data.payload.SUPPLIER.contact ],
-      from: 'contact@unitybill.eu',
-      subject: 'New eInvoice - Unity Bill',
+      from: 'contact@euro-invoice.eu',
+      subject: 'New eInvoice - Euro Invoice',
       text: 'New eInvoice',
       html: template
     })
@@ -996,8 +996,8 @@ fastify.post('/register', async function (request, reply) {
     let template = hdbs.compile(getTemplate("registercompany"))()
     let tmp = await sendemail({
       to: company_admin.name,
-      from: 'contact@unitybill.eu',
-      subject: 'Company successfully registered - Unity Bill',
+      from: 'contact@euro-invoice.eu',
+      subject: 'Company successfully registered - Euro Invoice',
       text: 'Company successfully registered',
       html: template
     })
@@ -1014,8 +1014,8 @@ fastify.get('/testemail', async function(request, reply){
   try {
     let template = hdbs.compile(getTemplate("contact"))()
     let tmp = await sendemail({
-      to: 'contact@unitybill.eu',
-      from: 'contact@unitybill.eu',
+      to: 'contact@euro-invoice.eu',
+      from: 'contact@euro-invoice.eu',
       subject: 'test contact',
       text: 'contact',
       html: template
@@ -1023,8 +1023,8 @@ fastify.get('/testemail', async function(request, reply){
     result.push(tmp)
     template = hdbs.compile(getTemplate("newsletter"))()
     tmp = await sendemail({
-      to: 'contact@unitybill.eu',
-      from: 'contact@unitybill.eu',
+      to: 'contact@euro-invoice.eu',
+      from: 'contact@euro-invoice.eu',
       subject: 'test newsletter',
       text: 'neswsletter',
       html: template
@@ -1032,8 +1032,8 @@ fastify.get('/testemail', async function(request, reply){
     result.push(tmp)
     template = hdbs.compile(getTemplate("newinvoice"))()
     tmp = await sendemail({
-      to: 'contact@unitybill.eu',
-      from: 'contact@unitybill.eu',
+      to: 'contact@euro-invoice.eu',
+      from: 'contact@euro-invoice.eu',
       subject: 'test new invoice',
       text: 'new invoice',
       html: template
@@ -1041,8 +1041,8 @@ fastify.get('/testemail', async function(request, reply){
     result.push(tmp)
     template = hdbs.compile(getTemplate("registercompany"))()
     tmp = await sendemail({
-      to: 'contact@unitybill.eu',
-      from: 'contact@unitybill.eu',
+      to: 'contact@euro-invoice.eu',
+      from: 'contact@euro-invoice.eu',
       subject: 'test register company',
       text: 'register company',
       html: template
@@ -1050,8 +1050,8 @@ fastify.get('/testemail', async function(request, reply){
     result.push(tmp)
     template = hdbs.compile(getTemplate("passwordchange"))()
     tmp = await sendemail({
-      to: 'contact@unitybill.eu',
-      from: 'contact@unitybill.eu',
+      to: 'contact@euro-invoice.eu',
+      from: 'contact@euro-invoice.eu',
       subject: 'test password change',
       text: 'password change',
       html: template
@@ -1071,15 +1071,15 @@ fastify.post('/contact', async function (request, reply) {
   try {
     let contactdb = nano.use('contact')
     result = await contactdb.insert(request.body.data)
-    //TODO send email too, two messages - one to contact@unitybill.eu and to the client
+    //TODO send email too, two messages - one to contact@euro-invoice.eu and to the client
     let payload = request.body.data
     if (payload.doctype == 'contact'){
 	let template = hdbs.compile(getTemplate("contact"))()
 	await sendemail(
 		  {
     		to: payload.email,
-    		from: 'contact@unitybill.eu', 
-    		subject: 'Contact confirmation - Unity Bill',
+    		from: 'contact@eur-invoice.eu', 
+    		subject: 'Contact confirmation - Euro Invoice',
     		text: 'We received your message and will be back to you soon! Thank you!',
     		html: template
   		}
@@ -1090,15 +1090,15 @@ fastify.post('/contact', async function (request, reply) {
   		await sendemail(
   			{
   				to: payload.email,
-  				from: 'contact@unitybill.eu',
-  				subject: 'Newsletter subscription - Unity Bill',
+  				from: 'contact@euro-invoice.eu',
+  				subject: 'Newsletter subscription - Euro Invoice',
   				text: 'You subscribed to our newsletter! Enjoy!',
   				html: template
   			}
   		)
   	}
   	let template = hdbs.compile(getTemplate("homepage"))({payload: payload})
-  	await sendemail({to:'contact@unitybill.eu', from:'contact@unitybill.eu', subject: 'Message from homepage - Unity Bill', text: JSON.stringify(payload), html: template})
+  	await sendemail({to:'contact@euro-invoice.eu', from:'contact@euro-invoice.eu', subject: 'Message from homepage - Euro Invoice', text: JSON.stringify(payload), html: template})
     reply.send({ status: 'ok', message: 'Message saved successfully.', dataset: result })
   } catch (err) {
     console.log(err);

@@ -1,8 +1,8 @@
 {
-  "name": "unitybill",
+  "name": "euroinvoice",
   "version": "1.0.0",
   "private": false,
-  "description": "Unitbill server",
+  "description": "Euro Invoice server",
   "main": "server.js",
   "scripts": {
     "start": "nodemon ./server.js"

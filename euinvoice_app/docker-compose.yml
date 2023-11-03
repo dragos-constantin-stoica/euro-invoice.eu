@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  nodeapp:
+  euinvoiceapp:
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,10 +8,10 @@ services:
       secrets:
         - npmrc
       tags:
-        - 'datastemalux/unitybill:1.0.0'
-    image: 'datastemalux/unitybill:1.0.0'
+        - 'dragosstoica/euinvoice:1.0.0'
+    image: 'dragosstoica/euinvoice:1.0.0'
     ports:
-      - 8080:3000
+      - ${APP_PORT}:${APP_PORT}
     healthcheck:
       test: ["CMD", "node", "hck.js"]
       interval: 20s
@@ -22,4 +22,4 @@ services:
 
 secrets:
   npmrc:
-    file: ./.npmrc
+    file: ./secrets.app

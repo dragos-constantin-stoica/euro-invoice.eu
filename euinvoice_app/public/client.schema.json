@@ -1,8 +1,8 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://unitybill.eu/company.schema.json",
+    "$id": "https://euro-invoice.eu/company.schema.json",
     "title": "Client",
-    "description": "Client data model for UnityBill",
+    "description": "Client data model for Euro Invoice",
     "type": "object",
     "properties": {
         "name" :{

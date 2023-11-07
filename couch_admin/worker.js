@@ -5,7 +5,10 @@ const WRK_PORT = process.env.WRK_PORT || 8090,
   COUCHDB_PASSWORD = process.env.COUCHDB_PASSWORD,
   APP_USER = process.env.APP_USER,
   APP_PASSWORD = process.env.APP_PASSWORD,
-  SG_API_KEY = process.env.SENDGRID_API_KEY || 'SendGrid API KEY',
+  EMAIL_USER = process.env.WRK_EMAIL_USER || 'contact@euro-invoice.eu',
+  EMAIL_PASSWORD = process.env.WRK_EMAIL_PASSWORD,
+  EMAIL_SERVER = process.env.WRK_EMAIL_SERVER,
+  EMAIL_PORT = process.env.WRK_EMAIL_PORT,
   COUCHDB_USER_NAMESPACE = 'org.couchdb.user';
 
 // CommonJS
@@ -27,9 +30,8 @@ const nano = require('nano')({
 //NanoID
 const { nanoid } = require('nanoid')
 //nanoid(13) - add prefix to CouchDB docID
-//SendGrid
-const sgMail = require('@sendgrid/mail')
-sgMail.setApiKey(SG_API_KEY)
+//email client
+const nodemailer = require('nodemailer')
 //Handlebars - used for HTML email dynamic templates
 const hdbs = require("handlebars")
 const fs = require("fs")
@@ -271,7 +273,7 @@ async function createCompanyWithAdmin(newCompany, admin) {
 
 async function sendemail(message) {
   //Force the sender email
-  message.from = 'contact@euro-invoice.eu'
+  message.from = EMAIL_USER
   /*
   {
     to: to,
@@ -279,12 +281,50 @@ async function sendemail(message) {
     subject: subject,
     text: text,
     html: html,
+    attachments:[] //embedded images
   }
   */
 
+// Create a SMTP transporter object
+let transporter = nodemailer.createTransport(
+  {
+      host: EMAIL_SERVER,
+      port: EMAIL_PORT,
+      secure: true, // use TLS
+      auth: {
+          user: EMAIL_USER,
+          pass: EMAIL_PASSWORD
+      },
+      logger: false,
+      debug: false // include SMTP traffic in the logs
+  },
+  {
+      // default message fields
+
+      // sender info
+      from: `<${EMAIL_USER}>`
+  }
+);
+
+// verify connection configuration
+transporter.verify(function (error, success) {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log("Server is ready to take our messages");
+  }
+});
+
   try {
-    let result = await sgMail.send(message)
+    message.attachments = message.attachments || []
+    message.attachments.push({
+      filename: 'logo.png',
+      path: __dirname + '/logo.png',
+      cid: 'logo@euro-invoice.eu'
+    })
+    let result = await transporter.sendMail(message)
     console.log(result)
+    console.log(result.messageId, result.response)
     return result
   } catch (error) {
     console.log(error);

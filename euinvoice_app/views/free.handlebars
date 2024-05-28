@@ -1,0 +1,37 @@
+<!-- Public template -->
+<div id="app_free">
+    <header>
+        <component v-bind:is="currentHeader"></component>
+    </header>
+    <main>
+        <!-- We want main content here -->
+        <component v-bind:is="mainComponent"></component>
+    </main>
+    <footer class="footer">
+        <!-- We want footer content here -->
+        <component v-bind:is="currentFooter"></component>
+    </footer>
+</div>
+
+<!-- Start running your app -->
+<script>
+    window.app = new Vue({
+	i18n,
+	el: '#app_free',
+	data: {
+		currentHeader: 'publicHeader',
+		currentFooter: 'publicFooter',
+		mainComponent: 'timesheet',
+		locales: ['gb', 'fr', 'ro'],
+	},
+
+	methods: {
+		showLayout(layout = { currentHeader: 'publicHeader', mainComponent: 'timesheet', currentFooter: 'publicFooter' }) {
+			this.mainComponent = layout.mainComponent
+			this.currentHeader = layout.currentHeader
+			this.currentFooter = layout.currentFooter
+		},
+	}
+
+})
+</script>

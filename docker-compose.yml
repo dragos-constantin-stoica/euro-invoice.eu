@@ -1,4 +1,3 @@
-version: '3'
 name: euro-invoice
 
 services:
@@ -92,6 +91,7 @@ services:
 networks:
   eu_invoice:
     driver: bridge
+    name: eu_invoice
   nginx-proxy:
     external: true
 

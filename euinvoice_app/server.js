@@ -509,6 +509,10 @@ app.get('/app', function (req, res) {
   res.render('index', { layout: 'main' })
 })
 
+app.get('/freetimesheet', function(req, res){
+  res.render('free', {layout: 'timesheet'})
+})
+
 /*
  * Error pages
  * 404, 50x

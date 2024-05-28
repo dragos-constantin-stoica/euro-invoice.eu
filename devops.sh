@@ -26,6 +26,8 @@ usage(){
     -~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
     $0 setup
         setup each container
+    $0 network
+        setup docker networks
     $0 redeploy [service_name]
         stop and restart with rebuild the service
     $0 run
@@ -48,6 +50,12 @@ where [service_name] is:
 `docker compose config --services`
 "
     echo -e "$__usage"
+}
+
+# setup docker external networks
+network_setup(){
+    docker network create -d bridge nginx-proxy
+    #docker network create -d bridge eu_invoice
 }
 
 # setup function
@@ -240,6 +248,7 @@ fi
 
 case $1 in
     "setup")    setup $2;;
+    "network")  network_setup;;
     "cleanup")  cleanup ;;
     "redeploy") redeploy $2;;
     "run")      run ;;

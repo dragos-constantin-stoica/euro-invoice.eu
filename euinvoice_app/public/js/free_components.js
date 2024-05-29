@@ -7,8 +7,15 @@ Vue.component("timesheet", {
             shark: '',
             client: '',
             client_contact: '',
-            fields: ["label", "hours", "type", "show_details"],
+            fields: [{key:"label", label:"Date"}, "hours", "type", "comments", "show_details"],
             calendar: [],
+            type_opt:[
+                {value:'Work', text:'Work day'},
+                {value:'Holiday', text:'Holyday'},
+                {value:'Sick', text:'Sick leave'},
+                {value: 'Weekend', text: 'Weekend'}
+
+            ],
             show: true
         }
     },
@@ -35,7 +42,8 @@ Vue.component("timesheet", {
                     date: tmp.toISOString(),
                     label: label_tmp,
                     hours: (label_tmp.indexOf("Sat") != -1 || label_tmp.indexOf("Sun") != -1) ? 0 : 8,
-                    type: (label_tmp.indexOf("Sat") != -1 || label_tmp.indexOf("Sun") != -1) ? 'Weekend' : 'Work day'
+                    type: (label_tmp.indexOf("Sat") != -1 || label_tmp.indexOf("Sun") != -1) ? 'Weekend' : 'Work',
+                    comments: ''
                 })
             }
         },
@@ -45,27 +53,105 @@ Vue.component("timesheet", {
             if (item.label.indexOf("Sat") != -1 || item.label.indexOf("Sun") != -1) return 'table-success'
         },
 
-        exportToExcel() {
-            /* generate worksheet and workbook */
-            const worksheet = XLSX.utils.json_to_sheet(this.calendar);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Month");
-            /* fix headers */
-            XLSX.utils.sheet_add_aoa(worksheet, [["Name", "Birthday"]], { origin: "A1" });
+        updateCalendar(item){
+            //console.log(item);
 
-            let row = [
-                { v: "Courier: 24", t: "s", s: { font: { name: "Courier", sz: 24 } } },
-                { v: "bold & color", t: "s", s: { font: { bold: true, color: { rgb: "FF0000" } } } },
-                { v: "fill: color", t: "s", s: { fill: { fgColor: { rgb: "E9E9E9" } } } },
-                { v: "line\nbreak", t: "s", s: { alignment: { wrapText: true } } },
+
+        },
+
+        exportToExcel() {
+            const BORDER_ALL = {border: {top:{style:'thin'}, right:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}}} 
+            let main_header = [
+                { v: "Month", t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" }} }},
+                { v: "Employee", t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" } } } },
+                { v: "Intermediary", t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" } } } },
+                { v: "Client", t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" } } } },
+                { v: "Contact", t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" } } } }
+            ],
+            calendar_header = [
+                { v: "Date", t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" }} }},
+                { v: "Worked hours", t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" } } } },
+                { v: "Holidays", t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" } } } },
+                { v: "Sick leave", t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" } } } },
+                { v: "Comments", t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" } } } }
             ];
-            
-            // STEP 3: Create worksheet with rows; Add worksheet to workbook
-            XLSX.utils.sheet_add_aoa(worksheet, [row]);
+            /* generate worksheet and workbook */
+            const worksheet = XLSX.utils.aoa_to_sheet([main_header]);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, `Month - ${this.mm_yyyy}`);
+            /* header information */
+            let row = [
+                { v: this.mm_yyyy, t: "s", s: { ...BORDER_ALL }},
+                { v: this.consultant, t: "s", s: { ...BORDER_ALL }},
+                { v: this.shark, t: "s", s: { ...BORDER_ALL }},
+                { v: this.client, t: "s", s: { ...BORDER_ALL }},
+                { v: this.client_contact, t: "s", s: { ...BORDER_ALL }},
+            ]
+            XLSX.utils.sheet_add_aoa(worksheet, [row], {origin: "A2"});
+
+            XLSX.utils.sheet_add_aoa(worksheet, [calendar_header], {origin: "A5"});
+
+            let tmp =[], date_opt = {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              }
+
+            this.calendar.map( elm =>{
+                if(elm.type=='Weekend'){
+                    tmp.push([
+                        { v: (new Date(elm.date)).toLocaleDateString('de-DE', date_opt), t: "s", s: { ...BORDER_ALL,fill: { fgColor: { rgb: "DADADA" }} }},
+                        { v: 0, t: "s", s: { ...BORDER_ALL,fill: { fgColor: { rgb: "DADADA" }} }},
+                        { v: 0, t: "s", s: { ...BORDER_ALL,fill: { fgColor: { rgb: "DADADA" }} }},
+                        { v: 0, t: "s", s: { ...BORDER_ALL,fill: { fgColor: { rgb: "DADADA" }} }},
+                        { v: elm.comments, t: "s", s: { ...BORDER_ALL,fill: { fgColor: { rgb: "DADADA" }} }},
+                    ])
+                }else{
+                    tmp.push([
+                        { v: (new Date(elm.date)).toLocaleDateString('de-DE', date_opt), t: "s", s: { ...BORDER_ALL }},
+                        { v: elm.type=="Work"?elm.hours:0, t: "s", s: { ...BORDER_ALL }},
+                        { v: elm.type=="Holiday"?elm.hours:0, t: "s", s: { ...BORDER_ALL }},
+                        { v: elm.type=="Sick"?elm.hours:0, t: "s", s: { ...BORDER_ALL }},
+                        { v: elm.comments, t: "s", s: { ...BORDER_ALL }},
+                    ])
+                }
+            })
+            XLSX.utils.sheet_add_aoa(worksheet, tmp, {origin: "A6"});
+
+            let total_hours = this.calendar.reduce((acc, crt) => {
+                acc[crt.type] += crt.hours
+                return acc
+            }, 
+                {'Work': 0, 'Holiday':0 , 'Sick':0, 'Weekend': 0} 
+            )
+
+            //Total rows
+            row = [
+                [
+                { v: 'Total Hours', t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" }}  }},
+                { v: total_hours['Work'], t: "s", s: { ...BORDER_ALL }},
+                { v: total_hours['Holiday'], t: "s", s: { ...BORDER_ALL }},
+                { v: total_hours['Sick'], t: "s", s: { ...BORDER_ALL }},
+            ],
+            [
+                { v: 'Total Days', t: "s", s: { ...BORDER_ALL, font: { bold: true }, fill: { fgColor: { rgb: "B8D9F1" }}  }},
+                { v: total_hours['Work']/8, t: "s", s: { ...BORDER_ALL }},
+                { v: total_hours['Holiday']/8, t: "s", s: { ...BORDER_ALL }},
+                { v: total_hours['Sick']/8, t: "s", s: { ...BORDER_ALL }},
+            ],
+            ]
+
+            XLSX.utils.sheet_add_aoa(worksheet, row, {origin: `A${this.calendar.length+8}`});
+
 
             /* calculate column width */
-            const max_width = this.calendar.reduce((w, r) => Math.max(w, r.type.length), 10);
-            worksheet["!cols"] = [ { wch: max_width } ];
+            worksheet['!cols'] = [
+                { width: 12 }, 
+                { width: 14 }, 
+                { width: 14 }, 
+                { width: 14 }, 
+                { width: 25 }, 
+            ];
 
             /* create an XLSX file and try to save to Presidents.xlsx */
             XLSX.writeFile(workbook, "Timesheet.xlsx", { compression: true });
@@ -88,7 +174,8 @@ Vue.component("timesheet", {
                 date: tmp.toISOString(),
                 label: label_tmp,
                 hours: (label_tmp.indexOf("Sat") != -1 || label_tmp.indexOf("Sun") != -1) ? 0 : 8,
-                type: (label_tmp.indexOf("Sat") != -1 || label_tmp.indexOf("Sun") != -1) ? 'Weekend' : 'Work day'
+                type: (label_tmp.indexOf("Sat") != -1 || label_tmp.indexOf("Sun") != -1) ? 'Weekend' : 'Work',
+                comments:''
             })
         }
     },
@@ -108,24 +195,16 @@ Vue.component("timesheet", {
         </b-input-group-append>
         </b-input-group>
     
-
-        <b-form-group id="fs-month" label-cols-sm="4" label-cols-lg="3" content-cols-sm content-cols-lg="7" label="Month" label-for="input-month">
-        <b-form-input id="input-month" v-model="mm_yyyy.substring(0,2)"></b-form-input>
-        </b-form-group>
-        <b-form-group id="fs-year" label-cols-sm="4" label-cols-lg="3" content-cols-sm content-cols-lg="7" label="Year" label-for="input-year">
-        <b-form-input id="input-year" v-model="mm_yyyy.substring(3,7)"></b-form-input>
-        </b-form-group>
-
-        <b-form-group id="fs-consultant" label-cols-sm="4" label-cols-lg="3" content-cols-sm content-cols-lg="7" label="Consultant" label-for="input-consultant">
+        <b-form-group id="fs-consultant" label-cols="4" content-cols="8" label="Consultant's Full Name" label-for="input-consultant">
         <b-form-input id="input-consultant" v-model="consultant"></b-form-input>
         </b-form-group>
-        <b-form-group id="fs-main" label-cols-sm="4" label-cols-lg="3" content-cols-sm content-cols-lg="7" label="Intermediary Company" label-for="input-main">
+        <b-form-group id="fs-main"  label-cols="4" content-cols="8"  label="Intermediary Company" label-for="input-main">
         <b-form-input id="input-main" v-model="shark"></b-form-input>
         </b-form-group>
-        <b-form-group id="fs-client" label-cols-sm="4" label-cols-lg="3" content-cols-sm content-cols-lg="7" label="Final Client" label-for="input-client">
+        <b-form-group id="fs-client"  label-cols="4" content-cols="8"  label="Final Client" label-for="input-client">
         <b-form-input id="input-client" v-model="client"></b-form-input>
         </b-form-group>
-        <b-form-group id="fs-contact" label-cols-sm="4" label-cols-lg="3" content-cols-sm content-cols-lg="7" label="Client Contact" label-for="input-contact">
+        <b-form-group id="fs-contact"  label-cols="4" content-cols="8"  label="Final Client Contact" label-for="input-contact">
         <b-form-input id="input-contact" v-model="client_contact"></b-form-input>
         </b-form-group>        
 
@@ -143,11 +222,20 @@ Vue.component("timesheet", {
                 </b-row>
 
                 <b-row class="mb-2">
-                    <b-col sm="3" class="text-sm-right"><b>Type of time log:</b></b-col>
-                    <b-col>{{ row.item.type }}</b-col>
+                    <b-col sm="3" class="text-sm-right"><b>Type of time logged:</b></b-col>
+                    <b-col><b-form-select v-model="row.item.type" :options="type_opt"></b-form-select></b-col>
                 </b-row>
 
-                <b-button size="sm" @click="row.toggleDetails">Hide Details</b-button>
+                <b-row class="mb-2">
+                    <b-col sm="3" class="text-sm-right"><b>Comments:</b></b-col>
+                    <b-col><b-form-input id="input-comments" v-model="row.item.comments"></b-form-input></b-col>
+                </b-row>
+
+                <b-row>
+                    <b-col sm="6" class="text-sm-left">
+                        <b-button size="sm" @click="row.toggleDetails">Hide Details</b-button>
+                    </b-col>
+                </b-row>
                 </b-card>
             </template>
         </b-table>
@@ -155,8 +243,7 @@ Vue.component("timesheet", {
 
       <template #footer>
       <b-button variant="success" @click="exportToExcel">Export to Excel</b-button>
-
-        <h6 class="mb-0">Export to PDF</h6>
+        <!-- <h6 class="mb-0">Export to PDF</h6> -->
       </template>
     </b-card>
     </div>

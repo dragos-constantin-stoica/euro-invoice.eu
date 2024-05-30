@@ -7,17 +7,39 @@ Vue.component("timesheet", {
             shark: '',
             client: '',
             client_contact: '',
-            fields: [{key:"label", label:"Date"}, "hours", "type", "comments", "show_details"],
+            fields: [{key:"label", label:"Date"}, "hours", "type", "comments", {key: "show_details", label:"Edit" }],
             calendar: [],
             type_opt:[
                 {value:'Work', text:'Work day'},
-                {value:'Holiday', text:'Holyday'},
+                {value:'Holiday', text:'Holiday'},
                 {value:'Sick', text:'Sick leave'},
                 {value: 'Weekend', text: 'Weekend'}
 
             ],
+            fld_total: [
+                {key:'label', label:''},"work", "holiday", "sick"
+            ],
             show: true
         }
+    },
+
+    computed:{
+        computeTotal: function(){
+            let total_hours = this.calendar.reduce((acc, crt) => {
+                acc[crt.type] += crt.hours
+                return acc
+            }, 
+                {'Work': 0, 'Holiday':0 , 'Sick':0, 'Weekend': 0} 
+            )
+
+            return [
+                {label: 'Total hours', work:total_hours['Work'], holiday:total_hours['Holiday'], sick:total_hours['Sick']},
+                {label: 'Total hours', work:total_hours['Work']/8, holiday:total_hours['Holiday']/8, sick:total_hours['Sick']/8} 
+            ]
+            //console.log(item);
+
+
+        },
     },
 
     methods: {
@@ -51,12 +73,6 @@ Vue.component("timesheet", {
         rowClass(item, type) {
             if (!item || type !== 'row') return
             if (item.label.indexOf("Sat") != -1 || item.label.indexOf("Sun") != -1) return 'table-success'
-        },
-
-        updateCalendar(item){
-            //console.log(item);
-
-
         },
 
         exportToExcel() {
@@ -202,14 +218,15 @@ Vue.component("timesheet", {
         <h6 class="mb-0">Fill in your timesheet</h6>
       </template>    
 
-        <label for="date-input">Choose a date</label>
-        <b-input-group class="mb-3">
-        <b-form-input id="date-input" v-model="mm_yyyy" type="text" placeholder="MM-YYYY" autocomplete="off"></b-form-input>
-        <b-input-group-append>
-            <b-form-datepicker v-model="date_value" button-only right locale="en-US" aria-controls="date-input" @context="onContext"></b-form-datepicker>
-        </b-input-group-append>
-        </b-input-group>
-    
+        <b-form-group id="fs-date" label-cols="4" content-cols="8" label="Choose a date" label-for="date-input">
+            <b-input-group>
+            <b-form-input id="date-input" v-model="mm_yyyy" type="text" placeholder="MM-YYYY" autocomplete="off"></b-form-input>
+            <b-input-group-append>
+                <b-form-datepicker v-model="date_value" button-only right locale="en-US" aria-controls="date-input" @context="onContext"></b-form-datepicker>
+            </b-input-group-append>
+            </b-input-group>
+        </b-form-group>
+        
         <b-form-group id="fs-consultant" label-cols="4" content-cols="8" label="Consultant's Full Name" label-for="input-consultant">
         <b-form-input id="input-consultant" v-model="consultant"></b-form-input>
         </b-form-group>
@@ -223,9 +240,14 @@ Vue.component("timesheet", {
         <b-form-input id="input-contact" v-model="client_contact"></b-form-input>
         </b-form-group>        
 
-        <b-table fixed responsive :items="calendar" :fields="fields" :tbody-tr-class="rowClass">
+        <b-table fixed responsive sticky-header small borderless striped :items="computeTotal" :fields="fld_total">
+        </b-table>
+
+        <b-table fixed responsive sticky-header :items="calendar" :fields="fields" :tbody-tr-class="rowClass">
             <template #cell(show_details)="row">
-                <b-button size="sm" @click="row.toggleDetails" class="mr-2">{{ row.detailsShowing ? 'Hide' : 'Show'}} Details</b-button>
+                <b-button pill size="sm" variant="warning" @click="row.toggleDetails" class="mr-2">
+                <b-icon icon="pencil-fill" aria-label="Edit"></b-icon>
+                </b-button>
             </template>
         
 
@@ -248,14 +270,16 @@ Vue.component("timesheet", {
 
                 <b-row>
                     <b-col sm="6" class="text-sm-left">
-                        <b-button size="sm" @click="row.toggleDetails">Hide Details</b-button>
+                        <b-button pill size="sm" variant="success" @click="row.toggleDetails">
+                        <b-icon icon="pencil-square" aria-label="Edit"></b-icon>
+                        </b-button>
                     </b-col>
                 </b-row>
                 </b-card>
             </template>
+
         </b-table>
-
-
+    
       <template #footer>
       <b-button variant="success" @click="exportToExcel">Export to Excel</b-button>
         <!-- <h6 class="mb-0">Export to PDF</h6> -->

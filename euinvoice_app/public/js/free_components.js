@@ -220,7 +220,7 @@ Vue.component("timesheet", {
 
         <b-form-group id="fs-date" label-cols="4" content-cols="8" label="Choose a date" label-for="date-input">
             <b-input-group>
-            <b-form-input id="date-input" v-model="mm_yyyy" type="text" placeholder="MM-YYYY" autocomplete="off"></b-form-input>
+            <b-form-input id="date-input" v-model="mm_yyyy" type="text" placeholder="MM-YYYY" autocomplete="off" readonly></b-form-input>
             <b-input-group-append>
                 <b-form-datepicker v-model="date_value" button-only right locale="en-US" aria-controls="date-input" @context="onContext"></b-form-datepicker>
             </b-input-group-append>

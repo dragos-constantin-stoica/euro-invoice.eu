@@ -34,7 +34,7 @@ Vue.component("timesheet", {
 
             return [
                 {label: 'Total hours', work:total_hours['Work'], holiday:total_hours['Holiday'], sick:total_hours['Sick']},
-                {label: 'Total hours', work:total_hours['Work']/8, holiday:total_hours['Holiday']/8, sick:total_hours['Sick']/8} 
+                {label: 'Total days', work:total_hours['Work']/8, holiday:total_hours['Holiday']/8, sick:total_hours['Sick']/8} 
             ]
             //console.log(item);
 

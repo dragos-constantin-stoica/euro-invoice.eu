@@ -1,0 +1,4 @@
+Sitemap: https://euro-invoice.eu/sitemap.xml
+
+User-agent: *
+Allow: /

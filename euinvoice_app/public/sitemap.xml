@@ -3,25 +3,17 @@
     <url>
         <loc>https://euro-invoice.eu</loc>
         <lastmod>2024-05-30</lastmod>
-        <changefreq>always</changefreq>
-        <priority>1.0</priority>
     </url>
     <url>
         <loc>https://euro-invoice.eu/index.html</loc>
         <lastmod>2024-05-30</lastmod>
-        <changefreq>always</changefreq>
-        <priority>0.8</priority>
     </url>
     <url>
         <loc>https://euro-invoice.eu/app</loc>
         <lastmod>2024-05-30</lastmod>
-        <changefreq>always</changefreq>
-        <priority>0.8</priority>
     </url>
     <url>
         <loc>https://euro-invoice.eu/freetimesheet</loc>
         <lastmod>2024-05-30</lastmod>
-        <changefreq>always</changefreq>
-        <priority>0.8</priority>
     </url>
 </urlset>

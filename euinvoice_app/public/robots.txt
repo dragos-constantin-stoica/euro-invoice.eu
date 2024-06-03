@@ -1,3 +1,3 @@
-User-agent: *
-Allow: /
+User-agent: Googlebot,Bingbot,Slurp,DuckDuckBot,Baiduspider
+Allow: *
 Sitemap: https://euro-invoice.eu/sitemap.xml
